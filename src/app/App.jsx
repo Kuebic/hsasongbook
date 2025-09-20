@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ErrorBoundary } from 'react-error-boundary'
-import { SearchPage } from './features/song-search'
-import { SongViewPage } from './features/song-display'
+import { SearchPage } from '../features/song-search'
+import { SongViewPage } from '../features/song-display'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
-import './App.css'
+import '../App.css'
 
 function ErrorFallback({ error, resetErrorBoundary }) {
   return (
