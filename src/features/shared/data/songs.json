@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "title": "Amazing Grace",
+    "artist": "John Newton",
+    "key": "G",
+    "lyrics": "Amazing grace, how sweet the sound\nThat saved a wretch like me\nI once was lost, but now am found\nWas blind but now I see"
+  },
+  {
+    "id": 2,
+    "title": "How Great Thou Art",
+    "artist": "Carl Boberg",
+    "key": "A",
+    "lyrics": "O Lord my God, When I in awesome wonder\nConsider all the worlds Thy Hands have made..."
+  }
+]
