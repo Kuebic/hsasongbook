@@ -1,5 +1,1 @@
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+/* App-specific styles - most styling is handled by Tailwind CSS */

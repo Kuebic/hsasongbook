@@ -4,13 +4,134 @@
     "title": "Amazing Grace",
     "artist": "John Newton",
     "key": "G",
-    "lyrics": "Amazing grace, how sweet the sound\nThat saved a wretch like me\nI once was lost, but now am found\nWas blind but now I see"
+    "tempo": "72",
+    "themes": ["grace", "salvation", "redemption"],
+    "lyrics": "Amazing grace, how sweet the sound\nThat saved a wretch like me\nI once was lost, but now am found\nWas blind but now I see\n\nT'was grace that taught my heart to fear\nAnd grace my fears relieved\nHow precious did that grace appear\nThe hour I first believed\n\nThrough many dangers, toils and snares\nI have already come\n'Tis grace hath brought me safe thus far\nAnd grace will lead me home"
   },
   {
     "id": 2,
     "title": "How Great Thou Art",
     "artist": "Carl Boberg",
     "key": "A",
-    "lyrics": "O Lord my God, When I in awesome wonder\nConsider all the worlds Thy Hands have made..."
+    "tempo": "68",
+    "themes": ["worship", "creation", "majesty"],
+    "lyrics": "O Lord my God, When I in awesome wonder\nConsider all the worlds Thy Hands have made\nI see the stars, I hear the rolling thunder\nThy power throughout the universe displayed\n\nThen sings my soul, My Saviour God, to Thee\nHow great Thou art, How great Thou art\nThen sings my soul, My Saviour God, to Thee\nHow great Thou art, How great Thou art!"
+  },
+  {
+    "id": 3,
+    "title": "Oceans (Where Feet May Fail)",
+    "artist": "Hillsong United",
+    "key": "D",
+    "tempo": "66",
+    "themes": ["faith", "trust", "courage"],
+    "lyrics": "You call me out upon the waters\nThe great unknown where feet may fail\nAnd there I find You in the mystery\nIn oceans deep, my faith will stand\n\nAnd I will call upon Your name\nAnd keep my eyes above the waves\nWhen oceans rise, my soul will rest in Your embrace\nFor I am Yours and You are mine"
+  },
+  {
+    "id": 4,
+    "title": "Way Maker",
+    "artist": "Sinach",
+    "key": "E",
+    "tempo": "68",
+    "themes": ["miracle", "promise", "worship"],
+    "lyrics": "You are here, moving in our midst\nI worship You, I worship You\nYou are here, working in this place\nI worship You, I worship You\n\nYou are Way Maker, Miracle Worker\nPromise Keeper, Light in the darkness\nMy God, that is who You are"
+  },
+  {
+    "id": 5,
+    "title": "10,000 Reasons (Bless the Lord)",
+    "artist": "Matt Redman",
+    "key": "G",
+    "tempo": "73",
+    "themes": ["blessing", "praise", "worship"],
+    "lyrics": "Bless the Lord, O my soul, O my soul\nWorship His holy name\nSing like never before, O my soul\nI'll worship Your holy name\n\nThe sun comes up, it's a new day dawning\nIt's time to sing Your song again\nWhatever may pass and whatever lies before me\nLet me be singing when the evening comes"
+  },
+  {
+    "id": 6,
+    "title": "What A Beautiful Name",
+    "artist": "Hillsong Worship",
+    "key": "D",
+    "tempo": "68",
+    "themes": ["Jesus", "name", "power"],
+    "lyrics": "You were the Word at the beginning\nOne with God the Lord Most High\nYour hidden glory in creation\nNow revealed in You our Christ\n\nWhat a beautiful Name it is\nWhat a beautiful Name it is\nThe Name of Jesus Christ my King"
+  },
+  {
+    "id": 7,
+    "title": "Good Good Father",
+    "artist": "Chris Tomlin",
+    "key": "A",
+    "tempo": "76",
+    "themes": ["father", "love", "identity"],
+    "lyrics": "I've heard a thousand stories\nOf what they think You're like\nBut I've heard the tender whisper\nOf love in the dead of night\n\nYou tell me that You're pleased\nAnd that I'm never alone\n\nYou're a Good Good Father\nIt's who You are, it's who You are, it's who You are\nAnd I'm loved by You\nIt's who I am, it's who I am, it's who I am"
+  },
+  {
+    "id": 8,
+    "title": "Reckless Love",
+    "artist": "Cory Asbury",
+    "key": "Eb",
+    "tempo": "82",
+    "themes": ["love", "grace", "pursuit"],
+    "lyrics": "Before I spoke a word, You were singing over me\nYou have been so, so good to me\nBefore I took a breath, You breathed Your life in me\nYou have been so, so kind to me\n\nOh, the overwhelming, never-ending, reckless love of God\nOh, it chases me down, fights 'til I'm found, leaves the ninety-nine"
+  },
+  {
+    "id": 9,
+    "title": "Build My Life",
+    "artist": "Housefires",
+    "key": "C",
+    "tempo": "72",
+    "themes": ["foundation", "worship", "devotion"],
+    "lyrics": "Worthy of every song we could ever sing\nWorthy of all the praise we could ever bring\nWorthy of every breath we could ever breathe\nWe live for You\n\nJesus the name above every other name\nJesus the only one who could ever save\nWorthy of every breath we could ever breathe\nWe live for You"
+  },
+  {
+    "id": 10,
+    "title": "Here I Am To Worship",
+    "artist": "Tim Hughes",
+    "key": "E",
+    "tempo": "75",
+    "themes": ["worship", "humility", "light"],
+    "lyrics": "Light of the world\nYou stepped down into darkness\nOpened my eyes, let me see\nBeauty that made this heart adore You\nHope of a life spent with You\n\nHere I am to worship\nHere I am to bow down\nHere I am to say that You're my God"
+  },
+  {
+    "id": 11,
+    "title": "Holy Spirit",
+    "artist": "Bryan & Katie Torwalt",
+    "key": "F",
+    "tempo": "70",
+    "themes": ["spirit", "presence", "welcome"],
+    "lyrics": "There's nothing worth more that will ever come close\nNo thing can compare You're our living hope\nYour Presence Lord\n\nHoly Spirit You are welcome here\nCome flood this place and fill the atmosphere\nYour glory God is what our hearts long for\nTo be overcome by Your Presence Lord"
+  },
+  {
+    "id": 12,
+    "title": "Great Are You Lord",
+    "artist": "All Sons & Daughters",
+    "key": "D",
+    "tempo": "68",
+    "themes": ["praise", "breath", "creation"],
+    "lyrics": "You give life, You are love\nYou bring light to the darkness\nYou give hope, You restore\nEvery heart that is broken\n\nGreat are You, Lord\n\nIt's Your breath in our lungs\nSo we pour out our praise\nWe pour out our praise"
+  },
+  {
+    "id": 13,
+    "title": "King of My Heart",
+    "artist": "Bethel Music",
+    "key": "Ab",
+    "tempo": "68",
+    "themes": ["kingship", "goodness", "forever"],
+    "lyrics": "Let the King of my heart\nBe the mountain where I run\nThe fountain I drink from\nOh He is my song\n\nYou are good, good, oh\nYou are good, good, oh\nYou are good, good, oh\nYou are good, good, oh"
+  },
+  {
+    "id": 14,
+    "title": "Cornerstone",
+    "artist": "Hillsong Worship",
+    "key": "C",
+    "tempo": "72",
+    "themes": ["foundation", "Christ", "hope"],
+    "lyrics": "My hope is built on nothing less\nThan Jesus' blood and righteousness\nI dare not trust the sweetest frame\nBut wholly trust in Jesus' name\n\nChrist alone, Cornerstone\nWeak made strong in the Savior's love\nThrough the storm, He is Lord\nLord of all"
+  },
+  {
+    "id": 15,
+    "title": "Living Hope",
+    "artist": "Phil Wickham",
+    "key": "F",
+    "tempo": "74",
+    "themes": ["hope", "resurrection", "hallelujah"],
+    "lyrics": "How great the chasm that lay between us\nHow high the mountain I could not climb\nIn desperation I turned to heaven\nAnd spoke Your name into the night\n\nThen through the darkness Your loving-kindness\nTore through the shadows of my soul\nThe work is finished, the end is written\nJesus Christ, my living hope"
   }
 ]
