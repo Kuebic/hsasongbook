@@ -5,9 +5,32 @@ import logger from '@/lib/logger';
 
 /**
  * PWAPerformance class for tracking PWA-specific performance metrics
+ *
+ * Usage:
+ *   const monitor = new PWAPerformance();
+ *   // ... use monitor
+ *   monitor.cleanup(); // IMPORTANT: Always cleanup when done
+ *
+ * React Usage:
+ *   useEffect(() => {
+ *     const monitor = new PWAPerformance();
+ *     return () => monitor.cleanup();
+ *   }, []);
+ *
+ * Singleton Usage:
+ *   const monitor = PWAPerformance.getInstance();
+ *   // ... use monitor
+ *   PWAPerformance.destroyInstance(); // When done
  */
 export class PWAPerformance {
+  static instance = null;
+
   constructor() {
+    // Implement singleton pattern to prevent multiple instances
+    if (PWAPerformance.instance) {
+      return PWAPerformance.instance;
+    }
+
     this.metrics = {
       webVitals: {},
       pwaMetrics: {},
@@ -17,12 +40,42 @@ export class PWAPerformance {
     this.observers = [];
     this.startTime = Date.now();
     this.setupPerformanceObserver();
+
+    // Store singleton instance
+    PWAPerformance.instance = this;
+  }
+
+  /**
+   * Get or create singleton instance
+   * @returns {PWAPerformance} The singleton instance
+   */
+  static getInstance() {
+    if (!PWAPerformance.instance) {
+      PWAPerformance.instance = new PWAPerformance();
+    }
+    return PWAPerformance.instance;
+  }
+
+  /**
+   * Destroy singleton instance
+   */
+  static destroyInstance() {
+    if (PWAPerformance.instance) {
+      PWAPerformance.instance.cleanup();
+      PWAPerformance.instance = null;
+    }
   }
 
   /**
    * Initialize performance monitoring
    */
   setupPerformanceObserver() {
+    // Safety check: cleanup any existing observers first
+    if (this.observers.length > 0) {
+      logger.warn('Cleaning up existing observers before re-initialization');
+      this.cleanup();
+    }
+
     if (!('PerformanceObserver' in window)) {
       logger.warn('PerformanceObserver not supported');
       return;
@@ -452,9 +505,10 @@ export class PWAPerformance {
   }
 
   /**
-   * Clean up performance observers
+   * Clean up performance observers and reset state
    */
   cleanup() {
+    // Disconnect all observers
     this.observers.forEach(observer => {
       try {
         observer.disconnect();
@@ -462,6 +516,23 @@ export class PWAPerformance {
         console.error('Error disconnecting performance observer:', error);
       }
     });
+
+    // Clear the observers array
     this.observers = [];
+
+    // Clear any pending measurements
+    try {
+      performance.clearMarks();
+      performance.clearMeasures();
+    } catch (error) {
+      console.error('Error clearing performance marks:', error);
+    }
+
+    // Reset singleton instance if using singleton pattern
+    if (PWAPerformance.instance === this) {
+      PWAPerformance.instance = null;
+    }
+
+    logger.log('Performance monitoring cleaned up');
   }
 }

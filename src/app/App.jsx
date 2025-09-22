@@ -56,6 +56,8 @@ function AppWithFeatures() {
 
   // Initialize database and migrate mock data on first load
   useEffect(() => {
+    let performanceMonitor = null;
+
     const initializePWA = async () => {
       try {
         // Initialize database
@@ -70,8 +72,8 @@ function AppWithFeatures() {
 
         // Initialize performance monitoring
         if (typeof window !== 'undefined') {
-          // PWAPerformance constructor automatically sets up monitoring
-          new PWAPerformance()
+          // Use singleton pattern to prevent multiple instances
+          performanceMonitor = PWAPerformance.getInstance()
         }
       } catch (error) {
         console.error('Failed to initialize PWA features:', error)
@@ -79,6 +81,14 @@ function AppWithFeatures() {
     }
 
     initializePWA()
+
+    // Cleanup function to prevent memory leak
+    return () => {
+      if (performanceMonitor) {
+        performanceMonitor.cleanup()
+        performanceMonitor = null
+      }
+    }
   }, [])
 
   return (
