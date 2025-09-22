@@ -1,7 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ErrorBoundary } from 'react-error-boundary'
 import { SearchPage } from '../features/search'
-import { SongViewPage } from '../features/song'
+import { SongPage } from '../features/songs'
+import { ArrangementPage } from '../features/arrangements'
+import { NotFound } from '../features/shared/pages/NotFound'
+import ScrollRestoration from '../features/shared/components/ScrollRestoration'
+import MobileNav from '../features/shared/components/MobileNav'
+import { useKeyboardShortcuts } from '../features/shared/hooks/useKeyboardShortcuts'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
@@ -35,6 +40,23 @@ function ErrorFallback({ error, resetErrorBoundary }) {
   )
 }
 
+function AppWithFeatures() {
+  useKeyboardShortcuts()
+
+  return (
+    <>
+      <ScrollRestoration />
+      <MobileNav />
+      <Routes>
+        <Route path="/" element={<SearchPage />} />
+        <Route path="/song/:songId" element={<SongPage />} />
+        <Route path="/arrangement/:arrangementId" element={<ArrangementPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  )
+}
+
 function App() {
   return (
     <ErrorBoundary
@@ -45,10 +67,7 @@ function App() {
       }}
     >
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<SearchPage />} />
-          <Route path="/song/:id" element={<SongViewPage />} />
-        </Routes>
+        <AppWithFeatures />
       </BrowserRouter>
     </ErrorBoundary>
   )
