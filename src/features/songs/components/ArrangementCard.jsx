@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -6,7 +7,7 @@ import { Music, Clock, Guitar, Hash, PlayCircle } from 'lucide-react'
 import RatingDisplay from '../../shared/components/RatingDisplay'
 import PopularityDisplay from '../../shared/components/PopularityDisplay'
 
-export default function ArrangementCard({ arrangement }) {
+function ArrangementCard({ arrangement }) {
   const navigate = useNavigate()
 
   const handleViewArrangement = () => {
@@ -85,3 +86,5 @@ export default function ArrangementCard({ arrangement }) {
     </Card>
   )
 }
+
+export default memo(ArrangementCard)

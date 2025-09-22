@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import ArrangementCard from './ArrangementCard'
 import SortSelector from '../../shared/components/SortSelector'
 import { sortArrangements, SORT_OPTIONS } from '../../shared/utils/arrangementSorter'
@@ -7,6 +7,22 @@ import { Music2 } from 'lucide-react'
 
 export default function ArrangementList({ arrangements, isLoading = false }) {
   const [sortBy, setSortBy] = useState(SORT_OPTIONS.POPULAR)
+
+  // Memoize sorted arrangements to prevent unnecessary re-sorting
+  const sortedArrangements = useMemo(() => {
+    if (!arrangements || arrangements.length === 0) return []
+
+    const startTime = performance.now()
+    const sorted = sortArrangements(arrangements, sortBy)
+    const endTime = performance.now()
+
+    // Log performance in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Sort operation took ${(endTime - startTime).toFixed(2)}ms`)
+    }
+
+    return sorted
+  }, [arrangements, sortBy])
 
   // Loading state
   if (isLoading) {
@@ -48,8 +64,6 @@ export default function ArrangementList({ arrangements, isLoading = false }) {
       </Card>
     )
   }
-
-  const sortedArrangements = sortArrangements(arrangements, sortBy)
 
   return (
     <div>
