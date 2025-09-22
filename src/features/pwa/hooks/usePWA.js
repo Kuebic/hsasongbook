@@ -46,9 +46,10 @@ export function usePWA() {
     if ('serviceWorker' in navigator) {
       try {
         // Only register service worker in production
-        // In development, the service worker file doesn't exist
+        // In development, the service worker file doesn't exist unless devOptions.enabled is true
         if (!import.meta.env.PROD) {
-          logger.log('Service Worker skipped in development mode');
+          logger.log('Service Worker: Development mode detected');
+          logger.log('skipWaiting is disabled in development for stability');
           return;
         }
 
