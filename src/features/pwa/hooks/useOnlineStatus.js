@@ -1,5 +1,6 @@
 // Online/offline status detection hook
 import { useState, useEffect, useCallback } from 'react';
+import logger from '@/lib/logger';
 
 /**
  * Hook for detecting and managing online/offline status
@@ -14,7 +15,7 @@ export function useOnlineStatus() {
   const handleOnline = useCallback(() => {
     setIsOnline(true);
     setLastOnlineTime(Date.now());
-    console.log('Connection restored');
+    logger.log('Connection restored');
 
     // Dispatch custom event for other components
     window.dispatchEvent(new CustomEvent('connection-restored', {
@@ -26,7 +27,7 @@ export function useOnlineStatus() {
   const handleOffline = useCallback(() => {
     setIsOnline(false);
     setLastOfflineTime(Date.now());
-    console.log('Connection lost');
+    logger.log('Connection lost');
 
     // Dispatch custom event for other components
     window.dispatchEvent(new CustomEvent('connection-lost', {

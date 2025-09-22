@@ -1,6 +1,8 @@
 // Cache management utilities for PWA
 // Based on patterns from PRPs/ai_docs/pwa-caching-strategies.md
 
+import logger from '@/lib/logger';
+
 /**
  * CacheManager provides utilities for managing caches in the PWA
  */
@@ -50,7 +52,7 @@ export class CacheManager {
               cacheStats.size += blob.size;
             }
           } catch (error) {
-            console.warn('Error reading cache entry:', error);
+            logger.warn('Error reading cache entry:', error);
           }
         }
 
@@ -72,7 +74,7 @@ export class CacheManager {
    */
   async clearAllCaches() {
     if (!('caches' in window)) {
-      console.warn('Cache API not supported');
+      logger.warn('Cache API not supported');
       return;
     }
 
@@ -88,7 +90,7 @@ export class CacheManager {
       }
     }
 
-    console.log(`Cleared ${deletedCaches.length} caches:`, deletedCaches);
+    logger.log(`Cleared ${deletedCaches.length} caches:`, deletedCaches);
   }
 
   /**
@@ -98,7 +100,7 @@ export class CacheManager {
    */
   async clearCache(cacheType) {
     if (!('caches' in window)) {
-      console.warn('Cache API not supported');
+      logger.warn('Cache API not supported');
       return false;
     }
 
@@ -110,7 +112,7 @@ export class CacheManager {
 
     try {
       const deleted = await caches.delete(cacheName);
-      console.log(`Cache ${cacheName} ${deleted ? 'deleted' : 'not found'}`);
+      logger.log(`Cache ${cacheName} ${deleted ? 'deleted' : 'not found'}`);
       return deleted;
     } catch (error) {
       console.error(`Error deleting cache ${cacheName}:`, error);
@@ -126,7 +128,7 @@ export class CacheManager {
    */
   async preloadUrls(urls, cacheType = 'dynamic') {
     if (!('caches' in window)) {
-      console.warn('Cache API not supported');
+      logger.warn('Cache API not supported');
       return { success: [], failed: urls };
     }
 
@@ -162,7 +164,7 @@ export class CacheManager {
       results.failed = urls;
     }
 
-    console.log(`Preloaded ${results.success.length}/${urls.length} URLs`);
+    logger.log(`Preloaded ${results.success.length}/${urls.length} URLs`);
     return results;
   }
 
@@ -308,14 +310,14 @@ export class CacheManager {
             }
           }
         } catch (error) {
-          console.warn('Error checking cache entry date:', error);
+          logger.warn('Error checking cache entry date:', error);
         }
       }
     } catch (error) {
       console.error('Error cleaning up cache:', error);
     }
 
-    console.log(`Cleaned up ${removedCount} old cache entries from ${cacheType}`);
+    logger.log(`Cleaned up ${removedCount} old cache entries from ${cacheType}`);
     return removedCount;
   }
 

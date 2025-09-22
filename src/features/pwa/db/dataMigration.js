@@ -3,6 +3,7 @@
 
 import { getDatabase } from './database.js';
 import { SongRepository, ArrangementRepository } from './repository.js';
+import logger from '@/lib/logger';
 
 // Import mock data
 import songsData from '../../shared/data/songs.json';
@@ -22,7 +23,7 @@ export class DataMigration {
    * @returns {Promise<Object>} Migration results
    */
   async importMockData() {
-    console.log('Starting mock data migration to IndexedDB...');
+    logger.log('Starting mock data migration to IndexedDB...');
 
     const results = {
       songs: { total: 0, imported: 0, errors: [] },
@@ -44,7 +45,7 @@ export class DataMigration {
       results.endTime = Date.now();
       results.duration = results.endTime - results.startTime;
 
-      console.log('Mock data migration completed:', results);
+      logger.log('Mock data migration completed:', results);
       return results;
     } catch (error) {
       console.error('Error during mock data migration:', error);
@@ -60,7 +61,7 @@ export class DataMigration {
    * @returns {Promise<Object>} Import results
    */
   async importSongs(songs) {
-    console.log(`Importing ${songs.length} songs...`);
+    logger.log(`Importing ${songs.length} songs...`);
 
     const results = {
       total: songs.length,
@@ -82,7 +83,7 @@ export class DataMigration {
       }
     }
 
-    console.log(`Imported ${results.imported}/${results.total} songs`);
+    logger.log(`Imported ${results.imported}/${results.total} songs`);
     return results;
   }
 
@@ -92,7 +93,7 @@ export class DataMigration {
    * @returns {Promise<Object>} Import results
    */
   async importArrangements(arrangements) {
-    console.log(`Importing ${arrangements.length} arrangements...`);
+    logger.log(`Importing ${arrangements.length} arrangements...`);
 
     const results = {
       total: arrangements.length,
@@ -114,7 +115,7 @@ export class DataMigration {
       }
     }
 
-    console.log(`Imported ${results.imported}/${results.total} arrangements`);
+    logger.log(`Imported ${results.imported}/${results.total} arrangements`);
     return results;
   }
 
@@ -210,7 +211,7 @@ export class DataMigration {
    * @returns {Promise<void>}
    */
   async clearExistingData() {
-    console.log('Clearing existing data...');
+    logger.log('Clearing existing data...');
 
     try {
       const db = await getDatabase();
@@ -226,7 +227,7 @@ export class DataMigration {
       }));
 
       await tx.done;
-      console.log('Existing data cleared successfully');
+      logger.log('Existing data cleared successfully');
     } catch (error) {
       console.error('Error clearing existing data:', error);
       throw error;
@@ -238,7 +239,7 @@ export class DataMigration {
    * @returns {Promise<Object>} Migration results
    */
   async forceImportMockData() {
-    console.log('Force importing mock data (clearing existing data first)...');
+    logger.log('Force importing mock data (clearing existing data first)...');
 
     await this.clearExistingData();
     return await this.importMockData();
@@ -252,7 +253,7 @@ export class DataMigration {
     const alreadyImported = await this.isMockDataImported();
 
     if (alreadyImported) {
-      console.log('Mock data already imported, skipping...');
+      logger.log('Mock data already imported, skipping...');
       return {
         skipped: true,
         message: 'Mock data already exists',
@@ -304,7 +305,7 @@ export class DataMigration {
    * @returns {Promise<Object>} Validation results
    */
   async validateImportedData() {
-    console.log('Validating imported data integrity...');
+    logger.log('Validating imported data integrity...');
 
     const validation = {
       songs: { valid: 0, invalid: 0, errors: [] },
@@ -348,7 +349,7 @@ export class DataMigration {
         }
       }
 
-      console.log('Data validation completed:', validation);
+      logger.log('Data validation completed:', validation);
       return validation;
     } catch (error) {
       console.error('Error during data validation:', error);

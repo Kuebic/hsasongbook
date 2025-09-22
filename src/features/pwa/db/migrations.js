@@ -1,6 +1,8 @@
 // Database schema migrations for HSA Songbook IndexedDB
 // Based on patterns from PRPs/ai_docs/indexeddb-schema-migrations.md
 
+import logger from '@/lib/logger';
+
 // Migration history
 const MIGRATIONS = {
   1: 'Initial schema with songs, arrangements, and setlists',
@@ -24,16 +26,16 @@ export function getCurrentVersion() {
  * @param {IDBTransaction} transaction - Upgrade transaction
  */
 export function runMigrations(db, oldVersion, newVersion, transaction) {
-  console.log(`Running migrations from v${oldVersion} to v${newVersion}`);
+  logger.log(`Running migrations from v${oldVersion} to v${newVersion}`);
 
   // Run migrations sequentially
   for (let version = oldVersion + 1; version <= newVersion; version++) {
     const migrationHandler = migrationHandlers[version];
     if (migrationHandler) {
-      console.log(`Applying migration v${version}: ${MIGRATIONS[version]}`);
+      logger.log(`Applying migration v${version}: ${MIGRATIONS[version]}`);
       migrationHandler(db, transaction);
     } else {
-      console.warn(`No migration handler found for version ${version}`);
+      logger.warn(`No migration handler found for version ${version}`);
     }
   }
 }
@@ -227,6 +229,6 @@ export function validateSchema(db) {
 
   // Note: Index validation would need to be done in a transaction
   // This is a basic store validation only
-  console.log('Database schema validation passed (stores only)');
+  logger.log('Database schema validation passed (stores only)');
   return true;
 }

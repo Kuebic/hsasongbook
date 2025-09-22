@@ -1,6 +1,8 @@
 // PWA testing utilities for development and validation
 // Based on PWA testing patterns and best practices
 
+import logger from '@/lib/logger';
+
 /**
  * PWATestUtils provides utilities for testing PWA functionality
  */
@@ -14,7 +16,7 @@ export class PWATestUtils {
    * @returns {Promise<Object>} Test results
    */
   async runPWATests() {
-    console.log('Running PWA tests...');
+    logger.log('Running PWA tests...');
     this.testResults = [];
 
     const tests = [
@@ -334,7 +336,7 @@ export class PWATestUtils {
    * @returns {Promise<Object>} Test results
    */
   async simulateOffline(testFunction) {
-    console.log('Simulating offline conditions...');
+    logger.log('Simulating offline conditions...');
 
     // Note: This doesn't actually take the browser offline
     // It simulates the navigator.onLine state for testing
@@ -409,7 +411,7 @@ export class PWATestUtils {
       timestamp: new Date().toISOString()
     });
 
-    console.log(`${passed ? '✅' : '❌'} ${name}: ${details}`);
+    logger.log(`${passed ? '✅' : '❌'} ${name}: ${details}`);
   }
 
   /**

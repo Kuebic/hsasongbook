@@ -1,6 +1,8 @@
 // Performance monitoring and metrics for PWA
 // Based on patterns from PRPs/ai_docs/pwa-metrics-tracking.md
 
+import logger from '@/lib/logger';
+
 /**
  * PWAPerformance class for tracking PWA-specific performance metrics
  */
@@ -22,7 +24,7 @@ export class PWAPerformance {
    */
   setupPerformanceObserver() {
     if (!('PerformanceObserver' in window)) {
-      console.warn('PerformanceObserver not supported');
+      logger.warn('PerformanceObserver not supported');
       return;
     }
 
@@ -395,7 +397,7 @@ export class PWAPerformance {
    */
   sendEvent(eventName, properties) {
     // Placeholder for analytics integration
-    console.log('Analytics Event:', eventName, properties);
+    logger.log('Analytics Event:', eventName, properties);
 
     // In a real implementation, this would send to your analytics service
     // Examples: Google Analytics, Mixpanel, custom analytics

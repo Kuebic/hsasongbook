@@ -1,5 +1,6 @@
 // Main PWA hook for service worker management and PWA state
 import { useState, useEffect } from 'react';
+import logger from '@/lib/logger';
 
 /**
  * Main PWA hook that manages service worker registration and PWA state
@@ -47,7 +48,7 @@ export function usePWA() {
         // Only register service worker in production
         // In development, the service worker file doesn't exist
         if (!import.meta.env.PROD) {
-          console.log('Service Worker skipped in development mode');
+          logger.log('Service Worker skipped in development mode');
           return;
         }
 
@@ -79,7 +80,7 @@ export function usePWA() {
           });
         }
 
-        console.log('Service Worker registered successfully');
+        logger.log('Service Worker registered successfully');
       } catch (error) {
         console.error('Service Worker registration failed:', error);
       }
@@ -93,7 +94,7 @@ export function usePWA() {
     // Listen for app installed event
     window.addEventListener('appinstalled', () => {
       setIsInstalled(true);
-      console.log('PWA was installed');
+      logger.log('PWA was installed');
     });
 
     // Listen for display mode changes
@@ -210,7 +211,7 @@ export function useInstallPrompt() {
     window.addEventListener('appinstalled', () => {
       setDeferredPrompt(null);
       setShowInstallPrompt(false);
-      console.log('PWA was installed successfully');
+      logger.log('PWA was installed successfully');
     });
 
     return () => {
@@ -229,7 +230,7 @@ export function useInstallPrompt() {
       // Wait for the user to respond
       const { outcome } = await deferredPrompt.userChoice;
 
-      console.log(`User response to install prompt: ${outcome}`);
+      logger.log(`User response to install prompt: ${outcome}`);
 
       // Clear the deferred prompt
       setDeferredPrompt(null);

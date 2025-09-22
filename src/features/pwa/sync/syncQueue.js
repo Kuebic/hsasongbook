@@ -2,6 +2,7 @@
 // Based on patterns from PRPs/ai_docs/offline-sync-patterns.md
 
 import { getDatabase } from '../db/database.js';
+import logger from '@/lib/logger';
 
 /**
  * SyncQueue manages operations that need to be synchronized when online
@@ -39,7 +40,7 @@ export class SyncQueue {
     };
 
     await db.put('syncQueue', syncItem);
-    console.log(`Queued ${item.operation} operation for ${item.type}:${item.entityId}`);
+    logger.log(`Queued ${item.operation} operation for ${item.type}:${item.entityId}`);
 
     // Trigger processing if online (don't await to avoid blocking)
     if (navigator.onLine) {
@@ -61,17 +62,17 @@ export class SyncQueue {
     }
 
     this.processing = true;
-    console.log('Processing sync queue...');
+    logger.log('Processing sync queue...');
 
     try {
       const items = await this.getQueueItems();
-      console.log(`Found ${items.length} items to sync`);
+      logger.log(`Found ${items.length} items to sync`);
 
       for (const item of items) {
         try {
           await this.processItem(item);
           await this.removeFromQueue(item.id);
-          console.log(`Successfully synced ${item.type}:${item.entityId}`);
+          logger.log(`Successfully synced ${item.type}:${item.entityId}`);
         } catch (error) {
           await this.handleSyncError(item, error);
         }
@@ -82,7 +83,7 @@ export class SyncQueue {
       if (remainingItems > 0 && navigator.onLine) {
         // Schedule next processing with exponential backoff
         const delay = this.getBackoffDelay();
-        console.log(`Scheduling next sync attempt in ${delay}ms`);
+        logger.log(`Scheduling next sync attempt in ${delay}ms`);
         setTimeout(() => this.processQueue(), delay);
       }
     } catch (error) {
@@ -341,7 +342,7 @@ export class SyncQueue {
     }
 
     await tx.done;
-    console.log(`Cleaned up ${removedCount} old sync queue items`);
+    logger.log(`Cleaned up ${removedCount} old sync queue items`);
     return removedCount;
   }
 
@@ -409,7 +410,7 @@ export class SyncQueue {
     await tx.done;
 
     if (retriedCount > 0) {
-      console.log(`Retrying ${retriedCount} failed sync items`);
+      logger.log(`Retrying ${retriedCount} failed sync items`);
       // Trigger processing if online
       if (navigator.onLine) {
         this.processQueue().catch(error => {

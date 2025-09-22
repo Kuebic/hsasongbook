@@ -1,6 +1,8 @@
 // Conflict resolution for offline sync operations
 // Based on patterns from PRPs/ai_docs/offline-sync-patterns.md
 
+import logger from '@/lib/logger';
+
 /**
  * ConflictResolver handles conflicts between local and remote data
  */
@@ -28,7 +30,7 @@ export class ConflictResolver {
       throw new Error(`Unknown conflict resolution strategy: ${strategy}`);
     }
 
-    console.log(`Resolving conflict for ${local.id} using ${strategy} strategy`);
+    logger.log(`Resolving conflict for ${local.id} using ${strategy} strategy`);
     return await resolver(local, remote, base);
   }
 
@@ -43,15 +45,15 @@ export class ConflictResolver {
     const remoteTime = new Date(remote.updatedAt).getTime();
 
     if (localTime > remoteTime) {
-      console.log('Local version wins (newer timestamp)');
+      logger.log('Local version wins (newer timestamp)');
       return { ...local, syncStatus: 'synced' };
     } else if (remoteTime > localTime) {
-      console.log('Remote version wins (newer timestamp)');
+      logger.log('Remote version wins (newer timestamp)');
       return { ...remote, syncStatus: 'synced' };
     } else {
       // Same timestamp - use deterministic tiebreaker
       const tiebreaker = local.updatedBy > remote.updatedBy ? local : remote;
-      console.log('Timestamp tie - using deterministic tiebreaker');
+      logger.log('Timestamp tie - using deterministic tiebreaker');
       return { ...tiebreaker, syncStatus: 'synced' };
     }
   }
@@ -65,7 +67,7 @@ export class ConflictResolver {
    */
   async threeWayMergeResolver(local, remote, base) {
     if (!base) {
-      console.warn('No base version available, falling back to last-write-wins');
+      logger.warn('No base version available, falling back to last-write-wins');
       return this.lastWriteWinsResolver(local, remote);
     }
 
@@ -95,7 +97,7 @@ export class ConflictResolver {
       merged[field] = await this.mergeField(field, localValue, remoteValue, baseValue);
     }
 
-    console.log('Three-way merge completed');
+    logger.log('Three-way merge completed');
     return merged;
   }
 
@@ -186,7 +188,7 @@ export class ConflictResolver {
 
       default:
         // Default: prefer local value (user is actively working on it)
-        console.log(`Using default resolution for field '${field}': preferring local value`);
+        logger.log(`Using default resolution for field '${field}': preferring local value`);
         return localValue !== null && localValue !== undefined ? localValue : remoteValue;
     }
   }
@@ -253,7 +255,7 @@ export class ConflictResolver {
       );
     }
 
-    console.log('Field-specific resolution completed');
+    logger.log('Field-specific resolution completed');
     return resolved;
   }
 
@@ -266,7 +268,7 @@ export class ConflictResolver {
   async userChoiceResolver(local, remote) {
     // This would typically show a UI for user selection
     // For now, we'll simulate with a preference or fallback to last-write-wins
-    console.log('User choice resolution - presenting conflict to user');
+    logger.log('User choice resolution - presenting conflict to user');
 
     // Store conflict for user resolution
     await this.storeConflictForUserResolution(local, remote);
@@ -284,7 +286,7 @@ export class ConflictResolver {
   async storeConflictForUserResolution(local, remote) {
     // This would store the conflict in a special store for user review
     // Implementation depends on how conflicts are presented to users
-    console.log(`Storing conflict for user resolution: ${local.id}`);
+    logger.log(`Storing conflict for user resolution: ${local.id}`);
 
     // Could dispatch custom event for UI to handle
     if (typeof window !== 'undefined') {

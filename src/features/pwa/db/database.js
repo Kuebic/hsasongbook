@@ -1,6 +1,7 @@
 // IndexedDB setup with idb library for HSA Songbook PWA
 import { openDB } from 'idb';
 import { runMigrations } from './migrations.js';
+import logger from '@/lib/logger';
 
 const DB_NAME = 'HSASongbookDB';
 const CURRENT_VERSION = 3;
@@ -53,12 +54,12 @@ export async function initDatabase() {
   try {
     dbInstance = await openDB(DB_NAME, CURRENT_VERSION, {
       upgrade(db, oldVersion, newVersion, transaction) {
-        console.log(`Migrating HSA Songbook database from v${oldVersion} to v${newVersion}`);
+        logger.log(`Migrating HSA Songbook database from v${oldVersion} to v${newVersion}`);
         runMigrations(db, oldVersion, newVersion, transaction);
       },
 
       blocked() {
-        console.warn('Database upgrade blocked. Please close other tabs and try again.');
+        logger.warn('Database upgrade blocked. Please close other tabs and try again.');
         // Notify user to close other tabs
         if (typeof window !== 'undefined' && window.dispatchEvent) {
           window.dispatchEvent(new CustomEvent('db-blocked', {
@@ -68,7 +69,7 @@ export async function initDatabase() {
       },
 
       blocking() {
-        console.warn('This connection is blocking a database upgrade. Closing...');
+        logger.warn('This connection is blocking a database upgrade. Closing...');
         // Close and reopen connection
         if (dbInstance) {
           dbInstance.close();
@@ -84,7 +85,7 @@ export async function initDatabase() {
       }
     });
 
-    console.log('HSA Songbook database initialized successfully');
+    logger.log('HSA Songbook database initialized successfully');
     return dbInstance;
   } catch (error) {
     console.error('Failed to initialize database:', error);
@@ -153,7 +154,7 @@ export async function clearDatabase() {
   }));
 
   await tx.done;
-  console.log('Database cleared successfully');
+  logger.log('Database cleared successfully');
 }
 
 /**
