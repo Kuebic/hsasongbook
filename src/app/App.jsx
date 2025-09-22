@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ErrorBoundary } from 'react-error-boundary'
+import { useEffect } from 'react'
 import { SearchPage } from '../features/search'
 import { SongPage } from '../features/songs'
 import { ArrangementPage } from '../features/arrangements'
@@ -10,6 +11,13 @@ import { useKeyboardShortcuts } from '../features/shared/hooks/useKeyboardShortc
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
+
+// PWA imports
+import { usePWA, UpdateNotification, OfflineIndicator } from '../features/pwa'
+import { initDatabase } from '../features/pwa/db/database'
+import { importMockData } from '../features/pwa/db/dataMigration'
+import { PWAPerformance } from '../features/pwa/utils/performance'
+
 import '../App.css'
 
 function ErrorFallback({ error, resetErrorBoundary }) {
@@ -43,10 +51,49 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 function AppWithFeatures() {
   useKeyboardShortcuts()
 
+  // Initialize PWA features
+  const { needRefresh, updateServiceWorker } = usePWA()
+
+  // Initialize database and migrate mock data on first load
+  useEffect(() => {
+    const initializePWA = async () => {
+      try {
+        // Initialize database
+        const db = await initDatabase()
+
+        // Check if this is first run (no data in DB)
+        const songs = await db.getAll('songs')
+        if (songs.length === 0) {
+          console.log('First run detected, migrating mock data...')
+          await importMockData()
+        }
+
+        // Initialize performance monitoring
+        if (typeof window !== 'undefined') {
+          // PWAPerformance constructor automatically sets up monitoring
+          new PWAPerformance()
+        }
+      } catch (error) {
+        console.error('Failed to initialize PWA features:', error)
+      }
+    }
+
+    initializePWA()
+  }, [])
+
   return (
     <>
       <ScrollRestoration />
       <MobileNav />
+
+      {/* PWA UI Components */}
+      <OfflineIndicator />
+      {needRefresh && (
+        <UpdateNotification
+          onUpdate={updateServiceWorker}
+        />
+      )}
+
       <Routes>
         <Route path="/" element={<SearchPage />} />
         <Route path="/song/:songId" element={<SongPage />} />
