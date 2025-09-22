@@ -1,0 +1,262 @@
+[
+  {
+    "id": "arr_1_1",
+    "songId": "song_1",
+    "name": "Default",
+    "key": "G",
+    "tempo": 72,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: Amazing Grace}\n{artist: John Newton}\n{key: G}\n{tempo: 72}\n\n[G]Amazing grace, how sweet the sound\nThat saved a wretch like me\nI once was lost, but now am found\nWas blind but now I see\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_1_2",
+    "songId": "song_1",
+    "name": "Alternative",
+    "key": "B",
+    "tempo": 68,
+    "timeSignature": "4/4",
+    "capo": 2,
+    "tags": [
+      "alternative"
+    ],
+    "chordProContent": "{title: Amazing Grace}\n{artist: John Newton}\n{key: B}\n{tempo: 72}\n\n[B]Amazing grace, how sweet the sound\nThat saved a wretch like me\nI once was lost, [F#]but now am found\nWas blind but now I see\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_2_1",
+    "songId": "song_2",
+    "name": "Default",
+    "key": "A",
+    "tempo": 68,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: How Great Thou Art}\n{artist: Carl Boberg}\n{key: A}\n{tempo: 68}\n\n[A]O Lord my God, When I in awesome wonder\nConsider all the worlds Thy Hands have made\nI see the stars, I hear the rolling thunder\nThy power throughout the universe displayed\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_3_1",
+    "songId": "song_3",
+    "name": "Default",
+    "key": "D",
+    "tempo": 66,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: Oceans (Where Feet May Fail)}\n{artist: Hillsong United}\n{key: D}\n{tempo: 66}\n\n[D]You call me out upon the waters\nThe great unknown where feet may fail\nAnd there I find You in the mystery\nIn oceans deep, my faith will stand\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_4_1",
+    "songId": "song_4",
+    "name": "Default",
+    "key": "E",
+    "tempo": 68,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: Way Maker}\n{artist: Sinach}\n{key: E}\n{tempo: 68}\n\n[E]You are here, moving in our midst\nI worship You, I worship You\nYou are here, working in this place\nI worship You, I worship You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_4_2",
+    "songId": "song_4",
+    "name": "Alternative",
+    "key": "G",
+    "tempo": 64,
+    "timeSignature": "4/4",
+    "capo": 2,
+    "tags": [
+      "alternative"
+    ],
+    "chordProContent": "{title: Way Maker}\n{artist: Sinach}\n{key: G}\n{tempo: 68}\n\n[G]You are here, moving in our midst\nI worship You, I worship You\nYou are here, working in this place\nI worship You, I worship You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_5_1",
+    "songId": "song_5",
+    "name": "Default",
+    "key": "G",
+    "tempo": 73,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: 10,000 Reasons (Bless the Lord)}\n{artist: Matt Redman}\n{key: G}\n{tempo: 73}\n\n[G]Bless the Lord, O my soul, O my soul\nWorship His holy name\nSing like never before, O my soul\nI'll worship Your holy name\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_6_1",
+    "songId": "song_6",
+    "name": "Default",
+    "key": "D",
+    "tempo": 68,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: What A Beautiful Name}\n{artist: Hillsong Worship}\n{key: D}\n{tempo: 68}\n\n[D]You were the Word at the beginning\nOne with God the Lord Most High\nYour hidden glory in creation\nNow revealed in You our Christ\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_7_1",
+    "songId": "song_7",
+    "name": "Default",
+    "key": "A",
+    "tempo": 76,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: Good Good Father}\n{artist: Chris Tomlin}\n{key: A}\n{tempo: 76}\n\n[A]I've heard a thousand stories\nOf what they think You're like\nBut I've heard the tender whisper\nOf love in the dead of night\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_7_2",
+    "songId": "song_7",
+    "name": "Alternative",
+    "key": "C",
+    "tempo": 72,
+    "timeSignature": "4/4",
+    "capo": 2,
+    "tags": [
+      "alternative"
+    ],
+    "chordProContent": "{title: Good Good Father}\n{artist: Chris Tomlin}\n{key: C}\n{tempo: 76}\n\n[C]I've heard a thousand stories\nOf what they think You're like\nBut I've heard the tender whisper\nOf love in the dead of night\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_8_1",
+    "songId": "song_8",
+    "name": "Default",
+    "key": "Eb",
+    "tempo": 82,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: Reckless Love}\n{artist: Cory Asbury}\n{key: Eb}\n{tempo: 82}\n\n[Eb]Before I spoke a word, You were singing over me\nYou have been so, so good to me\nBefore I took a breath, You breathed Your life in me\nYou have been so, so kind to me\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_9_1",
+    "songId": "song_9",
+    "name": "Default",
+    "key": "C",
+    "tempo": 72,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: Build My Life}\n{artist: Housefires}\n{key: C}\n{tempo: 72}\n\n[C]Worthy of every song we could ever sing\nWorthy of all the praise we could ever bring\nWorthy of every breath we could ever breathe\nWe live for You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_10_1",
+    "songId": "song_10",
+    "name": "Default",
+    "key": "E",
+    "tempo": 75,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: Here I Am To Worship}\n{artist: Tim Hughes}\n{key: E}\n{tempo: 75}\n\n[E]Light of the world\nYou stepped down into darkness\nOpened my eyes, let me see\nBeauty that made this heart adore You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_10_2",
+    "songId": "song_10",
+    "name": "Alternative",
+    "key": "G",
+    "tempo": 71,
+    "timeSignature": "4/4",
+    "capo": 2,
+    "tags": [
+      "alternative"
+    ],
+    "chordProContent": "{title: Here I Am To Worship}\n{artist: Tim Hughes}\n{key: G}\n{tempo: 75}\n\n[G]Light of the world\nYou stepped down into darkness\nOpened my eyes, let me see\nBeauty that made this heart adore You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_11_1",
+    "songId": "song_11",
+    "name": "Default",
+    "key": "F",
+    "tempo": 70,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: Holy Spirit}\n{artist: Bryan & Katie Torwalt}\n{key: F}\n{tempo: 70}\n\n[F]There's nothing worth more that will ever come close\nNo thing can compare You're our living hope\nYour Presence Lord\n\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_12_1",
+    "songId": "song_12",
+    "name": "Default",
+    "key": "D",
+    "tempo": 68,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: Great Are You Lord}\n{artist: All Sons & Daughters}\n{key: D}\n{tempo: 68}\n\n[D]You give life, You are love\nYou bring light to the darkness\nYou give hope, You restore\nEvery heart that is broken\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_13_1",
+    "songId": "song_13",
+    "name": "Default",
+    "key": "Ab",
+    "tempo": 68,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: King of My Heart}\n{artist: Bethel Music}\n{key: Ab}\n{tempo: 68}\n\n[Ab]Let the King of my heart\nBe the mountain where I run\nThe fountain I drink from\nOh He is my song\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_13_2",
+    "songId": "song_13",
+    "name": "Alternative",
+    "key": "C",
+    "tempo": 64,
+    "timeSignature": "4/4",
+    "capo": 2,
+    "tags": [
+      "alternative"
+    ],
+    "chordProContent": "{title: King of My Heart}\n{artist: Bethel Music}\n{key: C}\n{tempo: 68}\n\n[C]Let the King of my heart\nBe the mountain where I run\nThe fountain I drink from\nOh He is my song\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_14_1",
+    "songId": "song_14",
+    "name": "Default",
+    "key": "C",
+    "tempo": 72,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: Cornerstone}\n{artist: Hillsong Worship}\n{key: C}\n{tempo: 72}\n\n[C]My hope is built on nothing less\nThan Jesus' blood and righteousness\nI dare not trust the sweetest frame\nBut wholly trust in Jesus' name\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  },
+  {
+    "id": "arr_15_1",
+    "songId": "song_15",
+    "name": "Default",
+    "key": "F",
+    "tempo": 74,
+    "timeSignature": "4/4",
+    "capo": 0,
+    "tags": [
+      "default"
+    ],
+    "chordProContent": "{title: Living Hope}\n{artist: Phil Wickham}\n{key: F}\n{tempo: 74}\n\n[F]How great the chasm that lay between us\nHow high the mountain I could not climb\nIn desperation I turned to heaven\nAnd spoke Your name into the night\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+  }
+]
