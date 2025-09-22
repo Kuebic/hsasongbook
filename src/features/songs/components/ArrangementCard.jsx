@@ -14,13 +14,8 @@ export default function ArrangementCard({ arrangement }) {
   return (
     <Card className="h-full flex flex-col hover:shadow-lg transition-all hover:scale-[1.02]">
       <CardHeader>
-        <CardTitle className="text-lg line-clamp-2 flex items-start justify-between">
+        <CardTitle className="text-lg line-clamp-2">
           <span>{arrangement.name}</span>
-          {arrangement.tags?.includes('default') && (
-            <Badge variant="outline" className="ml-2 text-xs">
-              Default
-            </Badge>
-          )}
         </CardTitle>
         <CardDescription className="space-y-1">
           <div className="flex items-center gap-2">
@@ -54,14 +49,12 @@ export default function ArrangementCard({ arrangement }) {
           {/* Tags */}
           {arrangement.tags && arrangement.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {arrangement.tags
-                .filter(tag => tag !== 'default')
-                .map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-xs capitalize">
-                    <Hash className="h-2 w-2 mr-1" />
-                    {tag}
-                  </Badge>
-                ))}
+              {arrangement.tags.map((tag, index) => (
+                <Badge key={index} variant="outline" className="text-xs capitalize">
+                  <Hash className="h-2 w-2 mr-1" />
+                  {tag}
+                </Badge>
+              ))}
             </div>
           )}
         </div>

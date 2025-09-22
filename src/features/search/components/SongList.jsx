@@ -21,7 +21,6 @@ export default function SongList({ songs }) {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {songs.map(song => {
         const arrangements = getArrangementsBySongId(song.id)
-        const defaultArrangement = arrangements[0]
 
         return (
           <Link
@@ -39,14 +38,9 @@ export default function SongList({ songs }) {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {defaultArrangement && (
+                  {arrangements.length > 0 && (
                     <Badge variant="secondary" className="text-xs">
-                      Key: {defaultArrangement.key}
-                    </Badge>
-                  )}
-                  {arrangements.length > 1 && (
-                    <Badge variant="outline" className="text-xs">
-                      {arrangements.length} arrangements
+                      {arrangements.length} {arrangements.length === 1 ? 'arrangement' : 'arrangements'}
                     </Badge>
                   )}
                   {song.themes?.slice(0, 2).map((theme, index) => (
