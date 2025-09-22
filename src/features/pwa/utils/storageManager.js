@@ -2,6 +2,7 @@
 // Handles quota checking, monitoring, and cleanup strategies
 
 import { STORAGE_CONFIG } from '../config/storage.js';
+import logger from '@/lib/logger';
 
 /**
  * StorageManager provides centralized storage quota management
@@ -109,14 +110,12 @@ export class StorageManager {
     if ('storage' in navigator && 'persist' in navigator.storage) {
       try {
         const isPersisted = await navigator.storage.persist()
-        if (isPersisted && import.meta.env.DEV) {
-          console.log('Storage will not be cleared automatically')
+        if (isPersisted) {
+          logger.warn('Storage will not be cleared automatically')
         }
         return isPersisted
       } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('Error requesting persistent storage:', error)
-        }
+        logger.error('Error requesting persistent storage:', error)
         return false
       }
     }

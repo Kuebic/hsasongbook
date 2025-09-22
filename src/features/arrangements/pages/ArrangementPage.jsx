@@ -5,7 +5,7 @@ import {
   getSongById,
   getArrangementsBySongId
 } from '../../shared/utils/dataHelpers'
-import ChordProViewer from '../components/ChordProViewer'
+import ChordProViewer from '@/features/chordpro'
 import ArrangementSwitcher from '../components/ArrangementSwitcher'
 import ArrangementHeader from '../components/ArrangementHeader'
 import Breadcrumbs from '../../shared/components/Breadcrumbs'
@@ -13,8 +13,9 @@ import { PageSpinner } from '../../shared/components/LoadingStates'
 import { SimplePageTransition } from '../../shared/components/PageTransition'
 import { useNavigation } from '../../shared/hooks/useNavigation'
 import { Button } from '@/components/ui/button'
+import logger from '@/lib/logger'
 import { Card, CardContent } from '@/components/ui/card'
-import { ArrowLeft, Music, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Music } from 'lucide-react'
 
 export function ArrangementPage() {
   const { arrangementId } = useParams()
@@ -24,7 +25,7 @@ export function ArrangementPage() {
   const [arrangement, setArrangement] = useState(null)
   const [song, setSong] = useState(null)
   const [allArrangements, setAllArrangements] = useState([])
-  const [showChords, setShowChords] = useState(true)
+  const [showChords] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -123,32 +124,17 @@ export function ArrangementPage() {
           />
         </div>
 
-        {/* Chord Toggle */}
-        <div className="flex justify-end mb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowChords(!showChords)}
-          >
-            {showChords ? (
-              <>
-                <EyeOff className="mr-2 h-4 w-4" />
-                Hide Chords
-              </>
-            ) : (
-              <>
-                <Eye className="mr-2 h-4 w-4" />
-                Show Chords
-              </>
-            )}
-          </Button>
-        </div>
 
         {/* ChordPro Content */}
         <div className="mb-8">
           <ChordProViewer
             content={arrangement.chordProContent}
             showChords={showChords}
+            showToggle={true}
+            onLoad={(metadata) => {
+              // Optional: Log or use metadata
+              logger.debug('ChordPro metadata:', metadata)
+            }}
           />
         </div>
 

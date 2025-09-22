@@ -1,0 +1,264 @@
+/**
+ * ChordPro CSS Styles
+ *
+ * Mobile-first CSS overrides for ChordSheetJS HTML output
+ * Includes responsive styles, print styles, and theme variations
+ */
+
+/* Base mobile-first styles */
+.chord-sheet-output {
+  @apply text-sm leading-relaxed;
+  @apply font-mono;
+  /* Prevent double-tap zoom on iOS */
+  touch-action: manipulation;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* ChordSheetJS HTML Div Formatter elements - v12.3.1 */
+/* Root container */
+.chord-sheet-output .chord-sheet {
+  @apply space-y-2;
+}
+
+/* Line/row container */
+.chord-sheet-output .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline; /* Changed from flex-start to baseline */
+  margin-bottom: 1.5rem;
+  padding-top: 1.2rem; /* Add padding to accommodate absolute positioned chords */
+  position: relative;
+}
+
+/* Chord/lyric pair container */
+.chord-sheet-output .column {
+  display: inline-block; /* Changed from inline-flex */
+  position: relative;
+  padding-right: 0.5rem;
+}
+
+/* Chord text - positioned absolutely above lyrics */
+.chord-sheet-output .chord {
+  @apply text-primary font-bold text-xs;
+  position: absolute;
+  top: -1.1rem; /* Position chord above the lyric */
+  left: 0;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* Lyrics text - stays on baseline */
+.chord-sheet-output .lyrics {
+  @apply text-foreground;
+  display: inline-block; /* Changed from block to inline-block */
+  white-space: pre;
+  line-height: 1.5; /* Ensure consistent line height */
+  /* Preserve spaces in lyrics */
+}
+
+/* Section labels and formatting */
+.chord-sheet-output .paragraph.verse::before,
+.chord-sheet-output .paragraph.chorus::before,
+.chord-sheet-output .paragraph.bridge::before {
+  content: attr(data-section-label);
+  @apply block font-semibold text-sm uppercase tracking-wider;
+  @apply text-muted-foreground mt-4 mb-2;
+}
+
+/* Comment formatting */
+.chord-sheet-output .comment {
+  @apply text-muted-foreground italic text-xs;
+  @apply block my-2 px-2;
+  @apply border-l-2 border-muted;
+}
+
+/* Section content indentation */
+.chord-sheet-output .paragraph.chorus,
+.chord-sheet-output .paragraph.verse,
+.chord-sheet-output .paragraph.bridge {
+  @apply pl-4 border-l-2 border-muted/30;
+  @apply ml-2;
+}
+
+/* Hide chords when toggled off */
+.hide-chords .chord {
+  @apply hidden;
+}
+
+/* Adjust spacing when chords are hidden */
+.hide-chords .row {
+  margin-bottom: 0.5rem;
+  padding-top: 0; /* Remove top padding when chords are hidden */
+}
+
+/* Make lyrics more prominent when chords are hidden */
+.hide-chords .lyrics {
+  @apply text-base leading-relaxed;
+}
+
+
+/* Fallback for parsing errors */
+.chord-pro-fallback {
+  @apply font-mono text-xs;
+  @apply p-4 bg-muted/20 rounded;
+  @apply whitespace-pre-wrap break-words;
+  @apply overflow-x-auto;
+}
+
+/* Mobile-specific optimizations (up to 640px) */
+@media (max-width: 640px) {
+  .chord-sheet-output {
+    @apply text-xs;
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .chord-sheet-output .chord {
+    font-size: 0.65rem;
+    top: -0.9rem; /* Adjust chord position for smaller font */
+  }
+
+  .chord-sheet-output .lyrics {
+    font-size: 0.85rem;
+  }
+
+  /* Reduce section indentation on mobile */
+  .chord-sheet-output .paragraph.chorus,
+  .chord-sheet-output .paragraph.verse,
+  .chord-sheet-output .paragraph.bridge {
+    @apply pl-2 ml-1;
+  }
+
+  /* Compact spacing for mobile */
+  .chord-sheet-output .row {
+    margin-bottom: 1rem;
+    padding-top: 1rem; /* Slightly less padding on mobile */
+  }
+}
+
+/* Tablet styles (641px to 768px) */
+@media (min-width: 641px) and (max-width: 768px) {
+  .chord-sheet-output {
+    @apply text-sm;
+  }
+
+  .chord-sheet-output .chord {
+    @apply text-sm;
+    top: -1rem; /* Adjust chord position for tablet */
+  }
+
+  .chord-sheet-output .lyrics {
+    @apply text-base;
+  }
+}
+
+/* Desktop styles (769px and up) */
+@media (min-width: 769px) {
+  .chord-sheet-output {
+    @apply text-base;
+  }
+
+  .chord-sheet-output .chord {
+    @apply text-sm;
+    top: -1.2rem; /* Adjust chord position for desktop */
+  }
+
+  .chord-sheet-output .lyrics {
+    @apply text-base;
+  }
+
+  /* More generous spacing on desktop */
+  .chord-sheet-output .row {
+    margin-bottom: 1.5rem;
+    padding-top: 1.3rem; /* Adequate padding for desktop */
+  }
+}
+
+/* Print styles */
+@media print {
+  .chord-sheet-output {
+    font-size: 12pt !important;
+    line-height: 1.5 !important;
+    color: black !important;
+    background: white !important;
+  }
+
+  .chord-sheet-output .chord {
+    font-size: 10pt !important;
+    font-weight: bold !important;
+    color: black !important;
+  }
+
+  .chord-sheet-output .lyrics {
+    font-size: 12pt !important;
+    color: black !important;
+  }
+
+  /* Hide non-essential elements */
+  .chord-toggle-button,
+  .chord-pro-help,
+  .mobile-hint {
+    display: none !important;
+  }
+
+  /* Prevent page breaks inside sections */
+  .paragraph.chorus,
+  .paragraph.verse,
+  .paragraph.bridge {
+    page-break-inside: avoid;
+  }
+
+  /* Add page break before new songs */
+  .chord-pro-viewer {
+    page-break-before: auto;
+  }
+}
+
+/* Dark theme adjustments (when used with Tailwind dark mode) */
+@media (prefers-color-scheme: dark) {
+  .dark .chord-sheet-output .chord {
+    @apply text-blue-400;
+  }
+
+  .dark .chord-sheet-output .comment {
+    @apply text-gray-500 border-gray-700;
+  }
+
+  .dark .chord-pro-fallback {
+    @apply bg-gray-900/50;
+  }
+}
+
+/* Animation for chord toggle */
+.chord-sheet-output .chord {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.hide-chords .chord {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Zoom-friendly styles for pinch-to-zoom */
+.chord-sheet-zoomed {
+  transform-origin: top left;
+  will-change: transform;
+}
+
+/* Accessibility improvements */
+.chord-sheet-output:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary/50;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .chord-sheet-output .chord {
+    font-weight: 900;
+    text-decoration: underline;
+  }
+
+  .chord-sheet-output .lyrics {
+    font-weight: 600;
+  }
+}

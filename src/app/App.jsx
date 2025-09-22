@@ -11,6 +11,7 @@ import { useKeyboardShortcuts } from '../features/shared/hooks/useKeyboardShortc
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
+import logger from '@/lib/logger'
 
 // PWA imports
 import { usePWA, UpdateNotification, OfflineIndicator } from '../features/pwa'
@@ -66,7 +67,7 @@ function AppWithFeatures() {
         // Check if this is first run (no data in DB)
         const songs = await db.getAll('songs')
         if (songs.length === 0) {
-          console.log('First run detected, migrating mock data...')
+          logger.info('First run detected, migrating mock data...')
           await importMockData()
         }
 

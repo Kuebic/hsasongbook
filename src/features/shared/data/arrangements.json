@@ -12,7 +12,7 @@
     "favorites": 342,
     "createdAt": "2022-03-15T10:00:00Z",
     "updatedAt": "2024-11-20T14:30:00Z",
-    "chordProContent": "{title: Amazing Grace}\n{artist: John Newton}\n{key: G}\n{tempo: 72}\n\n[G]Amazing grace, how sweet the sound\nThat saved a wretch like me\nI once was lost, but now am found\nWas blind but now I see\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "{title: Amazing Grace}\n{artist: John Newton}\n{key: G}\n{tempo: 72}\n{time: 4/4}\n{capo: 0}\n\n{comment: Play softly and reverently}\n\n{start_of_verse: Verse 1}\n[G]Amazing [G/B]grace, how [C]sweet the [G]sound\nThat [G]saved a [D/F#]wretch like [Em]me\nI [G]once was [G/B]lost, but [C]now am [G]found\nWas [Em]blind but [D]now I [G]see\n{end_of_verse}\n\n{start_of_verse: Verse 2}\n'Twas [G]grace that [G/B]taught my [C]heart to [G]fear\nAnd [G]grace my [D/F#]fears re[Em]lieved\nHow [G]precious [G/B]did that [C]grace ap[G]pear\nThe [Em]hour I [D]first be[G]lieved\n{end_of_verse}\n\n{comment: Instrumental break - repeat verse chords}\n\n{start_of_verse: Verse 3}\nThrough [G]many [G/B]dangers, [C]toils and [G]snares\nI [G]have al[D/F#]ready [Em]come\n'Tis [G]grace hath [G/B]brought me [C]safe thus [G]far\nAnd [Em]grace will [D]lead me [G]home\n{end_of_verse}"
   },
   {
     "id": "arr_1_2",
@@ -29,7 +29,7 @@
     "favorites": 67,
     "createdAt": "2023-06-20T08:30:00Z",
     "updatedAt": "2023-06-20T08:30:00Z",
-    "chordProContent": "{title: Amazing Grace}\n{artist: John Newton}\n{key: B}\n{tempo: 72}\n\n[B]Amazing grace, how sweet the sound\nThat saved a wretch like me\nI once was lost, [F#]but now am found\nWas blind but now I see\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "{title: Amazing Grace}\n{artist: John Newton}\n{key: B}\n{tempo: 68}\n{time: 4/4}\n{capo: 2}\n\n{comment: Alternative arrangement with capo on 2nd fret}\n\n{start_of_verse}\n[B]Amazing grace, how [E]sweet the [B]sound\nThat saved a [F#]wretch like me\nI [B]once was lost, but [E]now am [B]found\nWas [C#m]blind but [F#]now I [B]see\n{end_of_verse}\n\n{start_of_bridge}\n[E]When we've been [B]there ten [F#]thousand [B]years\n[B]Bright shining [F#]as the [G#m]sun\n[E]We've no less [B]days to [F#]sing God's [B]praise\nThan [C#m]when we [F#]first be[B]gun\n{end_of_bridge}"
   },
   {
     "id": "arr_2_1",
@@ -44,7 +44,7 @@
     "favorites": 523,
     "createdAt": "2022-01-10T12:00:00Z",
     "updatedAt": "2024-12-01T09:15:00Z",
-    "chordProContent": "{title: How Great Thou Art}\n{artist: Carl Boberg}\n{key: A}\n{tempo: 68}\n\n[A]O Lord my God, When I in awesome wonder\nConsider all the worlds Thy Hands have made\nI see the stars, I hear the rolling thunder\nThy power throughout the universe displayed\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "{title: How Great Thou Art}\n{artist: Carl Boberg}\n{subtitle: Swedish hymn}\n{key: A}\n{tempo: 68}\n{time: 4/4}\n\n{start_of_verse: Verse 1}\n[A]O Lord my God, When I in [D]awesome wonder\nCon[A]sider [E]all the [F#m]worlds Thy [E]Hands have [A]made\nI see the stars, I hear the [D]rolling thunder\nThy [A]power through[E]out the [F#m]uni[E]verse dis[A]played\n{end_of_verse}\n\n{start_of_chorus}\nThen sings my [D]soul, my [A]Savior God, to [E]Thee\nHow great Thou [F#m]art! [E]How great Thou [A]art!\nThen sings my [D]soul, my [A]Savior God, to [E]Thee\nHow great Thou [F#m]art! [E]How great Thou [A]art!\n{end_of_chorus}\n\n{comment: Repeat chorus with more energy}\n{chorus}\n\n{start_of_verse: Verse 2}\n[A]When through the woods and forest [D]glades I wander\nAnd [A]hear the [E]birds sing [F#m]sweetly [E]in the [A]trees\nWhen I look down from lofty [D]mountain grandeur\nAnd [A]hear the [E]brook and [F#m]feel the [E]gentle [A]breeze\n{end_of_verse}"
   },
   {
     "id": "arr_3_1",
@@ -59,7 +59,7 @@
     "favorites": 189,
     "createdAt": "2022-08-05T14:20:00Z",
     "updatedAt": "2022-08-05T14:20:00Z",
-    "chordProContent": "{title: Oceans (Where Feet May Fail)}\n{artist: Hillsong United}\n{key: D}\n{tempo: 66}\n\n[D]You call me out upon the waters\nThe great unknown where feet may fail\nAnd there I find You in the mystery\nIn oceans deep, my faith will stand\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "{title: Oceans (Where Feet May Fail)}\n{artist: Hillsong United}\n{key: D}\n{tempo: 66}\n{time: 4/4}\n{year: 2013}\n\n{comment: Start softly and build}\n\n{start_of_verse}\n[D]You call me out upon the [A]waters\nThe great un[G]known where feet may [D]fail\nAnd there I find You in the [A]mystery\nIn oceans [G]deep, my faith will [D]stand\n{end_of_verse}\n\n{start_of_chorus}\n[D]And I will [G]call upon Your [D]name\nAnd keep my [G]eyes above the [D]waves\nWhen oceans [G]rise, my soul will [D]rest in Your em[A]brace\nFor I am [G]Yours [A]and You are [D]mine\n{end_of_chorus}\n\n{comment: Repeat chorus with more intensity}\n\n{start_of_bridge}\n[Bm]Spirit lead me where my [A/C#]trust is without borders\nLet me [D]walk upon the waters\nWher[G]ever You would call me\n[Bm]Take me deeper than my [A/C#]feet could ever wander\nAnd my [D]faith will be made stronger\nIn the [G]presence of my Savior\n{end_of_bridge}"
   },
   {
     "id": "arr_4_1",
@@ -74,7 +74,7 @@
     "favorites": 0,
     "createdAt": "2024-12-10T11:00:00Z",
     "updatedAt": "2024-12-10T11:00:00Z",
-    "chordProContent": "{title: Way Maker}\n{artist: Sinach}\n{key: E}\n{tempo: 68}\n\n[E]You are here, moving in our midst\nI worship You, I worship You\nYou are here, working in this place\nI worship You, I worship You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "{title: Way Maker}\n{artist: Sinach}\n{key: E}\n{tempo: 68}\n{time: 4/4}\n{ccli: 7115744}\n\n{start_of_verse}\n[E]You are here, moving in our midst\nI [A]worship You, I worship You\n[E]You are here, working in this place\nI [A]worship You, I worship You\n{end_of_verse}\n\n{comment: Repeat verse}\n{verse}\n\n{start_of_chorus}\n(You are) [E]Way maker, miracle worker\n[A]Promise keeper, light in the darkness\nMy [C#m]God, that is who You [B]are\n(You are) [E]Way maker, miracle worker\n[A]Promise keeper, light in the darkness\nMy [C#m]God, that is who You [B]are\n{end_of_chorus}\n\n{start_of_bridge}\n[E]Even when I don't see it, You're working\n[A]Even when I don't feel it, You're working\n[C#m]You never stop, You never stop working\n[B]You never stop, You never stop working\n{end_of_bridge}"
   },
   {
     "id": "arr_4_2",

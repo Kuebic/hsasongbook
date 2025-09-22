@@ -4,6 +4,7 @@ import SortSelector from '../../shared/components/SortSelector'
 import { sortArrangements, SORT_OPTIONS } from '../utils/arrangementSorter'
 import { Card, CardContent } from '@/components/ui/card'
 import { Music2 } from 'lucide-react'
+import logger from '@/lib/logger'
 
 export default function ArrangementList({ arrangements, isLoading = false }) {
   const [sortBy, setSortBy] = useState(SORT_OPTIONS.POPULAR)
@@ -17,9 +18,7 @@ export default function ArrangementList({ arrangements, isLoading = false }) {
     const endTime = performance.now()
 
     // Log performance in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`Sort operation took ${(endTime - startTime).toFixed(2)}ms`)
-    }
+    logger.debug(`Sort operation took ${(endTime - startTime).toFixed(2)}ms`)
 
     return sorted
   }, [arrangements, sortBy])
