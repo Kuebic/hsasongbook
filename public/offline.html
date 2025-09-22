@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HSA Songbook - Offline</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #ffffff;
+    }
+
+    .container {
+      max-width: 500px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon svg {
+      width: 40px;
+      height: 40px;
+      stroke: #ffffff;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #ffffff;
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .status {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    button {
+      background: #ffffff;
+      color: #1e293b;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .features {
+      margin-top: 40px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      text-align: left;
+      margin-bottom: 16px;
+    }
+
+    .feature-icon {
+      width: 24px;
+      height: 24px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .feature-text {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 24px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      p {
+        font-size: 14px;
+      }
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    .loading {
+      animation: pulse 2s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M8.5 14.5L4 19l1.5 1.5L10 16m0-2l6.5-6.5L19 10l-6.5 6.5M3 21v-4l2-2m16-12v4l-2 2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="18" cy="5" r="3"/>
+        <circle cx="5" cy="18" r="3"/>
+      </svg>
+    </div>
+
+    <h1>You're Offline</h1>
+
+    <p>HSA Songbook couldn't load this page because you're not connected to the internet.</p>
+
+    <div class="status">
+      Previously viewed songs and arrangements are still available
+    </div>
+
+    <button onclick="handleRetry()">Try Again</button>
+
+    <div class="features">
+      <div class="feature">
+        <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#ffffff" opacity="0.6"/>
+        </svg>
+        <span class="feature-text">Cached content remains accessible offline</span>
+      </div>
+
+      <div class="feature">
+        <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#ffffff" opacity="0.6"/>
+        </svg>
+        <span class="feature-text">Your changes will sync when reconnected</span>
+      </div>
+
+      <div class="feature">
+        <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#ffffff" opacity="0.6"/>
+        </svg>
+        <span class="feature-text">Check your internet connection</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Retry logic
+    function handleRetry() {
+      const button = document.querySelector('button');
+      button.textContent = 'Checking...';
+      button.classList.add('loading');
+
+      // Try to navigate back or reload
+      setTimeout(() => {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.reload();
+        }
+      }, 500);
+    }
+
+    // Check online status periodically
+    let isOnline = navigator.onLine;
+
+    function checkConnection() {
+      if (!isOnline && navigator.onLine) {
+        // Connection restored
+        handleRetry();
+      }
+      isOnline = navigator.onLine;
+    }
+
+    // Check every 3 seconds
+    setInterval(checkConnection, 3000);
+
+    // Listen for online event
+    window.addEventListener('online', handleRetry);
+
+    // Service worker message handling
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'OFFLINE_READY') {
+          const status = document.querySelector('.status');
+          if (status) {
+            status.textContent = 'Offline mode is ready. Your content is cached.';
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
