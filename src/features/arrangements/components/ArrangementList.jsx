@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import ArrangementCard from './ArrangementCard'
 import SortSelector from '../../shared/components/SortSelector'
-import { sortArrangements, SORT_OPTIONS } from '../../shared/utils/arrangementSorter'
+import { sortArrangements, SORT_OPTIONS } from '../utils/arrangementSorter'
 import { Card, CardContent } from '@/components/ui/card'
 import { Music2 } from 'lucide-react'
 

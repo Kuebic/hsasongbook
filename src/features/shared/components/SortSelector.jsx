@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ArrowUpDown, TrendingUp, Star, Clock, History } from 'lucide-react'
-import { SORT_OPTIONS } from '../utils/arrangementSorter'
+import { SORT_OPTIONS } from '../../arrangements/utils/arrangementSorter'
 
 export default function SortSelector({ value, onChange }) {
   const options = [
