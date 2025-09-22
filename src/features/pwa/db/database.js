@@ -2,11 +2,13 @@
 import { openDB } from 'idb';
 import { runMigrations } from './migrations.js';
 import logger from '@/lib/logger';
+import { StorageManager } from '../utils/storageManager.js';
 
 const DB_NAME = 'HSASongbookDB';
 const CURRENT_VERSION = 3;
 
 let dbInstance = null;
+const storageManager = new StorageManager();
 
 // Database schema interface for TypeScript-like documentation
 /**
@@ -120,19 +122,43 @@ export function closeDatabase() {
  */
 export async function checkStorageHealth() {
   try {
-    if ('storage' in navigator && 'estimate' in navigator.storage) {
-      const estimate = await navigator.storage.estimate();
+    const quota = await storageManager.getStorageQuota();
+    const stats = await getDatabaseStats();
+
+    if (!quota.supported) {
       return {
-        used: estimate.usage || 0,
-        available: estimate.quota || 0,
-        percentage: (estimate.usage || 0) / (estimate.quota || 1) * 100,
-        healthy: (estimate.usage || 0) / (estimate.quota || 1) < 0.8 // Under 80% usage
+        supported: false,
+        used: 0,
+        available: 0,
+        percentage: 0,
+        healthy: true,
+        message: 'Storage API not supported'
       };
     }
-    return { used: 0, available: 0, percentage: 0, healthy: true };
+
+    return {
+      supported: true,
+      used: quota.usage,
+      available: quota.available,
+      percentage: quota.percentage * 100,
+      healthy: quota.status !== 'critical',
+      status: quota.status,
+      databaseRecords: stats,
+      recommendations: storageManager.getStorageRecommendations(quota.percentage, stats),
+      formattedUsage: quota.formattedUsage,
+      formattedQuota: quota.formattedQuota,
+      formattedAvailable: quota.formattedAvailable
+    };
   } catch (error) {
-    console.error('Error checking storage health:', error);
-    return { used: 0, available: 0, percentage: 0, healthy: false };
+    logger.error('Error checking storage health:', error);
+    return {
+      supported: false,
+      used: 0,
+      available: 0,
+      percentage: 0,
+      healthy: false,
+      error: error.message
+    };
   }
 }
 
@@ -178,4 +204,29 @@ export async function getDatabaseStats() {
   }
 
   return stats;
+}
+
+/**
+ * Check if there's enough quota before a write operation
+ * @param {number} estimatedSize - Estimated size in bytes
+ * @returns {Promise<Object>} Quota check result
+ */
+export async function checkQuotaBeforeWrite(estimatedSize) {
+  return await storageManager.checkQuotaBeforeWrite(estimatedSize);
+}
+
+/**
+ * Request persistent storage
+ * @returns {Promise<boolean>} True if granted
+ */
+export async function requestPersistentStorage() {
+  return await storageManager.requestPersistentStorage();
+}
+
+/**
+ * Get storage manager instance
+ * @returns {StorageManager} Storage manager
+ */
+export function getStorageManager() {
+  return storageManager;
 }

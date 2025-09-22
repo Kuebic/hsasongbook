@@ -1,7 +1,9 @@
 // Repository pattern for HSA Songbook data access
 // Based on patterns from PRPs/ai_docs/offline-sync-patterns.md
 
-import { getDatabase } from './database.js';
+import { getDatabase, checkQuotaBeforeWrite, getStorageManager } from './database.js';
+import { StorageQuotaExceededError } from '../utils/storageManager.js';
+import logger from '@/lib/logger';
 
 /**
  * Base repository class with common functionality
@@ -57,7 +59,8 @@ class BaseRepository {
       id: entity.id || this.generateId(),
       updatedAt: now,
       syncStatus: 'pending',
-      version: (entity.version || 0) + 1
+      version: (entity.version || 0) + 1,
+      lastAccessedAt: Date.now()  // Track for LRU cleanup
     };
 
     // Set createdAt for new entities
@@ -65,8 +68,45 @@ class BaseRepository {
       updatedEntity.createdAt = now;
     }
 
-    await db.put(this.storeName, updatedEntity);
-    await this.queueForSync('update', updatedEntity.id, updatedEntity);
+    // Check storage quota before write
+    const storageManager = getStorageManager();
+    const estimatedSize = storageManager.estimateObjectSize(updatedEntity);
+    const quotaCheck = await checkQuotaBeforeWrite(estimatedSize);
+
+    if (!quotaCheck.canWrite) {
+      // Try emergency cleanup
+      const cleaned = await this.performEmergencyCleanup();
+      if (!cleaned) {
+        throw new StorageQuotaExceededError(
+          'Storage quota exceeded. Please free up space.',
+          {
+            currentPercentage: quotaCheck.currentPercentage,
+            projectedPercentage: quotaCheck.projectedPercentage,
+            availableSpace: quotaCheck.availableSpace,
+            requiredSpace: quotaCheck.requiredSpace
+          }
+        );
+      }
+    }
+
+    if (quotaCheck.shouldWarn) {
+      this.notifyStorageWarning(quotaCheck.currentPercentage);
+    }
+
+    try {
+      await db.put(this.storeName, updatedEntity);
+      await this.queueForSync('update', updatedEntity.id, updatedEntity);
+    } catch (error) {
+      // Handle QuotaExceededError specifically
+      if (error.name === 'QuotaExceededError' || error.name === 'DOMException') {
+        await this.handleQuotaExceeded();
+        // Try one more time after cleanup
+        await db.put(this.storeName, updatedEntity);
+        await this.queueForSync('update', updatedEntity.id, updatedEntity);
+      } else {
+        throw error;
+      }
+    }
 
     return updatedEntity;
   }
@@ -92,9 +132,37 @@ class BaseRepository {
    * @returns {Promise<Array>} Saved entities
    */
   async bulkSave(entities) {
+    // Check quota for all entities first
+    const storageManager = getStorageManager();
+    const totalSize = entities.reduce((acc, entity) =>
+      acc + storageManager.estimateObjectSize(entity), 0
+    );
+
+    const quotaCheck = await checkQuotaBeforeWrite(totalSize);
+
+    if (!quotaCheck.canWrite) {
+      // Try emergency cleanup
+      const cleaned = await this.performEmergencyCleanup();
+      if (!cleaned) {
+        throw new StorageQuotaExceededError(
+          `Cannot save ${entities.length} items: Storage quota exceeded`,
+          {
+            itemCount: entities.length,
+            totalSize,
+            availableSpace: quotaCheck.availableSpace
+          }
+        );
+      }
+    }
+
+    if (quotaCheck.shouldWarn) {
+      this.notifyStorageWarning(quotaCheck.currentPercentage);
+    }
+
     const db = await this.getDB();
     const tx = db.transaction(this.storeName, 'readwrite');
     const now = new Date().toISOString();
+    const currentTime = Date.now();
 
     const savedEntities = await Promise.all(
       entities.map(async (entity) => {
@@ -103,7 +171,8 @@ class BaseRepository {
           id: entity.id || this.generateId(),
           updatedAt: now,
           syncStatus: 'pending',
-          version: (entity.version || 0) + 1
+          version: (entity.version || 0) + 1,
+          lastAccessedAt: currentTime
         };
 
         if (!entity.id) {
@@ -182,6 +251,126 @@ class BaseRepository {
    */
   async getUnsyncedEntities() {
     return await this.searchByIndex('by-sync-status', 'pending');
+  }
+
+  /**
+   * Perform emergency cleanup when quota is exceeded
+   * @returns {Promise<boolean>} True if cleanup was successful
+   */
+  async performEmergencyCleanup() {
+    try {
+      logger.warn(`Performing emergency cleanup for ${this.storeName}`);
+
+      // First, try to clear old sync queue items
+      await this.clearOldSyncQueue();
+
+      // Then remove least recently used items
+      await this.removeLRUItems(10);
+
+      // Check if we have enough space now
+      const storageManager = getStorageManager();
+      const quota = await storageManager.getStorageQuota();
+
+      return quota.status !== 'critical';
+    } catch (error) {
+      logger.error('Emergency cleanup failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Clear old sync queue items
+   * @returns {Promise<number>} Number of items removed
+   */
+  async clearOldSyncQueue() {
+    const db = await this.getDB();
+    const cutoffDate = Date.now() - (7 * 24 * 60 * 60 * 1000); // 7 days old
+    let removed = 0;
+
+    if (db.objectStoreNames.contains('syncQueue')) {
+      const tx = db.transaction('syncQueue', 'readwrite');
+      const store = tx.objectStore('syncQueue');
+      const items = await store.getAll();
+
+      for (const item of items) {
+        if (item.timestamp < cutoffDate || item.retryCount > 5) {
+          await store.delete(item.id);
+          removed++;
+        }
+      }
+
+      await tx.done;
+    }
+
+    logger.log(`Removed ${removed} old sync queue items`);
+    return removed;
+  }
+
+  /**
+   * Remove least recently used items
+   * @param {number} count - Number of items to remove
+   * @returns {Promise<number>} Number of items removed
+   */
+  async removeLRUItems(count) {
+    const db = await this.getDB();
+    const items = await this.getAll();
+
+    // Sort by lastAccessedAt (oldest first)
+    const sortedItems = items
+      .filter(item => !item.isFavorite && !item.isPinned) // Don't remove favorites/pinned
+      .sort((a, b) => (a.lastAccessedAt || 0) - (b.lastAccessedAt || 0));
+
+    const toRemove = sortedItems.slice(0, count);
+    let removed = 0;
+
+    for (const item of toRemove) {
+      await db.delete(this.storeName, item.id);
+      removed++;
+    }
+
+    logger.log(`Removed ${removed} LRU items from ${this.storeName}`);
+    return removed;
+  }
+
+  /**
+   * Handle quota exceeded error
+   * @returns {Promise<void>}
+   */
+  async handleQuotaExceeded() {
+    logger.warn('Quota exceeded, attempting recovery');
+
+    // Try progressive cleanup
+    await this.clearOldSyncQueue();
+    await this.removeLRUItems(5);
+
+    // Notify user
+    this.notifyQuotaCritical();
+  }
+
+  /**
+   * Notify user about storage warning
+   * @param {number} percentage - Current usage percentage
+   */
+  notifyStorageWarning(percentage) {
+    const event = new CustomEvent('storage-warning', {
+      detail: {
+        percentage: percentage * 100,
+        message: `Storage is ${Math.round(percentage * 100)}% full. Consider clearing unused data.`
+      }
+    });
+    window.dispatchEvent(event);
+  }
+
+  /**
+   * Notify user about critical storage
+   */
+  notifyQuotaCritical() {
+    const event = new CustomEvent('storage-critical', {
+      detail: {
+        message: 'Storage is critically full. Some features may not work correctly.'
+      }
+    });
+    window.dispatchEvent(event);
   }
 }
 
