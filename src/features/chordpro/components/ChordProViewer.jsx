@@ -2,14 +2,18 @@
  * ChordProViewer Component
  *
  * Main viewer component using ChordSheetJS for rendering ChordPro content
- * Mobile-first design with responsive layout
+ * Mobile-first design with responsive layout and real-time transposition
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
+import ChordSheetJS from 'chordsheetjs'
 import { useChordSheet } from '../hooks/useChordSheet'
+import { useTransposition } from '../hooks/useTransposition'
 import ChordToggle from './ChordToggle'
+import TransposeControl from './TransposeControl'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import logger from '@/lib/logger'
 
 // Import CSS styles
 import '../styles/chordpro.css'
@@ -19,19 +23,94 @@ export default function ChordProViewer({
   showChords: showChordsProp = true,
   className,
   onLoad,
-  showToggle = true
+  showToggle = true,
+  showTranspose = true
 }) {
   const [showChords, setShowChords] = useState(showChordsProp)
   const containerRef = useRef(null)
 
   // Parse and format ChordPro content
   const {
-    htmlOutput,
+    parsedSong,
     metadata,
     hasChords,
     error,
     sections
   } = useChordSheet(content, showChords)
+
+  // Determine original key (from metadata or default)
+  const originalKey = useMemo(() => {
+    return metadata.key || 'C' // Default to C if no key specified
+  }, [metadata.key])
+
+  // Transposition logic
+  const {
+    currentKey,
+    transpositionOffset,
+    transposeBy,
+    reset,
+    isTransposed
+  } = useTransposition(parsedSong, originalKey)
+
+  // Generate HTML with transposition
+  const htmlOutput = useMemo(() => {
+    if (!parsedSong) return ''
+
+    try {
+      let songToFormat = parsedSong
+
+      // If we need to transpose, modify the song first
+      if (transpositionOffset !== 0) {
+        // Check if built-in transpose method exists and works
+        if (typeof parsedSong.transpose === 'function') {
+          try {
+            songToFormat = parsedSong.transpose(transpositionOffset)
+            logger.debug('Used built-in transpose method')
+          } catch {
+            logger.debug('Built-in transpose failed, using manual method')
+            // Fall through to manual method
+            songToFormat = parsedSong
+          }
+        }
+
+        // If built-in didn't work, do manual transposition
+        if (songToFormat === parsedSong && transpositionOffset !== 0) {
+          logger.debug('Using manual chord transposition')
+
+          // Clone lines and transpose chords
+          const modifiedLines = parsedSong.lines.map(line => {
+            const newLine = { ...line }
+            newLine.items = line.items.map(item => {
+              // Check if this item has chords to transpose
+              if (item.chords && typeof item.chords === 'string' && item.chords.trim()) {
+                try {
+                  const chord = ChordSheetJS.Chord.parse(item.chords)
+                  if (chord) {
+                    const transposed = chord.transpose(transpositionOffset)
+                    return { ...item, chords: transposed.toString() }
+                  }
+                } catch {
+                  logger.debug('Could not transpose chord:', item.chords)
+                }
+              }
+              return item
+            })
+            return newLine
+          })
+
+          // Create a new song-like object with modified lines
+          songToFormat = { ...parsedSong, lines: modifiedLines }
+        }
+      }
+
+      // Format the song to HTML
+      const formatter = new ChordSheetJS.HtmlDivFormatter()
+      return formatter.format(songToFormat)
+    } catch (error) {
+      logger.error('Failed to generate HTML:', error)
+      return '<div class="error">Error rendering chord chart</div>'
+    }
+  }, [parsedSong, transpositionOffset])
 
   // Notify parent of metadata when loaded
   useEffect(() => {
@@ -74,40 +153,55 @@ export default function ChordProViewer({
     )
   }
 
+
   // Build the viewer UI
   const viewerContent = (
     <Card className={containerClasses}>
       <CardContent className="p-4 sm:p-6">
         {/* Header controls */}
-        <div className="flex justify-between items-center mb-4">
-          {/* Metadata display */}
-          <div className="text-xs text-muted-foreground">
-            {metadata.title && (
-              <span className="font-medium">{metadata.title}</span>
-            )}
-            {metadata.artist && (
-              <span className="ml-2">by {metadata.artist}</span>
-            )}
-            {metadata.key && (
-              <span className="ml-2">Key: {metadata.key}</span>
-            )}
-            {metadata.tempo && (
-              <span className="ml-2">Tempo: {metadata.tempo}</span>
-            )}
-            {metadata.capo && metadata.capo > 0 && (
-              <span className="ml-2">Capo: {metadata.capo}</span>
-            )}
+        <div className="flex flex-col gap-3">
+          {/* Metadata and basic controls */}
+          <div className="flex justify-between items-start flex-wrap gap-2">
+            {/* Metadata display */}
+            <div className="text-xs text-muted-foreground">
+              {metadata.title && (
+                <span className="font-medium">{metadata.title}</span>
+              )}
+              {metadata.artist && (
+                <span className="ml-2">by {metadata.artist}</span>
+              )}
+              {currentKey && (
+                <span className="ml-2">Key: <strong>{currentKey}</strong></span>
+              )}
+              {isTransposed && originalKey && (
+                <span className="ml-1 text-xs">(Original: {originalKey})</span>
+              )}
+              {metadata.tempo && (
+                <span className="ml-2">Tempo: {metadata.tempo}</span>
+              )}
+            </div>
+
+            {/* Control buttons */}
+            <div className="flex gap-2 items-center">
+              {showToggle && hasChords && (
+                <ChordToggle
+                  showChords={showChords}
+                  onToggle={handleToggleChords}
+                  size="sm"
+                />
+              )}
+            </div>
           </div>
 
-          {/* Control buttons */}
-          <div className="flex gap-2">
-            {showToggle && hasChords && (
-              <ChordToggle
-                showChords={showChords}
-                onToggle={handleToggleChords}
-              />
-            )}
-          </div>
+          {/* Transpose controls */}
+          {showTranspose && hasChords && (
+            <TransposeControl
+              currentKey={currentKey}
+              transpositionOffset={transpositionOffset}
+              onTranspose={transposeBy}
+              onReset={reset}
+            />
+          )}
         </div>
 
         {/* Error state */}
