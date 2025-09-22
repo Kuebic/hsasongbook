@@ -37,22 +37,35 @@ export default function SortSelector({ value, onChange }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="min-w-[150px]">
-          <ArrowUpDown className="mr-2 h-4 w-4" />
-          {currentOption.label}
+        <Button
+          variant="outline"
+          size="sm"
+          className="min-w-[150px] h-10 touch-manipulation focus:ring-2 focus:ring-offset-2"
+        >
+          <ArrowUpDown className="mr-2 h-4 w-4 flex-shrink-0" />
+          <span className="truncate">{currentOption.label}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[180px]">
+      <DropdownMenuContent
+        align="end"
+        className="w-[200px] max-h-[70vh] overflow-y-auto"
+        sideOffset={5}
+      >
         {options.map(option => {
           const Icon = option.icon
+          const isActive = option.value === value
           return (
             <DropdownMenuItem
               key={option.value}
               onClick={() => onChange(option.value)}
-              className="cursor-pointer"
+              className={`cursor-pointer min-h-[44px] flex items-center ${
+                isActive ? 'bg-muted font-medium' : ''
+              }`}
             >
-              <Icon className="mr-2 h-4 w-4" />
-              {option.label}
+              <Icon className={`mr-2 h-4 w-4 flex-shrink-0 ${
+                isActive ? 'text-primary' : ''
+              }`} />
+              <span className="flex-1">{option.label}</span>
             </DropdownMenuItem>
           )
         })}
