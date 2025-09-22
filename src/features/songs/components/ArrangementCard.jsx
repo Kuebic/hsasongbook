@@ -3,6 +3,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Music, Clock, Guitar, Hash, PlayCircle } from 'lucide-react'
+import RatingDisplay from '../../shared/components/RatingDisplay'
+import PopularityDisplay from '../../shared/components/PopularityDisplay'
 
 export default function ArrangementCard({ arrangement }) {
   const navigate = useNavigate()
@@ -46,9 +48,15 @@ export default function ArrangementCard({ arrangement }) {
             )}
           </div>
 
+          {/* Rating and Popularity */}
+          <div className="flex items-center justify-between py-2">
+            <RatingDisplay rating={arrangement.rating} />
+            <PopularityDisplay favorites={arrangement.favorites} />
+          </div>
+
           {/* Tags */}
           {arrangement.tags && arrangement.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 border-t pt-3">
               {arrangement.tags.map((tag, index) => (
                 <Badge key={index} variant="outline" className="text-xs capitalize">
                   <Hash className="h-2 w-2 mr-1" />
