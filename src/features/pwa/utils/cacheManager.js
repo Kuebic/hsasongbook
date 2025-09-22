@@ -2,18 +2,21 @@
 // Based on patterns from PRPs/ai_docs/pwa-caching-strategies.md
 
 import logger from '@/lib/logger';
+import { getConfig } from '@/lib/config/environment.js';
 
 /**
  * CacheManager provides utilities for managing caches in the PWA
  */
 export class CacheManager {
   constructor() {
+    const config = getConfig();
     this.cacheNames = {
-      static: 'hsasongbook-static-v1',
-      dynamic: 'hsasongbook-dynamic-v1',
-      api: 'hsasongbook-api-v1',
-      images: 'hsasongbook-images-v1'
+      static: `${config.cache.names.static}-v${config.cache.version}`,
+      dynamic: `${config.cache.names.dynamic}-v${config.cache.version}`,
+      api: `${config.cache.names.api}-v${config.cache.version}`,
+      images: `${config.cache.names.images}-v${config.cache.version}`
     };
+    this.config = config.cache;
   }
 
   /**
@@ -278,7 +281,10 @@ export class CacheManager {
    * @param {number} maxAge - Maximum age in milliseconds
    * @returns {Promise<number>} Number of entries removed
    */
-  async cleanupOldEntries(cacheType = 'dynamic', maxAge = 7 * 24 * 60 * 60 * 1000) {
+  async cleanupOldEntries(cacheType = 'dynamic', maxAge = null) {
+    if (maxAge === null) {
+      maxAge = this.config.maxAge.dynamic;
+    }
     if (!('caches' in window)) {
       return 0;
     }
@@ -392,17 +398,17 @@ export class CacheManager {
     };
 
     // Check for potential issues
-    if (usage.percentage > 80) {
+    if (usage.percentage > this.config.storage.warningThreshold * 100) {
       report.overall.healthy = false;
-      report.overall.warnings.push('Storage usage over 80%');
+      report.overall.warnings.push(`Storage usage over ${Math.round(this.config.storage.warningThreshold * 100)}%`);
     }
 
-    if (usage.percentage > 95) {
+    if (usage.percentage > this.config.storage.criticalThreshold * 100) {
       report.overall.healthy = false;
       report.overall.errors.push('Storage usage critically high');
     }
 
-    if (stats.totalEntries > 1000) {
+    if (stats.totalEntries > this.config.storage.largeEntriesThreshold) {
       report.overall.warnings.push('Large number of cached entries - consider cleanup');
     }
 
@@ -433,7 +439,7 @@ export class CacheManager {
       results.cleaned += await this.cleanupOldEntries('dynamic', 7 * 24 * 60 * 60 * 1000);
 
       // Clean up old API responses
-      results.cleaned += await this.cleanupOldEntries('api', 24 * 60 * 60 * 1000);
+      results.cleaned += await this.cleanupOldEntries('api', this.config.maxAge.api);
 
       // Check storage usage
       const usage = await this.getStorageUsage();

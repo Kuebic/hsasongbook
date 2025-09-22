@@ -2,6 +2,7 @@
 // Based on patterns from PRPs/ai_docs/pwa-metrics-tracking.md
 
 import logger from '@/lib/logger';
+import { getConfig } from '@/lib/config/environment.js';
 
 /**
  * PWAPerformance class for tracking PWA-specific performance metrics
@@ -30,6 +31,10 @@ export class PWAPerformance {
     if (PWAPerformance.instance) {
       return PWAPerformance.instance;
     }
+
+    // Load configuration
+    const config = getConfig();
+    this.performanceConfig = config.performance;
 
     this.metrics = {
       webVitals: {},
@@ -357,14 +362,8 @@ export class PWAPerformance {
   rateMetric(metric, value) {
     if (value === null || value === undefined) return 'unknown';
 
-    const thresholds = {
-      fcp: { good: 1800, poor: 3000 },
-      lcp: { good: 2500, poor: 4000 },
-      fid: { good: 100, poor: 300 },
-      cls: { good: 0.1, poor: 0.25 }
-    };
-
-    const threshold = thresholds[metric];
+    const config = getConfig();
+    const threshold = config.performance.webVitals[metric];
     if (!threshold) return 'unknown';
 
     if (value <= threshold.good) return 'good';
@@ -402,9 +401,10 @@ export class PWAPerformance {
     // Adjust based on average response times
     const apiMetrics = this.metrics.networkMetrics.api;
     if (apiMetrics && apiMetrics.averageDuration) {
-      if (apiMetrics.averageDuration < 500) {
+      const config = getConfig();
+      if (apiMetrics.averageDuration < config.performance.network.fastResponseMs) {
         networkScore += 10;
-      } else if (apiMetrics.averageDuration > 2000) {
+      } else if (apiMetrics.averageDuration > config.performance.network.slowResponseMs) {
         networkScore -= 20;
       }
     }

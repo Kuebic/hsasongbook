@@ -3,16 +3,20 @@
 
 import { getDatabase } from '../db/database.js';
 import logger from '@/lib/logger';
+import { getConfig } from '@/lib/config/environment.js';
 
 /**
  * SyncQueue manages operations that need to be synchronized when online
  */
 export class SyncQueue {
   constructor() {
+    const config = getConfig();
     this.processing = false;
-    this.maxRetries = 3;
-    this.baseDelay = 1000; // 1 second
-    this.maxDelay = 30000; // 30 seconds
+    this.maxRetries = config.sync.maxRetries;
+    this.baseDelay = config.sync.baseDelay;
+    this.maxDelay = config.sync.maxDelay;
+    this.jitterPercent = config.sync.jitterPercent;
+    this.config = config.sync; // Store for later use
   }
 
   /**
@@ -136,10 +140,10 @@ export class SyncQueue {
   async apiRequest() {
     // For now, simulate API calls
     // In Phase 5, this will be replaced with actual Supabase API calls
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, this.config.simulationTimeout));
 
     // Simulate occasional failures for testing
-    if (Math.random() < 0.1) {
+    if (Math.random() < this.config.simulationFailureRate) {
       throw new Error('Simulated network error');
     }
 
@@ -307,8 +311,8 @@ export class SyncQueue {
       this.maxDelay
     );
 
-    // Add jitter (±10%)
-    const jitter = exponentialDelay * 0.1 * (Math.random() * 2 - 1);
+    // Add jitter
+    const jitter = exponentialDelay * this.jitterPercent * (Math.random() * 2 - 1);
     return Math.round(exponentialDelay + jitter);
   }
 
@@ -326,7 +330,10 @@ export class SyncQueue {
    * @param {number} olderThanHours - Remove items older than this many hours
    * @returns {Promise<number>} Number of items removed
    */
-  async cleanupQueue(olderThanHours = 24) {
+  async cleanupQueue(olderThanHours = null) {
+    if (olderThanHours === null) {
+      olderThanHours = this.config.cleanupAgeHours;
+    }
     const db = await getDatabase();
     const cutoffTime = new Date(Date.now() - olderThanHours * 60 * 60 * 1000);
     const tx = db.transaction('syncQueue', 'readwrite');

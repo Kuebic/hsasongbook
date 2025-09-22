@@ -3,9 +3,11 @@ import { openDB } from 'idb';
 import { runMigrations } from './migrations.js';
 import logger from '@/lib/logger';
 import { StorageManager } from '../utils/storageManager.js';
+import { getConfig } from '@/lib/config/environment.js';
 
-const DB_NAME = 'HSASongbookDB';
-const CURRENT_VERSION = 3;
+const config = getConfig();
+const DB_NAME = config.database.name;
+const CURRENT_VERSION = config.database.version;
 
 let dbInstance = null;
 const storageManager = new StorageManager();
@@ -83,7 +85,7 @@ export async function initDatabase() {
         console.error('Database connection terminated unexpectedly');
         dbInstance = null;
         // Attempt reconnection
-        setTimeout(() => initDatabase(), 1000);
+        setTimeout(() => initDatabase(), config.database.reconnectionDelay);
       }
     });
 
