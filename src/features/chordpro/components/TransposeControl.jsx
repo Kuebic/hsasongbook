@@ -1,7 +1,7 @@
 /**
  * TransposeControl Component
  *
- * Simple transposition controls with up/down buttons
+ * Simple transposition controls with up/down buttons and enharmonic toggle
  * Mobile-optimized with large touch targets for responsive design
  */
 
@@ -13,7 +13,9 @@ export default function TransposeControl({
   currentKey = 'C',
   onTranspose,
   onReset,
+  onToggleEnharmonic,
   transpositionOffset = 0,
+  preferFlats = false,
   disabled = false,
   className
 }) {
@@ -36,6 +38,9 @@ export default function TransposeControl({
       onTranspose?.(-1)
     }
   }
+
+  // Always show enharmonic toggle if we have onToggleEnharmonic function
+  const showEnharmonicToggle = !!onToggleEnharmonic
 
   // Simple responsive control layout
   return (
@@ -76,6 +81,21 @@ export default function TransposeControl({
         <ChevronUp className="h-4 w-4 sm:mr-1" />
         <span className="hidden sm:inline">Up</span>
       </Button>
+
+      {/* Enharmonic toggle button - always show when available */}
+      {showEnharmonicToggle && (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onToggleEnharmonic}
+          disabled={disabled}
+          className="h-9 sm:h-10 px-2 sm:px-3 font-mono"
+          aria-label={preferFlats ? "Use sharps" : "Use flats"}
+          title={preferFlats ? "Switch to sharps (♯)" : "Switch to flats (♭)"}
+        >
+          <span className="text-base">♭/♯</span>
+        </Button>
+      )}
 
       {/* Reset button - only show when transposed */}
       {isTransposed && (

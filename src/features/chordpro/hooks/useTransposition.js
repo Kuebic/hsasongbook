@@ -2,7 +2,7 @@
  * useTransposition Hook
  *
  * Handles real-time chord transposition using ChordSheetJS
- * Provides transposition controls, key detection, and capo calculation
+ * Provides transposition controls and key detection
  */
 
 import { useState, useMemo, useCallback } from 'react'
@@ -18,53 +18,6 @@ const CHROMATIC_FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', '
 //   'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'
 // }
 
-/**
- * Calculate semitone distance between two keys
- * @param {string} fromKey - Starting key
- * @param {string} toKey - Target key
- * @returns {number} Number of semitones (can be negative)
- */
-function calculateSemitoneDistance(fromKey, toKey) {
-  // Normalize keys to use sharps for calculation
-  const normalizeKey = (key) => {
-    if (CHROMATIC_FLATS.includes(key)) {
-      return CHROMATIC_SHARPS[CHROMATIC_FLATS.indexOf(key)]
-    }
-    return key
-  }
-
-  const normalizedFrom = normalizeKey(fromKey)
-  const normalizedTo = normalizeKey(toKey)
-
-  const fromIndex = CHROMATIC_SHARPS.indexOf(normalizedFrom)
-  const toIndex = CHROMATIC_SHARPS.indexOf(normalizedTo)
-
-  if (fromIndex === -1 || toIndex === -1) {
-    logger.warn('Invalid key in semitone calculation:', { fromKey, toKey })
-    return 0
-  }
-
-  let diff = toIndex - fromIndex
-
-  // Optimize for smallest distance (e.g., +7 becomes -5)
-  if (diff > 6) diff -= 12
-  else if (diff < -6) diff += 12
-
-  return diff
-}
-
-/**
- * Calculate capo position for guitarists
- * @param {string} originalKey - Original song key
- * @param {string} targetKey - Transposed key
- * @returns {number} Capo fret position (0-11)
- */
-function calculateCapo(originalKey, targetKey) {
-  const semitones = calculateSemitoneDistance(originalKey, targetKey)
-  // For guitar, we want positive capo positions
-  // If semitones is negative, we can suggest capo + playing in different key
-  return semitones > 0 ? semitones : 0
-}
 
 /**
  * Get key at specified semitone offset
@@ -107,69 +60,85 @@ export function useTransposition(parsedSong, originalKey = 'C') {
     return transposeKey(originalKey, transpositionOffset, preferFlats)
   }, [originalKey, transpositionOffset, preferFlats])
 
-  // Transpose the song with memoization
+  // Transpose the song with memoization (and apply enharmonic preference)
   const transposedSong = useMemo(() => {
-    if (!parsedSong || transpositionOffset === 0) {
+    if (!parsedSong) {
+      return parsedSong
+    }
+
+    // If no transposition and using sharps (default), return original
+    if (transpositionOffset === 0 && !preferFlats) {
       return parsedSong
     }
 
     try {
-      logger.time('transpose-operation')
-
-      // Use ChordSheetJS built-in transposition
-      // Create a new song with transposed chords
-      const transposedSong = parsedSong.transpose(transpositionOffset)
-
-      // Update key in metadata if present
-      if (transposedSong.key) {
-        transposedSong.key = currentKey
+      // Apply transposition first if needed
+      let processedSong = parsedSong
+      if (transpositionOffset !== 0) {
+        processedSong = parsedSong.transpose(transpositionOffset)
       }
 
-      logger.timeEnd('transpose-operation')
+      // If we're using sharps and no enharmonic change needed, return
+      if (!preferFlats) {
+        return processedSong
+      }
 
-      return transposedSong
-    } catch (error) {
-      logger.error('Transposition failed:', error)
+      // Apply enharmonic preference by rebuilding with modified chords
+      // This is necessary because Song objects are immutable
+      const chordProLines = []
 
-      // If built-in transpose fails, try manual approach
-      try {
-        logger.info('Attempting manual transposition fallback')
+      // Preserve metadata
+      if (processedSong.title) chordProLines.push(`{title: ${processedSong.title}}`)
+      if (processedSong.artist) chordProLines.push(`{artist: ${processedSong.artist}}`)
+      if (currentKey || processedSong.key) chordProLines.push(`{key: ${currentKey || processedSong.key}}`)
+      if (processedSong.tempo) chordProLines.push(`{tempo: ${processedSong.tempo}}`)
 
-        // Clone the song properly
-        const clonedSong = parsedSong.clone()
+      // Process lines with enharmonic conversion, preserving all content types
+      processedSong.lines.forEach(line => {
+        let lineText = ''
 
-        // Manually transpose each line
-        clonedSong.lines.forEach(line => {
-          line.items.forEach(item => {
-            if (item.chords && typeof item.chords === 'string' && item.chords.trim()) {
+        line.items.forEach(item => {
+          if (item instanceof ChordSheetJS.ChordLyricsPair) {
+            // Handle chord/lyrics pairs
+            if (item.chords) {
               try {
                 const chord = ChordSheetJS.Chord.parse(item.chords)
-                if (chord) {
-                  const transposed = chord.transpose(transpositionOffset)
-                  item.chords = preferFlats
-                    ? transposed.toString({ useFlats: true })
-                    : transposed.toString()
-                }
+                const modifiedChord = chord.useModifier(preferFlats ? 'b' : '#')
+                lineText += `[${modifiedChord}]`
               } catch {
-                logger.debug('Could not transpose chord:', item.chords)
+                lineText += `[${item.chords}]`
               }
             }
-          })
+            if (item.lyrics) lineText += item.lyrics
+          } else if (item instanceof ChordSheetJS.Comment) {
+            // Preserve comments
+            chordProLines.push(`{comment: ${item.content}}`)
+          } else if (item instanceof ChordSheetJS.Tag) {
+            // Preserve tags (section markers, etc.)
+            if (item.value) {
+              chordProLines.push(`{${item.name}: ${item.value}}`)
+            } else {
+              chordProLines.push(`{${item.name}}`)
+            }
+          } else if (item.content) {
+            // Handle any other content types
+            lineText += item.content
+          }
         })
 
-        return clonedSong
-      } catch (fallbackError) {
-        logger.error('Manual transposition also failed:', fallbackError)
-        return parsedSong
-      }
+        // Always push the line to preserve empty lines and formatting
+        chordProLines.push(lineText)
+      })
+
+      // Re-parse to get proper Song object
+      const parser = new ChordSheetJS.ChordProParser()
+      return parser.parse(chordProLines.join('\n'))
+
+    } catch (error) {
+      logger.error('Chord processing failed:', error)
+      return parsedSong
     }
   }, [parsedSong, transpositionOffset, preferFlats, currentKey])
-
-  // Capo position calculation
-  const capoPosition = useMemo(() => {
-    if (transpositionOffset === 0) return 0
-    return calculateCapo(originalKey, currentKey)
-  }, [originalKey, currentKey, transpositionOffset])
 
   // Control functions
   const transposeBy = useCallback((semitones) => {
@@ -189,12 +158,6 @@ export function useTransposition(parsedSong, originalKey = 'C') {
     transposeBy(-1)
   }, [transposeBy])
 
-  const transposeToKey = useCallback((targetKey) => {
-    const semitones = calculateSemitoneDistance(originalKey, targetKey)
-    setTranspositionOffset(semitones)
-    logger.info('Transposed to key:', targetKey, '(', semitones, 'semitones)')
-  }, [originalKey])
-
   const reset = useCallback(() => {
     setTranspositionOffset(0)
     logger.info('Reset transposition to original key:', originalKey)
@@ -211,14 +174,12 @@ export function useTransposition(parsedSong, originalKey = 'C') {
     currentKey,
     originalKey,
     transpositionOffset,
-    capoPosition,
     preferFlats,
 
     // Actions
     transposeBy,
     transposeUp,
     transposeDown,
-    transposeToKey,
     reset,
     toggleEnharmonic,
 

@@ -123,18 +123,21 @@ export class PWAPerformance {
       fidObserver.observe({ type: 'first-input', buffered: true });
       this.observers.push(fidObserver);
 
-      // Observe layout shifts
-      const clsObserver = new PerformanceObserver((list) => {
-        let clsValue = 0;
-        for (const entry of list.getEntries()) {
-          if (!entry.hadRecentInput) {
-            clsValue += entry.value;
+      // Observe layout shifts (only if supported)
+      if (PerformanceObserver.supportedEntryTypes &&
+          PerformanceObserver.supportedEntryTypes.includes('layout-shift')) {
+        const clsObserver = new PerformanceObserver((list) => {
+          let clsValue = 0;
+          for (const entry of list.getEntries()) {
+            if (!entry.hadRecentInput) {
+              clsValue += entry.value;
+            }
           }
-        }
-        this.metrics.webVitals.cls = clsValue;
-      });
-      clsObserver.observe({ type: 'layout-shift', buffered: true });
-      this.observers.push(clsObserver);
+          this.metrics.webVitals.cls = clsValue;
+        });
+        clsObserver.observe({ type: 'layout-shift', buffered: true });
+        this.observers.push(clsObserver);
+      }
 
     } catch (error) {
       console.error('Error setting up performance observers:', error);

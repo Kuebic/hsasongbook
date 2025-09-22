@@ -45,72 +45,39 @@ export default function ChordProViewer({
 
   // Transposition logic
   const {
+    transposedSong,
     currentKey,
     transpositionOffset,
     transposeBy,
     reset,
-    isTransposed
+    isTransposed,
+    preferFlats,
+    toggleEnharmonic
   } = useTransposition(parsedSong, originalKey)
 
-  // Generate HTML with transposition
+  // Generate HTML from the transposed/processed song
   const htmlOutput = useMemo(() => {
-    if (!parsedSong) return ''
+    // Use the transposed song from useTransposition hook (which handles both transposition and enharmonic preference)
+    const songToFormat = transposedSong || parsedSong
+
+    if (!songToFormat) return ''
 
     try {
-      let songToFormat = parsedSong
-
-      // If we need to transpose, modify the song first
-      if (transpositionOffset !== 0) {
-        // Check if built-in transpose method exists and works
-        if (typeof parsedSong.transpose === 'function') {
-          try {
-            songToFormat = parsedSong.transpose(transpositionOffset)
-            logger.debug('Used built-in transpose method')
-          } catch {
-            logger.debug('Built-in transpose failed, using manual method')
-            // Fall through to manual method
-            songToFormat = parsedSong
-          }
-        }
-
-        // If built-in didn't work, do manual transposition
-        if (songToFormat === parsedSong && transpositionOffset !== 0) {
-          logger.debug('Using manual chord transposition')
-
-          // Clone lines and transpose chords
-          const modifiedLines = parsedSong.lines.map(line => {
-            const newLine = { ...line }
-            newLine.items = line.items.map(item => {
-              // Check if this item has chords to transpose
-              if (item.chords && typeof item.chords === 'string' && item.chords.trim()) {
-                try {
-                  const chord = ChordSheetJS.Chord.parse(item.chords)
-                  if (chord) {
-                    const transposed = chord.transpose(transpositionOffset)
-                    return { ...item, chords: transposed.toString() }
-                  }
-                } catch {
-                  logger.debug('Could not transpose chord:', item.chords)
-                }
-              }
-              return item
-            })
-            return newLine
-          })
-
-          // Create a new song-like object with modified lines
-          songToFormat = { ...parsedSong, lines: modifiedLines }
-        }
-      }
-
       // Format the song to HTML
       const formatter = new ChordSheetJS.HtmlDivFormatter()
-      return formatter.format(songToFormat)
+      let html = formatter.format(songToFormat)
+
+      // Add CSS class for chord visibility control
+      if (!showChords) {
+        html = `<div class="hide-chords">${html}</div>`
+      }
+
+      return html
     } catch (error) {
       logger.error('Failed to generate HTML:', error)
       return '<div class="error">Error rendering chord chart</div>'
     }
-  }, [parsedSong, transpositionOffset])
+  }, [transposedSong, parsedSong, showChords])
 
   // Notify parent of metadata when loaded
   useEffect(() => {
@@ -200,6 +167,8 @@ export default function ChordProViewer({
               transpositionOffset={transpositionOffset}
               onTranspose={transposeBy}
               onReset={reset}
+              onToggleEnharmonic={toggleEnharmonic}
+              preferFlats={preferFlats}
             />
           )}
         </div>

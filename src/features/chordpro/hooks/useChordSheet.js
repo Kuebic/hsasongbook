@@ -26,7 +26,6 @@ export function useChordSheet(chordProText, showChords = true) {
         key: song.key || null,
         tempo: song.tempo || null,
         timeSignature: song.timeSignature || null,
-        capo: song.capo || null,
         duration: song.duration || null,
         year: song.year || null,
         album: song.album || null
