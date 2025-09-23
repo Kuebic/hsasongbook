@@ -102,7 +102,7 @@ export function ArrangementPage() {
   return (
     <SimplePageTransition>
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="container mx-auto px-4 py-8 max-w-4xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-screen-2xl">
           {/* Navigation Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <Breadcrumbs items={breadcrumbs} />
@@ -131,6 +131,10 @@ export function ArrangementPage() {
             content={arrangement.chordProContent}
             showChords={showChords}
             showToggle={true}
+            editable={true}
+            onContentChange={(newContent) => {
+              logger.debug('ChordPro content changed:', newContent.length)
+            }}
             onLoad={(metadata) => {
               // Optional: Log or use metadata
               logger.debug('ChordPro metadata:', metadata)

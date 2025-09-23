@@ -12,6 +12,8 @@ import { useTransposition } from '../hooks/useTransposition'
 import ChordToggle from './ChordToggle'
 import TransposeControl from './TransposeControl'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Edit3, Eye } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import logger from '@/lib/logger'
 
@@ -24,10 +26,20 @@ export default function ChordProViewer({
   className,
   onLoad,
   showToggle = true,
-  showTranspose = true
+  showTranspose = true,
+  editable = false,
+  onContentChange,
+  onEditModeChange,
+  initialEditMode = false
 }) {
   const [showChords, setShowChords] = useState(showChordsProp)
+  const [isEditMode, setIsEditMode] = useState(initialEditMode)
+  const [editContent, setEditContent] = useState(content)
   const containerRef = useRef(null)
+
+  // Lazy import editor components when needed
+  const [EditorComponent, setEditorComponent] = useState(null)
+  const [SplitViewComponent, setSplitViewComponent] = useState(null)
 
   // Parse and format ChordPro content
   const {
@@ -91,6 +103,39 @@ export default function ChordProViewer({
     setShowChords(showChordsProp)
   }, [showChordsProp])
 
+  // Sync content changes
+  useEffect(() => {
+    setEditContent(content)
+  }, [content])
+
+  // Lazy load editor components when edit mode is enabled
+  useEffect(() => {
+    if (isEditMode && editable && !EditorComponent) {
+      Promise.all([
+        import('./ChordProEditor').then(module => module.ChordProEditor),
+        import('./ChordProSplitView').then(module => module.ChordProSplitView)
+      ]).then(([Editor, SplitView]) => {
+        setEditorComponent(() => Editor)
+        setSplitViewComponent(() => SplitView)
+      }).catch(error => {
+        logger.error('Failed to load editor components:', error)
+      })
+    }
+  }, [isEditMode, editable, EditorComponent])
+
+  // Handle edit mode toggle
+  const handleEditModeToggle = () => {
+    const newEditMode = !isEditMode
+    setIsEditMode(newEditMode)
+    onEditModeChange?.(newEditMode)
+  }
+
+  // Handle content changes from editor
+  const handleContentChange = (newContent) => {
+    setEditContent(newContent)
+    onContentChange?.(newContent)
+  }
+
 
   // Handle chord toggle
   const handleToggleChords = () => {
@@ -124,7 +169,7 @@ export default function ChordProViewer({
   // Build the viewer UI
   const viewerContent = (
     <Card className={containerClasses}>
-      <CardContent className="p-4 sm:p-6">
+      <CardContent className="px-1 py-2 sm:p-2 lg:p-4">
         {/* Header controls */}
         <div className="flex flex-col gap-3">
           {/* Metadata and basic controls */}
@@ -150,7 +195,27 @@ export default function ChordProViewer({
 
             {/* Control buttons */}
             <div className="flex gap-2 items-center">
-              {showToggle && hasChords && (
+              {editable && (
+                <Button
+                  variant={isEditMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleEditModeToggle}
+                  className="text-xs"
+                >
+                  {isEditMode ? (
+                    <>
+                      <Eye className="h-3 w-3 mr-1" />
+                      View
+                    </>
+                  ) : (
+                    <>
+                      <Edit3 className="h-3 w-3 mr-1" />
+                      Edit
+                    </>
+                  )}
+                </Button>
+              )}
+              {showToggle && hasChords && !isEditMode && (
                 <ChordToggle
                   showChords={showChords}
                   onToggle={handleToggleChords}
@@ -161,7 +226,7 @@ export default function ChordProViewer({
           </div>
 
           {/* Transpose controls */}
-          {showTranspose && hasChords && (
+          {showTranspose && hasChords && !isEditMode && (
             <TransposeControl
               currentKey={currentKey}
               transpositionOffset={transpositionOffset}
@@ -173,25 +238,45 @@ export default function ChordProViewer({
           )}
         </div>
 
-        {/* Error state */}
-        {error && (
-          <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md">
-            <p className="text-sm">Error parsing chord chart: {error}</p>
-            <p className="text-xs mt-1">Displaying raw content below.</p>
+        {/* Edit Mode Content */}
+        {isEditMode && editable && SplitViewComponent && (
+          <div className="mt-4 border rounded-lg overflow-hidden h-[calc(100vh-16rem)] min-h-[400px] lg:h-[calc(100vh-12rem)]">
+            <SplitViewComponent
+              initialContent={editContent}
+              onContentChange={handleContentChange}
+              viewerOptions={{
+                showChords,
+                showToggle: false,
+                showTranspose: false
+              }}
+            />
           </div>
         )}
 
-        {/* Rendered ChordPro content */}
-        <div
-          ref={containerRef}
-          className={cn(
-            'chord-sheet-output',
-            'font-mono',
-            'space-y-2',
-            !showChords && 'hide-chords'
-          )}
-          dangerouslySetInnerHTML={{ __html: htmlOutput }}
-        />
+        {/* View Mode Content */}
+        {!isEditMode && (
+          <>
+            {/* Error state */}
+            {error && (
+              <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md">
+                <p className="text-sm">Error parsing chord chart: {error}</p>
+                <p className="text-xs mt-1">Displaying raw content below.</p>
+              </div>
+            )}
+
+            {/* Rendered ChordPro content */}
+            <div
+              ref={containerRef}
+              className={cn(
+                'chord-sheet-output',
+                'font-mono',
+                'space-y-2',
+                !showChords && 'hide-chords'
+              )}
+              dangerouslySetInnerHTML={{ __html: htmlOutput }}
+            />
+          </>
+        )}
 
         {/* Section navigation (if sections exist) */}
         {sections && sections.length > 0 && (

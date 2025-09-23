@@ -71,6 +71,56 @@ export const config = {
       api: 50
     },
     networkTimeoutSeconds: 5
+  },
+  chordpro: {
+    editor: {
+      autoSave: {
+        debounceMs: 1000,               // Auto-save delay in milliseconds
+        idleTimeoutMs: 5000,            // Idle timeout before forced save
+        enablePeriodicSave: true,       // Enable periodic saves every interval
+        maxDraftsPerEntity: 10,         // Maximum drafts to keep per arrangement
+        cleanupIntervalHours: 24        // Hours between draft cleanup
+      },
+      toolbar: {
+        enableQuickInsert: true,        // Enable quick-insert chord/directive buttons
+        showChordPalette: true,         // Show chord palette in toolbar
+        mobileCollapsible: true,        // Allow toolbar collapse on mobile
+        commonChords: ['C', 'G', 'Am', 'F', 'D', 'Em', 'Dm', 'A', 'E', 'Bm'], // Most used chords
+        directiveShortcuts: ['title', 'artist', 'key', 'tempo', 'verse', 'chorus', 'bridge'] // Quick directives
+      },
+      editor: {
+        lineNumbers: true,              // Show line numbers
+        bracketMatching: true,          // Highlight matching brackets
+        autoIndent: true,               // Auto-indent new lines
+        fontSize: 'medium',             // Font size: 'small' | 'medium' | 'large'
+        lineWrapping: true,             // Enable line wrapping
+        tabSize: 2,                     // Tab size in spaces
+        spellcheck: false,              // Disable spellcheck for chord notation
+        minHeight: '300px',             // Minimum editor height
+        maxHeight: '800px'              // Maximum editor height before scrolling
+      },
+      completion: {
+        activateOnTyping: true,         // Show completions while typing
+        maxRenderedOptions: 20,         // Maximum completion items to show
+        debounceMs: 150,                // Debounce completion trigger
+        includeChords: true,            // Include chord completions
+        includeDirectives: true,        // Include directive completions
+        caseSensitive: false            // Case sensitive completion matching
+      },
+      validation: {
+        enableLiveValidation: true,     // Real-time syntax validation
+        showErrorTooltips: true,        // Show error details on hover
+        highlightErrors: true,          // Highlight syntax errors
+        warnOnUnknownChords: false,     // Warn for non-standard chord notation
+        validateDirectives: true        // Validate ChordPro directive syntax
+      },
+      performance: {
+        syntaxHighlightThrottle: 100,   // Throttle syntax highlighting updates (ms)
+        largeDocumentThreshold: 1000,   // Lines considered "large document"
+        enableVirtualization: false,    // Virtual scrolling for very large docs
+        maxUndoHistory: 100             // Maximum undo/redo history entries
+      }
+    }
   }
 };
 
@@ -81,5 +131,6 @@ export const syncConfig = config.sync;
 export const cacheConfig = config.cache;
 export const performanceConfig = config.performance;
 export const pwaConfig = config.pwa;
+export const chordproConfig = config.chordpro;
 
 export default config;
