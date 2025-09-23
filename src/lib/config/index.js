@@ -74,6 +74,7 @@ export const config = {
   },
   chordpro: {
     editor: {
+      mobileBreakpoint: 768,              // Mobile breakpoint in pixels
       autoSave: {
         debounceMs: 1000,               // Auto-save delay in milliseconds
         idleTimeoutMs: 5000,            // Idle timeout before forced save

@@ -2,20 +2,15 @@
  * ChordProSplitView Component
  *
  * Provides a responsive split view showing ChordPro editor and preview.
- * Automatically adapts between horizontal (desktop) and vertical (mobile) layouts.
+ * Desktop: Toggle between editor-only and side-by-side split view.
+ * Mobile: Toggle between full-width editor and full-width preview.
  */
 
 import { useState, useRef, useEffect } from 'react';
 import ChordProEditor from './ChordProEditor';
 import ChordProViewer from './ChordProViewer';
 import { Button } from '@/components/ui/button';
-import {
-  PanelLeftOpen,
-  PanelRightOpen,
-  SplitSquareHorizontal,
-  Eye,
-  Edit3
-} from 'lucide-react';
+import { Eye, Edit3 } from 'lucide-react';
 import config from '@/lib/config';
 
 const { editor: editorConfig } = config.chordpro;
@@ -38,8 +33,8 @@ export function ChordProSplitView({
   className = ''
 }) {
   const [content, setContent] = useState(initialContent);
-  const [viewMode, setViewMode] = useState('split'); // 'split', 'editor', 'preview'
-  const [splitRatio, setSplitRatio] = useState(50); // Percentage for left panel
+  const [showPreview, setShowPreview] = useState(true); // Toggle between editor-only and split/preview
+  const [splitRatio, setSplitRatio] = useState(50); // Percentage for left panel (desktop only)
   const [isMobile, setIsMobile] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -114,168 +109,136 @@ export function ChordProSplitView({
     };
   }, [isDragging]);
 
-  // View mode controls for mobile
-  const ViewModeControls = () => (
-    <div className="flex gap-1 p-2 bg-slate-100 border-b">
+  // Unified toggle control for both mobile and desktop
+  const ToggleControl = () => (
+    <div className="flex items-center justify-between p-2 bg-slate-100 border-b">
+      <span className="text-sm font-medium text-muted-foreground">
+        {isMobile ? (
+          showPreview ? 'Viewing Preview' : 'Editing'
+        ) : (
+          'Edit Mode'
+        )}
+      </span>
       <Button
-        variant={viewMode === 'editor' ? 'default' : 'ghost'}
+        variant={isMobile ? "default" : "ghost"}
         size="sm"
-        onClick={() => setViewMode('editor')}
-        className="flex-1"
+        onClick={() => {
+          setShowPreview(!showPreview);
+          // Reset to centered split when showing preview
+          if (!showPreview) {
+            setSplitRatio(50);
+          }
+        }}
+        className="gap-2"
       >
-        <Edit3 className="h-4 w-4 mr-1" />
-        Edit
-      </Button>
-
-      <Button
-        variant={viewMode === 'split' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => setViewMode('split')}
-        className="flex-1"
-      >
-        <SplitSquareHorizontal className="h-4 w-4 mr-1" />
-        Split
-      </Button>
-
-      <Button
-        variant={viewMode === 'preview' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => setViewMode('preview')}
-        className="flex-1"
-      >
-        <Eye className="h-4 w-4 mr-1" />
-        Preview
-      </Button>
-    </div>
-  );
-
-  // Split view controls for desktop
-  const SplitControls = () => (
-    <div className="flex gap-1 p-2 bg-slate-50 border-b">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setSplitRatio(25)}
-        title="Favor preview"
-      >
-        <PanelRightOpen className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setSplitRatio(50)}
-        title="Equal split"
-      >
-        <SplitSquareHorizontal className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setSplitRatio(75)}
-        title="Favor editor"
-      >
-        <PanelLeftOpen className="h-4 w-4" />
+        {isMobile ? (
+          // Mobile: Show what will happen when clicked
+          showPreview ? (
+            <>
+              <Edit3 className="h-4 w-4" />
+              <span>Switch to Editor</span>
+            </>
+          ) : (
+            <>
+              <Eye className="h-4 w-4" />
+              <span>View Preview</span>
+            </>
+          )
+        ) : (
+          // Desktop: Show toggle state
+          showPreview ? (
+            <>
+              <Edit3 className="h-4 w-4" />
+              <span>Hide Preview</span>
+            </>
+          ) : (
+            <>
+              <Eye className="h-4 w-4" />
+              <span>Show Preview</span>
+            </>
+          )
+        )}
       </Button>
     </div>
   );
 
-  // Mobile layout (stacked)
+  // Mobile layout (full-width toggle)
   if (isMobile) {
     return (
       <div className={`flex flex-col h-full ${className}`}>
-        <ViewModeControls />
+        <ToggleControl />
 
         <div className="flex-1 overflow-auto">
-          {viewMode === 'editor' && (
+          {showPreview ? (
+            <ChordProViewer
+              content={content}
+              {...viewerOptions}
+            />
+          ) : (
             <ChordProEditor
               value={content}
               onChange={handleContentChange}
               {...editorOptions}
             />
           )}
+        </div>
+      </div>
+    );
+  }
 
-          {viewMode === 'preview' && (
-            <div className="h-full overflow-auto">
-              <ChordProViewer
-                content={content}
-                {...viewerOptions}
-              />
+  // Desktop layout (editor or split view)
+  return (
+    <div className={`flex flex-col h-full ${className}`}>
+      <ToggleControl />
+
+      <div
+        ref={containerRef}
+        className="flex-1 flex overflow-hidden relative"
+      >
+        {/* Editor Panel - Always visible */}
+        <div
+          className={`overflow-auto ${showPreview ? 'border-r' : ''}`}
+          style={{ width: showPreview ? `${splitRatio}%` : '100%' }}
+        >
+          <div className="w-full max-w-3xl mx-auto px-1">
+            <ChordProEditor
+              value={content}
+              onChange={handleContentChange}
+              {...editorOptions}
+            />
+          </div>
+        </div>
+
+        {/* Split Bar - Only when preview shown */}
+        {showPreview && (
+          <>
+            <div
+              ref={splitBarRef}
+              className={`
+                w-1 bg-slate-200 hover:bg-slate-300 cursor-col-resize
+                flex items-center justify-center relative
+                ${isDragging ? 'bg-slate-400' : ''}
+              `}
+              onMouseDown={() => setIsDragging(true)}
+              onTouchStart={() => setIsDragging(true)}
+            >
+              <div className="w-0.5 h-8 bg-slate-400 rounded-full" />
             </div>
-          )}
 
-          {viewMode === 'split' && (
-            <div className="flex flex-col h-full">
-              <div className="flex-1 border-b overflow-auto">
-                <ChordProEditor
-                  value={content}
-                  onChange={handleContentChange}
-                  {...editorOptions}
-                />
-              </div>
-              <div className="flex-1 overflow-auto">
+            {/* Preview Panel */}
+            <div
+              className="overflow-auto flex-1"
+              style={{ width: `${100 - splitRatio}%` }}
+            >
+              <div className="w-full max-w-3xl mx-auto px-1">
                 <ChordProViewer
                   content={content}
                   {...viewerOptions}
                 />
               </div>
             </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Desktop layout (side by side)
-  return (
-    <div className={`flex flex-col h-full ${className}`}>
-      <SplitControls />
-
-      <div
-        ref={containerRef}
-        className="flex-1 flex overflow-hidden relative"
-      >
-        {/* Editor Panel */}
-        <div
-          className="overflow-auto border-r"
-          style={{ width: `${splitRatio}%` }}
-        >
-          <div className="w-full max-w-3xl mx-auto px-1">
-            <ChordProEditor
-            value={content}
-            onChange={handleContentChange}
-            {...editorOptions}
-            />
-          </div>
-        </div>
-
-        {/* Split Bar */}
-        <div
-          ref={splitBarRef}
-          className={`
-            w-1 bg-slate-200 hover:bg-slate-300 cursor-col-resize
-            flex items-center justify-center relative
-            ${isDragging ? 'bg-slate-400' : ''}
-          `}
-          onMouseDown={() => setIsDragging(true)}
-          onTouchStart={() => setIsDragging(true)}
-        >
-          <div className="w-0.5 h-8 bg-slate-400 rounded-full" />
-        </div>
-
-        {/* Preview Panel */}
-        <div
-          className="overflow-auto flex-1"
-          style={{ width: `${100 - splitRatio}%` }}
-        >
-          <div className="w-full max-w-3xl mx-auto px-1">
-            <ChordProViewer
-            content={content}
-            {...viewerOptions}
-            />
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
