@@ -1,0 +1,299 @@
+/**
+ * ChordPro Print Styles
+ *
+ * Professional print formatting for chord sheets
+ * Optimized for standard paper sizes and readability
+ */
+
+@media print {
+  /* Reset and base styles */
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Hide all UI controls and non-content elements */
+  .fab-main,
+  .fab-action,
+  .mobile-fab-container,
+  .chordpro-bottom-sheet,
+  .editor-toolbar,
+  .auto-save-indicator,
+  button,
+  .toolbar-header,
+  nav,
+  header,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Hide editor in print, only show viewer */
+  .chordpro-editor,
+  .chordpro-editor-container,
+  [data-testid="chordpro-editor"] {
+    display: none !important;
+  }
+
+  /* Page setup */
+  @page {
+    margin: 0.5in;
+    size: letter portrait;
+  }
+
+  @page :first {
+    margin-top: 0.25in;
+  }
+
+  /* Document structure */
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #000;
+  }
+
+  /* ChordPro viewer specific */
+  .chordpro-viewer,
+  .chord-sheet-viewer {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Song metadata */
+  .chord-sheet-metadata,
+  .song-header {
+    text-align: center;
+    margin-bottom: 1em;
+    page-break-after: avoid;
+  }
+
+  .song-title {
+    font-size: 18pt;
+    font-weight: bold;
+    margin-bottom: 0.25em;
+  }
+
+  .song-artist {
+    font-size: 14pt;
+    font-style: italic;
+    margin-bottom: 0.5em;
+  }
+
+  .song-key,
+  .song-tempo,
+  .song-capo {
+    font-size: 10pt;
+    display: inline-block;
+    margin-right: 1em;
+  }
+
+  /* Chord positioning */
+  .chord {
+    position: relative;
+    display: inline-block;
+    font-family: 'Courier New', monospace;
+    font-size: 10pt;
+    font-weight: bold;
+    vertical-align: bottom;
+    line-height: 1;
+  }
+
+  /* Chord above lyrics style */
+  .chord-lyrics-line {
+    position: relative;
+    margin-bottom: 0.5em;
+  }
+
+  .chord-above {
+    position: absolute;
+    top: -1.2em;
+    font-family: 'Courier New', monospace;
+    font-size: 10pt;
+    font-weight: bold;
+  }
+
+  /* Lyrics styling */
+  .lyrics {
+    font-size: 11pt;
+    line-height: 1.8;
+  }
+
+  /* Section markers */
+  .section-label,
+  .verse-label,
+  .chorus-label,
+  .bridge-label {
+    font-weight: bold;
+    font-style: italic;
+    margin-top: 0.5em;
+    margin-bottom: 0.25em;
+    page-break-after: avoid;
+  }
+
+  .verse,
+  .chorus,
+  .bridge {
+    margin-bottom: 1em;
+    page-break-inside: avoid;
+  }
+
+  /* Comments and annotations */
+  .comment {
+    font-style: italic;
+    font-size: 9pt;
+    color: #333 !important;
+    margin: 0.25em 0;
+  }
+
+  .comment-box {
+    border: 1px solid #000;
+    padding: 0.25em 0.5em;
+    margin: 0.5em 0;
+    font-size: 9pt;
+  }
+
+  /* Two-column layout for compact printing */
+  .two-column-print {
+    column-count: 2;
+    column-gap: 0.5in;
+    column-rule: 1px solid #ccc;
+  }
+
+  .two-column-print .verse,
+  .two-column-print .chorus {
+    break-inside: avoid-column;
+  }
+
+  /* Page break controls */
+  .page-break {
+    page-break-after: always;
+  }
+
+  .no-page-break {
+    page-break-inside: avoid;
+  }
+
+  .new-page {
+    page-break-before: always;
+  }
+
+  /* Chord grid/chart */
+  .chord-grid {
+    font-family: 'Courier New', monospace;
+    font-size: 10pt;
+    white-space: pre;
+    margin: 0.5em 0;
+  }
+
+  /* Tab sections */
+  .tab-section {
+    font-family: 'Courier New', monospace;
+    font-size: 9pt;
+    white-space: pre;
+    overflow: visible;
+  }
+
+  /* Footer for page numbers */
+  @page {
+    @bottom-center {
+      content: counter(page);
+      font-size: 9pt;
+    }
+  }
+
+  /* Ensure proper spacing */
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+
+  /* Images (if any chord diagrams) */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Links as plain text */
+  a {
+    text-decoration: none !important;
+  }
+
+  a[href]:after {
+    content: "";
+  }
+
+  /* Table formatting for chord charts */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.5em 0;
+  }
+
+  td, th {
+    border: 1px solid #000;
+    padding: 0.25em;
+    text-align: left;
+  }
+
+  /* Hide scrollbars */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Optimize for print */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Card and container adjustments */
+  .card,
+  .card-content {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Ensure text is selectable for PDF generation */
+  * {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
+}
+
+/* High-resolution print styles */
+@media print and (min-resolution: 300dpi) {
+  body {
+    font-size: 10.5pt;
+  }
+
+  .chord {
+    font-size: 9.5pt;
+  }
+
+  .lyrics {
+    font-size: 10.5pt;
+  }
+}
+
+/* Landscape orientation for wide songs */
+@media print and (orientation: landscape) {
+  @page {
+    size: letter landscape;
+    margin: 0.5in 0.75in;
+  }
+
+  .two-column-print {
+    column-count: 3;
+  }
+}

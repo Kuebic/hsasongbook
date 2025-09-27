@@ -19,6 +19,7 @@ export default function ChordProEditor({
   value = '',
   onChange,
   onSave,
+  onEditorReady,
   disabled = false,
   placeholder = 'Enter ChordPro content...',
   arrangementId,
@@ -81,6 +82,17 @@ export default function ChordProEditor({
       onChange(newValue)
     }
   }, [onChange])
+
+  // Handle editor creation - get the EditorView reference
+  const handleCreateEditor = useCallback((view) => {
+    // Store the EditorView instance for toolbar and other operations
+    editorViewRef.current = view
+
+    // Notify parent component if callback provided
+    if (onEditorReady) {
+      onEditorReady(view)
+    }
+  }, [onEditorReady])
 
   // Force save handler
   const handleForceSave = useCallback(async () => {
@@ -158,6 +170,7 @@ export default function ChordProEditor({
               extensions={editor.editorProps.extensions}
               editable={!disabled}
               onChange={handleChange}
+              onCreateEditor={handleCreateEditor}
               height="calc(100vh - 20rem)"
               minHeight="400px"
               maxHeight="calc(100vh - 10rem)"
