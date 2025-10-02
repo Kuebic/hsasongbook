@@ -17,7 +17,6 @@ import logger from '@/lib/logger'
 import { usePWA, UpdateNotification, OfflineIndicator } from '../features/pwa'
 import { initDatabase } from '../features/pwa/db/database'
 import { importMockData } from '../features/pwa/db/dataMigration'
-import { PWAPerformance } from '../features/pwa/utils/performance'
 
 import '../App.css'
 
@@ -57,8 +56,6 @@ function AppWithFeatures() {
 
   // Initialize database and migrate mock data on first load
   useEffect(() => {
-    let performanceMonitor = null;
-
     const initializePWA = async () => {
       try {
         // Initialize database
@@ -70,26 +67,12 @@ function AppWithFeatures() {
           logger.info('First run detected, migrating mock data...')
           await importMockData()
         }
-
-        // Initialize performance monitoring
-        if (typeof window !== 'undefined') {
-          // Use singleton pattern to prevent multiple instances
-          performanceMonitor = PWAPerformance.getInstance()
-        }
       } catch (error) {
         console.error('Failed to initialize PWA features:', error)
       }
     }
 
     initializePWA()
-
-    // Cleanup function to prevent memory leak
-    return () => {
-      if (performanceMonitor) {
-        performanceMonitor.cleanup()
-        performanceMonitor = null
-      }
-    }
   }, [])
 
   return (
