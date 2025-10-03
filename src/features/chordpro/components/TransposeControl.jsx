@@ -45,18 +45,32 @@ export default function TransposeControl({
   // Simple responsive control layout
   return (
     <div className={cn('transpose-control flex items-center gap-2 flex-wrap', className)}>
-      {/* Down button */}
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={handleTransposeDown}
-        disabled={disabled || !canTransposeDown}
-        className="h-9 w-9 sm:h-10 sm:w-auto sm:px-3"
-        aria-label="Transpose down"
-      >
-        <ChevronDown className="h-4 w-4 sm:mr-1" />
-        <span className="hidden sm:inline">Down</span>
-      </Button>
+      {/* Transpose buttons grouped together */}
+      <div className="flex items-center gap-1">
+        {/* Down button */}
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleTransposeDown}
+          disabled={disabled || !canTransposeDown}
+          className="h-9 w-9"
+          aria-label="Transpose down"
+        >
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+
+        {/* Up button */}
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleTransposeUp}
+          disabled={disabled || !canTransposeUp}
+          className="h-9 w-9"
+          aria-label="Transpose up"
+        >
+          <ChevronUp className="h-4 w-4" />
+        </Button>
+      </div>
 
       {/* Current key display */}
       <div className="flex items-center gap-1 px-2">
@@ -68,19 +82,6 @@ export default function TransposeControl({
           </span>
         )}
       </div>
-
-      {/* Up button */}
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={handleTransposeUp}
-        disabled={disabled || !canTransposeUp}
-        className="h-9 w-9 sm:h-10 sm:w-auto sm:px-3"
-        aria-label="Transpose up"
-      >
-        <ChevronUp className="h-4 w-4 sm:mr-1" />
-        <span className="hidden sm:inline">Up</span>
-      </Button>
 
       {/* Enharmonic toggle button - always show when available */}
       {showEnharmonicToggle && (
