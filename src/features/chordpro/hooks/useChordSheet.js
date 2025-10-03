@@ -3,21 +3,34 @@
  *
  * React hook that wraps ChordSheetJS parser and formatter
  * Provides memoized parsing and HTML generation with mobile optimizations
+ * Supports metadata injection from arrangement object before parsing
  */
 
 import { useMemo } from 'react'
 import ChordSheetJS from 'chordsheetjs'
+import { injectMetadata } from '../utils/metadataInjector'
 
-export function useChordSheet(chordProText, showChords = true) {
+export function useChordSheet(chordProText, showChords = true, arrangementMetadata = null, metadataKey = null) {
   const result = useMemo(() => {
     if (!chordProText) {
       return { parsedSong: null, htmlOutput: '', metadata: {}, error: null, hasChords: false }
     }
 
     try {
-      // Create parser instance (memoized for performance)
+      // PRE-PROCESS: Inject metadata if provided
+      let contentToProcess = chordProText
+
+      if (arrangementMetadata) {
+        contentToProcess = injectMetadata(
+          chordProText,
+          arrangementMetadata,
+          { strategy: 'override-all' }  // CHANGED: Always override embedded directives with dropdown values
+        )
+      }
+
+      // Create parser instance and parse (with potentially enhanced content)
       const parser = new ChordSheetJS.ChordProParser()
-      const song = parser.parse(chordProText)
+      const song = parser.parse(contentToProcess)
 
       // Extract comprehensive metadata
       const metadata = {
@@ -102,7 +115,8 @@ export function useChordSheet(chordProText, showChords = true) {
         error: error.message || 'Failed to parse ChordPro content'
       }
     }
-  }, [chordProText, showChords])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chordProText, showChords, arrangementMetadata, metadataKey])  // metadataKey forces re-compute on metadata change
 
   return result
 }

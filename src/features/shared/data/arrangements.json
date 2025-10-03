@@ -12,7 +12,7 @@
     "favorites": 342,
     "createdAt": "2022-03-15T10:00:00Z",
     "updatedAt": "2024-11-20T14:30:00Z",
-    "chordProContent": "{title: Amazing Grace}\n{artist: John Newton}\n{key: G}\n{tempo: 72}\n{time: 4/4}\n{capo: 0}\n\n{comment: Play softly and reverently}\n\n{start_of_verse: Verse 1}\n[G]Amazing [G/B]grace, how [C]sweet the [G]sound\nThat [G]saved a [D/F#]wretch like [Em]me\nI [G]once was [G/B]lost, but [C]now am [G]found\nWas [Em]blind but [D]now I [G]see\n{end_of_verse}\n\n{start_of_verse: Verse 2}\n'Twas [G]grace that [G/B]taught my [C]heart to [G]fear\nAnd [G]grace my [D/F#]fears re[Em]lieved\nHow [G]precious [G/B]did that [C]grace ap[G]pear\nThe [Em]hour I [D]first be[G]lieved\n{end_of_verse}\n\n{comment: Instrumental break - repeat verse chords}\n\n{start_of_verse: Verse 3}\nThrough [G]many [G/B]dangers, [C]toils and [G]snares\nI [G]have al[D/F#]ready [Em]come\n'Tis [G]grace hath [G/B]brought me [C]safe thus [G]far\nAnd [Em]grace will [D]lead me [G]home\n{end_of_verse}"
+    "chordProContent": "{comment: Play softly and reverently}\n\n{start_of_verse: Verse 1}\n[G]Amazing [G/B]grace, how [C]sweet the [G]sound\nThat [G]saved a [D/F#]wretch like [Em]me\nI [G]once was [G/B]lost, but [C]now am [G]found\nWas [Em]blind but [D]now I [G]see\n{end_of_verse}\n\n{start_of_verse: Verse 2}\n'Twas [G]grace that [G/B]taught my [C]heart to [G]fear\nAnd [G]grace my [D/F#]fears re[Em]lieved\nHow [G]precious [G/B]did that [C]grace ap[G]pear\nThe [Em]hour I [D]first be[G]lieved\n{end_of_verse}\n\n{comment: Instrumental break - repeat verse chords}\n\n{start_of_verse: Verse 3}\nThrough [G]many [G/B]dangers, [C]toils and [G]snares\nI [G]have al[D/F#]ready [Em]come\n'Tis [G]grace hath [G/B]brought me [C]safe thus [G]far\nAnd [Em]grace will [D]lead me [G]home\n{end_of_verse}"
   },
   {
     "id": "arr_1_2",
@@ -29,7 +29,7 @@
     "favorites": 67,
     "createdAt": "2023-06-20T08:30:00Z",
     "updatedAt": "2023-06-20T08:30:00Z",
-    "chordProContent": "{title: Amazing Grace}\n{artist: John Newton}\n{key: B}\n{tempo: 68}\n{time: 4/4}\n{capo: 2}\n\n{comment: Alternative arrangement with capo on 2nd fret}\n\n{start_of_verse}\n[B]Amazing grace, how [E]sweet the [B]sound\nThat saved a [F#]wretch like me\nI [B]once was lost, but [E]now am [B]found\nWas [C#m]blind but [F#]now I [B]see\n{end_of_verse}\n\n{start_of_bridge}\n[E]When we've been [B]there ten [F#]thousand [B]years\n[B]Bright shining [F#]as the [G#m]sun\n[E]We've no less [B]days to [F#]sing God's [B]praise\nThan [C#m]when we [F#]first be[B]gun\n{end_of_bridge}"
+    "chordProContent": "{comment: Alternative arrangement with capo on 2nd fret}\n\n{start_of_verse}\n[B]Amazing grace, how [E]sweet the [B]sound\nThat saved a [F#]wretch like me\nI [B]once was lost, but [E]now am [B]found\nWas [C#m]blind but [F#]now I [B]see\n{end_of_verse}\n\n{start_of_bridge}\n[E]When we've been [B]there ten [F#]thousand [B]years\n[B]Bright shining [F#]as the [G#m]sun\n[E]We've no less [B]days to [F#]sing God's [B]praise\nThan [C#m]when we [F#]first be[B]gun\n{end_of_bridge}"
   },
   {
     "id": "arr_2_1",
@@ -40,11 +40,11 @@
     "timeSignature": "4/4",
     "capo": 0,
     "tags": [],
-    "rating": 5.0,
+    "rating": 5,
     "favorites": 523,
     "createdAt": "2022-01-10T12:00:00Z",
     "updatedAt": "2024-12-01T09:15:00Z",
-    "chordProContent": "{title: How Great Thou Art}\n{artist: Carl Boberg}\n{subtitle: Swedish hymn}\n{key: A}\n{tempo: 68}\n{time: 4/4}\n\n{start_of_verse: Verse 1}\n[A]O Lord my God, When I in [D]awesome wonder\nCon[A]sider [E]all the [F#m]worlds Thy [E]Hands have [A]made\nI see the stars, I hear the [D]rolling thunder\nThy [A]power through[E]out the [F#m]uni[E]verse dis[A]played\n{end_of_verse}\n\n{start_of_chorus}\nThen sings my [D]soul, my [A]Savior God, to [E]Thee\nHow great Thou [F#m]art! [E]How great Thou [A]art!\nThen sings my [D]soul, my [A]Savior God, to [E]Thee\nHow great Thou [F#m]art! [E]How great Thou [A]art!\n{end_of_chorus}\n\n{comment: Repeat chorus with more energy}\n{chorus}\n\n{start_of_verse: Verse 2}\n[A]When through the woods and forest [D]glades I wander\nAnd [A]hear the [E]birds sing [F#m]sweetly [E]in the [A]trees\nWhen I look down from lofty [D]mountain grandeur\nAnd [A]hear the [E]brook and [F#m]feel the [E]gentle [A]breeze\n{end_of_verse}"
+    "chordProContent": "{start_of_verse: Verse 1}\n[A]O Lord my God, When I in [D]awesome wonder\nCon[A]sider [E]all the [F#m]worlds Thy [E]Hands have [A]made\nI see the stars, I hear the [D]rolling thunder\nThy [A]power through[E]out the [F#m]uni[E]verse dis[A]played\n{end_of_verse}\n\n{start_of_chorus}\nThen sings my [D]soul, my [A]Savior God, to [E]Thee\nHow great Thou [F#m]art! [E]How great Thou [A]art!\nThen sings my [D]soul, my [A]Savior God, to [E]Thee\nHow great Thou [F#m]art! [E]How great Thou [A]art!\n{end_of_chorus}\n\n{comment: Repeat chorus with more energy}\n{chorus}\n\n{start_of_verse: Verse 2}\n[A]When through the woods and forest [D]glades I wander\nAnd [A]hear the [E]birds sing [F#m]sweetly [E]in the [A]trees\nWhen I look down from lofty [D]mountain grandeur\nAnd [A]hear the [E]brook and [F#m]feel the [E]gentle [A]breeze\n{end_of_verse}"
   },
   {
     "id": "arr_3_1",
@@ -59,7 +59,7 @@
     "favorites": 189,
     "createdAt": "2022-08-05T14:20:00Z",
     "updatedAt": "2022-08-05T14:20:00Z",
-    "chordProContent": "{title: Oceans (Where Feet May Fail)}\n{artist: Hillsong United}\n{key: D}\n{tempo: 66}\n{time: 4/4}\n{year: 2013}\n\n{comment: Start softly and build}\n\n{start_of_verse}\n[D]You call me out upon the [A]waters\nThe great un[G]known where feet may [D]fail\nAnd there I find You in the [A]mystery\nIn oceans [G]deep, my faith will [D]stand\n{end_of_verse}\n\n{start_of_chorus}\n[D]And I will [G]call upon Your [D]name\nAnd keep my [G]eyes above the [D]waves\nWhen oceans [G]rise, my soul will [D]rest in Your em[A]brace\nFor I am [G]Yours [A]and You are [D]mine\n{end_of_chorus}\n\n{comment: Repeat chorus with more intensity}\n\n{start_of_bridge}\n[Bm]Spirit lead me where my [A/C#]trust is without borders\nLet me [D]walk upon the waters\nWher[G]ever You would call me\n[Bm]Take me deeper than my [A/C#]feet could ever wander\nAnd my [D]faith will be made stronger\nIn the [G]presence of my Savior\n{end_of_bridge}"
+    "chordProContent": "{year: 2013}\n\n{comment: Start softly and build}\n\n{start_of_verse}\n[D]You call me out upon the [A]waters\nThe great un[G]known where feet may [D]fail\nAnd there I find You in the [A]mystery\nIn oceans [G]deep, my faith will [D]stand\n{end_of_verse}\n\n{start_of_chorus}\n[D]And I will [G]call upon Your [D]name\nAnd keep my [G]eyes above the [D]waves\nWhen oceans [G]rise, my soul will [D]rest in Your em[A]brace\nFor I am [G]Yours [A]and You are [D]mine\n{end_of_chorus}\n\n{comment: Repeat chorus with more intensity}\n\n{start_of_bridge}\n[Bm]Spirit lead me where my [A/C#]trust is without borders\nLet me [D]walk upon the waters\nWher[G]ever You would call me\n[Bm]Take me deeper than my [A/C#]feet could ever wander\nAnd my [D]faith will be made stronger\nIn the [G]presence of my Savior\n{end_of_bridge}"
   },
   {
     "id": "arr_4_1",
@@ -74,7 +74,7 @@
     "favorites": 0,
     "createdAt": "2024-12-10T11:00:00Z",
     "updatedAt": "2024-12-10T11:00:00Z",
-    "chordProContent": "{title: Way Maker}\n{artist: Sinach}\n{key: E}\n{tempo: 68}\n{time: 4/4}\n{ccli: 7115744}\n\n{start_of_verse}\n[E]You are here, moving in our midst\nI [A]worship You, I worship You\n[E]You are here, working in this place\nI [A]worship You, I worship You\n{end_of_verse}\n\n{comment: Repeat verse}\n{verse}\n\n{start_of_chorus}\n(You are) [E]Way maker, miracle worker\n[A]Promise keeper, light in the darkness\nMy [C#m]God, that is who You [B]are\n(You are) [E]Way maker, miracle worker\n[A]Promise keeper, light in the darkness\nMy [C#m]God, that is who You [B]are\n{end_of_chorus}\n\n{start_of_bridge}\n[E]Even when I don't see it, You're working\n[A]Even when I don't feel it, You're working\n[C#m]You never stop, You never stop working\n[B]You never stop, You never stop working\n{end_of_bridge}"
+    "chordProContent": "{ccli: 7115744}\n\n{start_of_verse}\n[E]You are here, moving in our midst\nI [A]worship You, I worship You\n[E]You are here, working in this place\nI [A]worship You, I worship You\n{end_of_verse}\n\n{comment: Repeat verse}\n{verse}\n\n{start_of_chorus}\n(You are) [E]Way maker, miracle worker\n[A]Promise keeper, light in the darkness\nMy [C#m]God, that is who You [B]are\n(You are) [E]Way maker, miracle worker\n[A]Promise keeper, light in the darkness\nMy [C#m]God, that is who You [B]are\n{end_of_chorus}\n\n{start_of_bridge}\n[E]Even when I don't see it, You're working\n[A]Even when I don't feel it, You're working\n[C#m]You never stop, You never stop working\n[B]You never stop, You never stop working\n{end_of_bridge}"
   },
   {
     "id": "arr_4_2",
@@ -91,7 +91,7 @@
     "favorites": 93,
     "createdAt": "2024-09-15T16:45:00Z",
     "updatedAt": "2024-09-15T16:45:00Z",
-    "chordProContent": "{title: Way Maker}\n{artist: Sinach}\n{key: G}\n{tempo: 68}\n\n[G]You are here, moving in our midst\nI worship You, I worship You\nYou are here, working in this place\nI worship You, I worship You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[G]You are here, moving in our midst\nI worship You, I worship You\nYou are here, working in this place\nI worship You, I worship You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_5_1",
@@ -106,7 +106,7 @@
     "favorites": 456,
     "createdAt": "2022-05-20T09:30:00Z",
     "updatedAt": "2024-10-15T11:20:00Z",
-    "chordProContent": "{title: 10,000 Reasons (Bless the Lord)}\n{artist: Matt Redman}\n{key: G}\n{tempo: 73}\n\n[G]Bless the Lord, O my soul, O my soul\nWorship His holy name\nSing like never before, O my soul\nI'll worship Your holy name\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[G]Bless the Lord, O my soul, O my soul\nWorship His holy name\nSing like never before, O my soul\nI'll worship Your holy name\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_6_1",
@@ -121,7 +121,7 @@
     "favorites": 78,
     "createdAt": "2023-02-14T13:00:00Z",
     "updatedAt": "2023-02-14T13:00:00Z",
-    "chordProContent": "{title: What A Beautiful Name}\n{artist: Hillsong Worship}\n{key: D}\n{tempo: 68}\n\n[D]You were the Word at the beginning\nOne with God the Lord Most High\nYour hidden glory in creation\nNow revealed in You our Christ\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[D]You were the Word at the beginning\nOne with God the Lord Most High\nYour hidden glory in creation\nNow revealed in You our Christ\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_7_1",
@@ -136,7 +136,7 @@
     "favorites": 234,
     "createdAt": "2022-11-08T10:15:00Z",
     "updatedAt": "2024-07-22T14:00:00Z",
-    "chordProContent": "{title: Good Good Father}\n{artist: Chris Tomlin}\n{key: A}\n{tempo: 76}\n\n[A]I've heard a thousand stories\nOf what they think You're like\nBut I've heard the tender whisper\nOf love in the dead of night\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[A]I've heard a thousand stories\nOf what they think You're like\nBut I've heard the tender whisper\nOf love in the dead of night\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_7_2",
@@ -153,7 +153,7 @@
     "favorites": 42,
     "createdAt": "2023-09-10T15:30:00Z",
     "updatedAt": "2023-09-10T15:30:00Z",
-    "chordProContent": "{title: Good Good Father}\n{artist: Chris Tomlin}\n{key: C}\n{tempo: 76}\n\n[C]I've heard a thousand stories\nOf what they think You're like\nBut I've heard the tender whisper\nOf love in the dead of night\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[C]I've heard a thousand stories\nOf what they think You're like\nBut I've heard the tender whisper\nOf love in the dead of night\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_8_1",
@@ -168,7 +168,7 @@
     "favorites": 12,
     "createdAt": "2024-11-01T08:00:00Z",
     "updatedAt": "2024-11-01T08:00:00Z",
-    "chordProContent": "{title: Reckless Love}\n{artist: Cory Asbury}\n{key: Eb}\n{tempo: 82}\n\n[Eb]Before I spoke a word, You were singing over me\nYou have been so, so good to me\nBefore I took a breath, You breathed Your life in me\nYou have been so, so kind to me\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[Eb]Before I spoke a word, You were singing over me\nYou have been so, so good to me\nBefore I took a breath, You breathed Your life in me\nYou have been so, so kind to me\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_9_1",
@@ -183,7 +183,7 @@
     "favorites": 312,
     "createdAt": "2022-06-30T11:45:00Z",
     "updatedAt": "2022-06-30T11:45:00Z",
-    "chordProContent": "{title: Build My Life}\n{artist: Housefires}\n{key: C}\n{tempo: 72}\n\n[C]Worthy of every song we could ever sing\nWorthy of all the praise we could ever bring\nWorthy of every breath we could ever breathe\nWe live for You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[C]Worthy of every song we could ever sing\nWorthy of all the praise we could ever bring\nWorthy of every breath we could ever breathe\nWe live for You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_10_1",
@@ -194,11 +194,11 @@
     "timeSignature": "4/4",
     "capo": 0,
     "tags": [],
-    "rating": 5.0,
+    "rating": 5,
     "favorites": 678,
     "createdAt": "2022-02-20T14:30:00Z",
     "updatedAt": "2024-12-15T10:00:00Z",
-    "chordProContent": "{title: Here I Am To Worship}\n{artist: Tim Hughes}\n{key: E}\n{tempo: 75}\n\n[E]Light of the world\nYou stepped down into darkness\nOpened my eyes, let me see\nBeauty that made this heart adore You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[E]Light of the world\nYou stepped down into darkness\nOpened my eyes, let me see\nBeauty that made this heart adore You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_10_2",
@@ -215,7 +215,7 @@
     "favorites": 156,
     "createdAt": "2023-04-12T09:00:00Z",
     "updatedAt": "2024-08-30T16:45:00Z",
-    "chordProContent": "{title: Here I Am To Worship}\n{artist: Tim Hughes}\n{key: G}\n{tempo: 75}\n\n[G]Light of the world\nYou stepped down into darkness\nOpened my eyes, let me see\nBeauty that made this heart adore You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[G]Light of the world\nYou stepped down into darkness\nOpened my eyes, let me see\nBeauty that made this heart adore You\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_11_1",
@@ -230,7 +230,7 @@
     "favorites": 89,
     "createdAt": "2023-07-25T12:15:00Z",
     "updatedAt": "2023-07-25T12:15:00Z",
-    "chordProContent": "{title: Holy Spirit}\n{artist: Bryan & Katie Torwalt}\n{key: F}\n{tempo: 70}\n\n[F]There's nothing worth more that will ever come close\nNo thing can compare You're our living hope\nYour Presence Lord\n\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[F]There's nothing worth more that will ever come close\nNo thing can compare You're our living hope\nYour Presence Lord\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_12_1",
@@ -245,7 +245,7 @@
     "favorites": 5,
     "createdAt": "2024-12-01T14:00:00Z",
     "updatedAt": "2024-12-01T14:00:00Z",
-    "chordProContent": "{title: Great Are You Lord}\n{artist: All Sons & Daughters}\n{key: D}\n{tempo: 68}\n\n[D]You give life, You are love\nYou bring light to the darkness\nYou give hope, You restore\nEvery heart that is broken\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[D]You give life, You are love\nYou bring light to the darkness\nYou give hope, You restore\nEvery heart that is broken\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_13_1",
@@ -256,11 +256,11 @@
     "timeSignature": "4/4",
     "capo": 0,
     "tags": [],
-    "rating": 4.0,
+    "rating": 4,
     "favorites": 145,
     "createdAt": "2023-01-18T10:30:00Z",
     "updatedAt": "2023-01-18T10:30:00Z",
-    "chordProContent": "{title: King of My Heart}\n{artist: Bethel Music}\n{key: Ab}\n{tempo: 68}\n\n[Ab]Let the King of my heart\nBe the mountain where I run\nThe fountain I drink from\nOh He is my song\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[Ab]Let the King of my heart\nBe the mountain where I run\nThe fountain I drink from\nOh He is my song\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_13_2",
@@ -277,7 +277,7 @@
     "favorites": 28,
     "createdAt": "2024-03-05T13:20:00Z",
     "updatedAt": "2024-03-05T13:20:00Z",
-    "chordProContent": "{title: King of My Heart}\n{artist: Bethel Music}\n{key: C}\n{tempo: 68}\n\n[C]Let the King of my heart\nBe the mountain where I run\nThe fountain I drink from\nOh He is my song\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[C]Let the King of my heart\nBe the mountain where I run\nThe fountain I drink from\nOh He is my song\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_14_1",
@@ -292,7 +292,7 @@
     "favorites": 267,
     "createdAt": "2022-09-12T11:00:00Z",
     "updatedAt": "2024-05-20T09:30:00Z",
-    "chordProContent": "{title: Cornerstone}\n{artist: Hillsong Worship}\n{key: C}\n{tempo: 72}\n\n[C]My hope is built on nothing less\nThan Jesus' blood and righteousness\nI dare not trust the sweetest frame\nBut wholly trust in Jesus' name\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[C]My hope is built on nothing less\nThan Jesus' blood and righteousness\nI dare not trust the sweetest frame\nBut wholly trust in Jesus' name\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   },
   {
     "id": "arr_15_1",
@@ -307,6 +307,6 @@
     "favorites": 54,
     "createdAt": "2023-11-22T15:45:00Z",
     "updatedAt": "2023-11-22T15:45:00Z",
-    "chordProContent": "{title: Living Hope}\n{artist: Phil Wickham}\n{key: F}\n{tempo: 74}\n\n[F]How great the chasm that lay between us\nHow high the mountain I could not climb\nIn desperation I turned to heaven\nAnd spoke Your name into the night\n\n{comment: Full ChordPro implementation coming in Phase 3}"
+    "chordProContent": "[F]How great the chasm that lay between us\nHow high the mountain I could not climb\nIn desperation I turned to heaven\nAnd spoke Your name into the night\n\n{comment: Full ChordPro implementation coming in Phase 3}"
   }
 ]

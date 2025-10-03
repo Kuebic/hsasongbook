@@ -14,7 +14,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuRadioGroup,
-  DropdownMenuRadioItem
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { Music, ChevronDown, Hash, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -78,7 +79,6 @@ export default function KeySelector({
   originalKey = null,
   includeMinorKeys = false
 }) {
-  const [isOpen, setIsOpen] = useState(false)
   const [preferFlats, setPreferFlats] = useState(value.includes('b'))
 
   // Get the appropriate key list based on preferences
@@ -87,7 +87,6 @@ export default function KeySelector({
   // Handle key selection
   const handleKeySelect = (newKey) => {
     onChange?.(newKey)
-    setIsOpen(false)
   }
 
   // Toggle between sharps and flats
@@ -112,7 +111,29 @@ export default function KeySelector({
 
   return (
     <div className="key-selector">
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size={size}
+            disabled={disabled}
+            className={buttonClasses}
+            aria-label="Select key"
+            aria-haspopup="listbox"
+          >
+            <span className="flex items-center gap-2">
+              <Music className="h-4 w-4" />
+              <span className="text-base font-medium">{value}</span>
+              {KEY_SIGNATURES[value] && (
+                <span className="text-xs text-muted-foreground">
+                  ({formatKeySignature(value)})
+                </span>
+              )}
+            </span>
+            <ChevronDown className="h-4 w-4 ml-2" />
+          </Button>
+        </DropdownMenuTrigger>
+
         <DropdownMenuContent
           align="start"
           className="w-56 max-h-[60vh] overflow-y-auto"
@@ -227,27 +248,6 @@ export default function KeySelector({
             </>
           )}
         </DropdownMenuContent>
-
-        <Button
-          variant="outline"
-          size={size}
-          disabled={disabled}
-          className={buttonClasses}
-          aria-label="Select key"
-          aria-expanded={isOpen}
-          aria-haspopup="listbox"
-        >
-          <span className="flex items-center gap-2">
-            <Music className="h-4 w-4" />
-            <span className="text-base font-medium">{value}</span>
-            {KEY_SIGNATURES[value] && (
-              <span className="text-xs text-muted-foreground">
-                ({formatKeySignature(value)})
-              </span>
-            )}
-          </span>
-          <ChevronDown className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
-        </Button>
       </DropdownMenu>
     </div>
   )

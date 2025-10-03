@@ -7,7 +7,8 @@ import logger from '@/lib/logger';
 const MIGRATIONS = {
   1: 'Initial schema with songs, arrangements, and setlists',
   2: 'Add sync queue and compound indexes for better performance',
-  3: 'Add popularity tracking, preferences store, and performance date index'
+  3: 'Add popularity tracking, preferences store, and performance date index',
+  4: 'Add chordproDrafts store for ChordPro editor auto-save'
 };
 
 /**
@@ -15,7 +16,7 @@ const MIGRATIONS = {
  * @returns {number} Current version number
  */
 export function getCurrentVersion() {
-  return 3;
+  return 4;
 }
 
 /**
@@ -46,7 +47,8 @@ export function runMigrations(db, oldVersion, newVersion, transaction) {
 const migrationHandlers = {
   1: createInitialSchema,
   2: addSyncQueueAndIndexes,
-  3: addPopularityAndPreferences
+  3: addPopularityAndPreferences,
+  4: createChordproDraftsStore
 };
 
 /**
@@ -206,12 +208,26 @@ async function migrateExistingDataForPopularity(transaction) {
 }
 
 /**
+ * Version 4: Add chordproDrafts store for ChordPro editor auto-save
+ * @param {IDBDatabase} db - Database instance
+ */
+function createChordproDraftsStore(db) {
+  // Create chordproDrafts store for editor auto-save functionality
+  if (!db.objectStoreNames.contains('chordproDrafts')) {
+    const draftsStore = db.createObjectStore('chordproDrafts', { keyPath: 'id' });
+    // Index for querying drafts by arrangement ID
+    draftsStore.createIndex('arrangementId', 'arrangementId', { unique: false });
+    logger.log('Created chordproDrafts object store with arrangementId index');
+  }
+}
+
+/**
  * Validate database schema after migration
  * @param {IDBDatabase} db - Database instance
  * @returns {boolean} True if schema is valid
  */
 export function validateSchema(db) {
-  const requiredStores = ['songs', 'arrangements', 'setlists', 'syncQueue', 'preferences'];
+  const requiredStores = ['songs', 'arrangements', 'setlists', 'syncQueue', 'preferences', 'chordproDrafts'];
   // const requiredIndexes = {
   //   songs: ['by-title', 'by-artist', 'by-sync-status', 'by-updated', 'by-popularity'],
   //   arrangements: ['by-song', 'by-key', 'by-rating', 'by-sync-status', 'by-popularity', 'by-song-rating', 'by-song-popularity'],

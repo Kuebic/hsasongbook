@@ -92,8 +92,11 @@ class PersistenceService {
         version: savedArrangement.version
       })
 
-      // Cleanup: Remove drafts after successful save
-      await this.cleanupDrafts(arrangementId)
+      // Cleanup: Remove drafts after successful save (non-blocking, optional)
+      // Don't await - run in background, don't block save success
+      this.cleanupDrafts(arrangementId).catch(err => {
+        logger.debug('Draft cleanup failed (non-critical):', err.message)
+      })
 
       return {
         success: true,

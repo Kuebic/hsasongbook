@@ -30,25 +30,38 @@ export default function ChordProViewer({
   editable = false,
   onContentChange,
   onEditModeChange,
-  initialEditMode = false
+  editMode,  // NEW: Controlled edit mode from parent
+  initialEditMode = false,  // DEPRECATED: Use editMode instead
+  arrangementMetadata = null  // Optional metadata to inject before parsing
 }) {
   const [showChords, setShowChords] = useState(showChordsProp)
-  const [isEditMode, setIsEditMode] = useState(initialEditMode)
   const [editContent, setEditContent] = useState(content)
   const containerRef = useRef(null)
+
+  // Use controlled editMode if provided, otherwise fall back to internal state
+  const isControlled = editMode !== undefined
+  const [internalEditMode, setInternalEditMode] = useState(initialEditMode)
+  const isEditMode = isControlled ? editMode : internalEditMode
 
   // Lazy import editor components when needed
   const [EditorComponent, setEditorComponent] = useState(null)
   const [SplitViewComponent, setSplitViewComponent] = useState(null)
 
-  // Parse and format ChordPro content
+  // Serialize metadata to force re-parse when metadata changes
+  // This ensures the viewer updates when dropdown values change
+  const metadataKey = useMemo(() => {
+    if (!arrangementMetadata) return null
+    return JSON.stringify(arrangementMetadata)
+  }, [arrangementMetadata])
+
+  // Parse and format ChordPro content with metadata injection
   const {
     parsedSong,
     metadata,
     hasChords,
     error,
     sections
-  } = useChordSheet(content, showChords)
+  } = useChordSheet(content, showChords, arrangementMetadata, metadataKey)
 
   // Determine original key (from metadata or default)
   const originalKey = useMemo(() => {
@@ -62,7 +75,6 @@ export default function ChordProViewer({
     transpositionOffset,
     transposeBy,
     reset,
-    isTransposed,
     preferFlats,
     toggleEnharmonic
   } = useTransposition(parsedSong, originalKey)
@@ -126,8 +138,15 @@ export default function ChordProViewer({
   // Handle edit mode toggle
   const handleEditModeToggle = () => {
     const newEditMode = !isEditMode
-    setIsEditMode(newEditMode)
-    onEditModeChange?.(newEditMode)
+
+    if (isControlled) {
+      // Controlled mode: notify parent
+      onEditModeChange?.(newEditMode)
+    } else {
+      // Uncontrolled mode: manage internally
+      setInternalEditMode(newEditMode)
+      onEditModeChange?.(newEditMode)
+    }
   }
 
   // Handle content changes from editor
@@ -172,29 +191,9 @@ export default function ChordProViewer({
       <CardContent className="px-1 py-2 sm:p-2 lg:p-4">
         {/* Header controls */}
         <div className="flex flex-col gap-3">
-          {/* Metadata and basic controls */}
-          <div className="flex justify-between items-start flex-wrap gap-2">
-            {/* Metadata display */}
-            <div className="text-xs text-muted-foreground">
-              {metadata.title && (
-                <span className="font-medium">{metadata.title}</span>
-              )}
-              {metadata.artist && (
-                <span className="ml-2">by {metadata.artist}</span>
-              )}
-              {currentKey && (
-                <span className="ml-2">Key: <strong>{currentKey}</strong></span>
-              )}
-              {isTransposed && originalKey && (
-                <span className="ml-1 text-xs">(Original: {originalKey})</span>
-              )}
-              {metadata.tempo && (
-                <span className="ml-2">Tempo: {metadata.tempo}</span>
-              )}
-            </div>
-
-            {/* Control buttons */}
-            <div className="flex gap-2 items-center">
+          {/* Control buttons - Metadata now shown only in ArrangementHeader */}
+          <div className="flex justify-between items-center flex-wrap gap-2">
+            <div className="flex gap-2 items-center ml-auto">
               {editable && (
                 <Button
                   variant={isEditMode ? "default" : "outline"}

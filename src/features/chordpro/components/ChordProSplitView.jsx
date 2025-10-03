@@ -11,7 +11,7 @@
  * - Print-optimized CSS support
  */
 
-import { useState, useRef, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   Panel,
   PanelGroup,
@@ -27,9 +27,7 @@ import config from '@/lib/config';
 import logger from '@/lib/logger';
 import '../styles/print.css'; // Import print styles for professional chord sheet printing
 
-// Lazy load heavy components for better initial load
-const MobileFAB = lazy(() => import('./MobileFAB'));
-const ChordProBottomSheet = lazy(() => import('./ChordProBottomSheet'));
+// Mobile chord insertion components removed - users type chords directly
 
 const { editor: editorConfig } = config.chordpro;
 
@@ -65,7 +63,6 @@ export function ChordProSplitView({
   const [debouncedContent, setDebouncedContent] = useState(initialContent);
   const [isMobile, setIsMobile] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
   const [mobileTabIndex, setMobileTabIndex] = useState(0); // 0: editor, 1: preview
 
   // Refs for component instances
@@ -342,24 +339,9 @@ export function ChordProSplitView({
           </div>
         </div>
 
-        {/* Mobile FAB for quick actions */}
-        {viewMode === 'edit' && (
-          <Suspense fallback={null}>
-            <MobileFAB
-              editorView={editorViewRef.current}
-              onOpenBottomSheet={() => setBottomSheetOpen(true)}
-            />
-          </Suspense>
-        )}
+        {/* Mobile FAB removed - users type chords directly per Phase 3.6 simplification */}
 
-        {/* Bottom sheet for extended actions */}
-        <Suspense fallback={null}>
-          <ChordProBottomSheet
-            isOpen={bottomSheetOpen}
-            onClose={() => setBottomSheetOpen(false)}
-            editorView={editorViewRef.current}
-          />
-        </Suspense>
+        {/* Bottom sheet removed - users type chords directly per Phase 3.6 simplification */}
       </div>
     );
   }

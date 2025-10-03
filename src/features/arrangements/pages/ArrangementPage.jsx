@@ -4,6 +4,7 @@ import { useArrangementData } from '../hooks/useArrangementData'
 import ChordProViewer from '@/features/chordpro'
 import ArrangementSwitcher from '../components/ArrangementSwitcher'
 import ArrangementHeader from '../components/ArrangementHeader'
+import ArrangementMetadataForm from '../components/ArrangementMetadataForm'
 import Breadcrumbs from '../../shared/components/Breadcrumbs'
 import { PageSpinner } from '../../shared/components/LoadingStates'
 import { SimplePageTransition } from '../../shared/components/PageTransition'
@@ -12,12 +13,14 @@ import { Button } from '@/components/ui/button'
 import logger from '@/lib/logger'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, Music } from 'lucide-react'
+import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSanitizer'
 
 export function ArrangementPage() {
   const { arrangementId } = useParams()
   const navigate = useNavigate()
   const { breadcrumbs } = useNavigation()
   const [showChords] = useState(true)
+  const [isEditMode, setIsEditMode] = useState(false)
 
   // Use IndexedDB hook instead of mock data
   const {
@@ -84,6 +87,29 @@ export function ArrangementPage() {
           />
         </div>
 
+        {/* Metadata Form - Only show in edit mode */}
+        {isEditMode && (
+          <div className="mb-6">
+            <ArrangementMetadataForm
+              metadata={{
+                key: arrangement.key,
+                tempo: arrangement.tempo,
+                timeSignature: arrangement.timeSignature,
+                capo: arrangement.capo
+              }}
+              onChange={async (newMetadata) => {
+                logger.debug('Metadata changed, saving to IndexedDB:', newMetadata)
+                // Save metadata via useArrangementData hook
+                const result = await updateArrangement(newMetadata)
+                if (result.success) {
+                  logger.debug('Metadata saved to IndexedDB successfully')
+                } else {
+                  logger.error('Failed to save metadata:', result.error)
+                }
+              }}
+            />
+          </div>
+        )}
 
         {/* ChordPro Content */}
         <div className="mb-8">
@@ -92,12 +118,24 @@ export function ArrangementPage() {
             showChords={showChords}
             showToggle={true}
             editable={true}
+            editMode={isEditMode}
+            onEditModeChange={setIsEditMode}
             arrangementId={arrangementId}
+            arrangementMetadata={{
+              key: arrangement.key,
+              tempo: arrangement.tempo,
+              timeSignature: arrangement.timeSignature,
+              capo: arrangement.capo
+            }}
             onContentChange={async (newContent) => {
-              logger.debug('ChordPro content changed, saving to IndexedDB:', newContent.length)
+              // Strip metadata directives before saving (controlled via dropdowns)
+              const sanitizedContent = sanitizeChordProContent(newContent)
+
+              logger.debug('ChordPro content changed, saving sanitized content to IndexedDB:', sanitizedContent.length)
+
               // Save via useArrangementData hook
               const result = await updateArrangement({
-                chordProContent: newContent
+                chordProContent: sanitizedContent
               })
               if (result.success) {
                 logger.debug('Content saved to IndexedDB successfully')

@@ -11,7 +11,7 @@ export const config = {
   },
   database: {
     name: 'HSASongbookDB',
-    version: 3,
+    version: 4,
     reconnectionDelay: 1000, // ms
     healthThreshold: 0.8 // 80%
   },
@@ -82,13 +82,8 @@ export const config = {
         maxDraftsPerEntity: 10,         // Maximum drafts to keep per arrangement
         cleanupIntervalHours: 24        // Hours between draft cleanup
       },
-      toolbar: {
-        enableQuickInsert: true,        // Enable quick-insert chord/directive buttons
-        showChordPalette: true,         // Show chord palette in toolbar
-        mobileCollapsible: true,        // Allow toolbar collapse on mobile
-        commonChords: ['C', 'G', 'Am', 'F', 'D', 'Em', 'Dm', 'A', 'E', 'Bm'], // Most used chords
-        directiveShortcuts: ['title', 'artist', 'key', 'tempo', 'verse', 'chorus', 'bridge'] // Quick directives
-      },
+      // Toolbar config removed - editor now simplified to Save + Undo/Redo only
+      // Metadata editing moved to ArrangementMetadataForm component
       editor: {
         lineNumbers: true,              // Show line numbers
         bracketMatching: true,          // Highlight matching brackets

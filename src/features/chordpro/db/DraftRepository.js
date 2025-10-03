@@ -38,10 +38,17 @@ class DraftRepository {
    * @param {string} arrangementId - Parent arrangement ID
    * @param {string} content - ChordPro content
    * @param {boolean} isAutoSave - Whether this is an auto-save operation
-   * @returns {Promise<Object>} Saved draft
+   * @returns {Promise<Object|null>} Saved draft or null if store unavailable
    */
   async saveDraft(arrangementId, content, isAutoSave = true) {
     const db = await this.getDB()
+
+    // Check if the object store exists (handles migration timing issues)
+    if (!db.objectStoreNames.contains(this.storeName)) {
+      logger.info(`Draft store not yet available. Skipping draft save.`)
+      return null
+    }
+
     const now = new Date()
     const expiresAt = new Date(
       now.getTime() + (this.config.cleanupIntervalHours * 60 * 60 * 1000)
@@ -99,6 +106,11 @@ class DraftRepository {
 
       return draft
     } catch (error) {
+      // Handle NotFoundError gracefully (store doesn't exist yet)
+      if (error.name === 'NotFoundError') {
+        logger.info(`Draft store not available: ${error.message}`)
+        return null
+      }
       // Handle QuotaExceededError specifically
       if (error.name === 'QuotaExceededError' || error.name === 'DOMException') {
         await this.cleanupExpiredDrafts()
@@ -119,6 +131,12 @@ class DraftRepository {
     const db = await this.getDB()
 
     try {
+      // Check if the object store exists (handles migration timing issues)
+      if (!db.objectStoreNames.contains(this.storeName)) {
+        logger.info(`Draft store not yet available (database migration pending). Drafts will be available after closing all browser tabs.`)
+        return []
+      }
+
       // Get all drafts for this arrangement
       const drafts = await db.getAllFromIndex(this.storeName, 'arrangementId', arrangementId)
 
@@ -139,6 +157,11 @@ class DraftRepository {
 
       return validDrafts
     } catch (error) {
+      // Handle NotFoundError gracefully (store doesn't exist yet)
+      if (error.name === 'NotFoundError') {
+        logger.info(`Draft store not available: ${error.message}`)
+        return []
+      }
       logger.error('Failed to get drafts by arrangement:', error)
       return []
     }
@@ -205,6 +228,13 @@ class DraftRepository {
    */
   async cleanupExpiredDrafts() {
     const db = await this.getDB()
+
+    // Check if the object store exists
+    if (!db.objectStoreNames.contains(this.storeName)) {
+      logger.debug(`Draft store not available. Skipping cleanup.`)
+      return 0
+    }
+
     const now = new Date()
 
     try {
@@ -223,6 +253,10 @@ class DraftRepository {
 
       return expiredDrafts.length
     } catch (error) {
+      if (error.name === 'NotFoundError') {
+        logger.debug(`Draft store not available: ${error.message}`)
+        return 0
+      }
       logger.error('Failed to cleanup expired drafts:', error)
       return 0
     }

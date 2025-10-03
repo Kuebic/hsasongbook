@@ -36,100 +36,6 @@ export function insertText(editorView, text, position = null) {
   }
 }
 
-/**
- * Insert a chord at the current cursor position
- * @param {EditorView} editorView - CodeMirror editor view
- * @param {string} chord - Chord name (e.g., 'C', 'Am7', 'F#m')
- * @param {number|null} position - Position to insert at (null for current cursor)
- * @returns {boolean} Success status
- */
-export function insertChord(editorView, chord, position = null) {
-  if (!chord || typeof chord !== 'string') {
-    logger.warn('insertChord: valid chord string is required')
-    return false
-  }
-
-  // Clean and validate chord notation
-  const cleanChord = chord.trim()
-  if (!cleanChord) {
-    return false
-  }
-
-  const chordText = `[${cleanChord}]`
-  return insertText(editorView, chordText, position)
-}
-
-/**
- * Insert a ChordPro directive
- * @param {EditorView} editorView - CodeMirror editor view
- * @param {string} directive - Directive name
- * @param {string} argument - Directive argument (optional)
- * @param {number|null} position - Position to insert at (null for current cursor)
- * @returns {boolean} Success status
- */
-export function insertDirective(editorView, directive, argument = '', position = null) {
-  if (!directive || typeof directive !== 'string') {
-    logger.warn('insertDirective: valid directive string is required')
-    return false
-  }
-
-  const cleanDirective = directive.trim()
-  if (!cleanDirective) {
-    return false
-  }
-
-  const directiveText = argument
-    ? `{${cleanDirective}: ${argument}}`
-    : `{${cleanDirective}}`
-
-  return insertText(editorView, directiveText, position)
-}
-
-/**
- * Insert environment directive pair (start/end)
- * @param {EditorView} editorView - CodeMirror editor view
- * @param {string} environment - Environment name (e.g., 'verse', 'chorus', 'bridge')
- * @param {string} label - Optional label for the environment
- * @param {boolean} addNewlines - Whether to add newlines around the environment
- * @returns {boolean} Success status
- */
-export function insertEnvironment(editorView, environment, label = '', addNewlines = true) {
-  if (!environment || typeof environment !== 'string') {
-    logger.warn('insertEnvironment: valid environment string is required')
-    return false
-  }
-
-  const cleanEnv = environment.trim()
-  if (!cleanEnv) {
-    return false
-  }
-
-  const startDirective = label
-    ? `{start_of_${cleanEnv}: ${label}}`
-    : `{start_of_${cleanEnv}}`
-
-  const endDirective = `{end_of_${cleanEnv}}`
-
-  const environmentText = addNewlines
-    ? `${startDirective}\n\n${endDirective}`
-    : `${startDirective}\n${endDirective}`
-
-  try {
-    const pos = editorView.state.selection.main.head
-
-    editorView.dispatch({
-      changes: { from: pos, insert: environmentText },
-      // Position cursor between start and end directives
-      selection: { anchor: pos + startDirective.length + (addNewlines ? 2 : 1) }
-    })
-
-    logger.debug('Environment inserted:', { environment: cleanEnv, label })
-    return true
-  } catch (error) {
-    logger.error('Failed to insert environment:', error)
-    return false
-  }
-}
 
 /**
  * Get the currently selected text
@@ -186,8 +92,9 @@ export function replaceSelection(editorView, text) {
 export function wrapSelectionWithChord(editorView, chord) {
   const selectedText = getSelectedText(editorView)
   if (!selectedText) {
-    // No selection, just insert chord
-    return insertChord(editorView, chord)
+    // No selection, insert chord at cursor
+    const chordText = `[${chord}]`
+    return insertText(editorView, chordText)
   }
 
   const wrappedText = `[${chord}]${selectedText}`
@@ -299,34 +206,6 @@ export function focusEditor(editorView) {
   }
 }
 
-/**
- * Format the selection or current line with proper ChordPro formatting
- * @param {EditorView} editorView - CodeMirror editor view
- * @returns {boolean} Success status
- */
-export function formatSelection(editorView) {
-  const selectedText = getSelectedText(editorView)
-
-  if (!selectedText) {
-    // Format current line
-    const lineInfo = getCurrentLine(editorView)
-    const formattedText = formatChordProLine(lineInfo.text)
-
-    try {
-      editorView.dispatch({
-        changes: { from: lineInfo.from, to: lineInfo.to, insert: formattedText }
-      })
-      return true
-    } catch (error) {
-      logger.error('Failed to format line:', error)
-      return false
-    }
-  } else {
-    // Format selection
-    const formattedText = formatChordProText(selectedText)
-    return replaceSelection(editorView, formattedText)
-  }
-}
 
 /**
  * Format a single line of ChordPro text
@@ -500,9 +379,6 @@ export function toTitleCase(text) {
  */
 const editorHelpers = {
   insertText,
-  insertChord,
-  insertDirective,
-  insertEnvironment,
   getSelectedText,
   replaceSelection,
   wrapSelectionWithChord,
@@ -511,7 +387,6 @@ const editorHelpers = {
   moveCursor,
   selectRange,
   focusEditor,
-  formatSelection,
   formatChordProLine,
   formatChordProText,
   validateChordProSyntax,
