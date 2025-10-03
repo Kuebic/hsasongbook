@@ -29,12 +29,31 @@ import { cn } from '@/lib/utils'
 import { chordproConfig } from '@/lib/config'
 import editorHelpers from '../utils/editorHelpers'
 import logger from '@/lib/logger'
+import SaveButton from './SaveButton'
+import UndoRedoControls from './UndoRedoControls'
+import SaveStatusIndicator from './SaveStatusIndicator'
 
 export default function EditorToolbar({
   editorView,
   disabled = false,
   className,
-  compact = false
+  compact = false,
+  // Save-related props
+  saveStatus,
+  onSave,
+  isDirty,
+  lastSaved,
+  saveError,
+  // Undo/redo props
+  canUndo,
+  canRedo,
+  undoCount,
+  redoCount,
+  onUndo,
+  onRedo,
+  // Display options
+  showSaveControls = true,
+  showUndoRedo = true
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const config = chordproConfig.editor.toolbar
@@ -126,6 +145,34 @@ export default function EditorToolbar({
   if (compact || isCollapsed) {
     return (
       <div className={cn('editor-toolbar flex items-center gap-1 flex-wrap', className)}>
+        {/* Save controls */}
+        {showSaveControls && (
+          <>
+            <SaveButton
+              saveStatus={saveStatus}
+              onSave={onSave}
+              isDirty={isDirty}
+              showText={false}
+            />
+            <div className="h-6 w-px bg-border" />
+          </>
+        )}
+
+        {/* Undo/redo controls */}
+        {showUndoRedo && (
+          <>
+            <UndoRedoControls
+              canUndo={canUndo}
+              canRedo={canRedo}
+              undoCount={undoCount}
+              redoCount={redoCount}
+              onUndo={onUndo}
+              onRedo={onRedo}
+            />
+            <div className="h-6 w-px bg-border" />
+          </>
+        )}
+
         {/* Essential mobile buttons */}
         <Button
           size="sm"
@@ -239,6 +286,42 @@ export default function EditorToolbar({
   // Full toolbar for desktop and when expanded
   return (
     <div className={cn('editor-toolbar flex items-center gap-2 flex-wrap p-2 bg-muted/30 rounded-md', className)}>
+      {/* Save section */}
+      {showSaveControls && (
+        <>
+          <div className="flex items-center gap-2">
+            <SaveButton
+              saveStatus={saveStatus}
+              onSave={onSave}
+              isDirty={isDirty}
+            />
+            <SaveStatusIndicator
+              saveStatus={saveStatus}
+              lastSaved={lastSaved}
+              isDirty={isDirty}
+              saveError={saveError}
+            />
+          </div>
+          <div className="h-6 w-px bg-border" />
+        </>
+      )}
+
+      {/* Undo/redo section */}
+      {showUndoRedo && (
+        <>
+          <UndoRedoControls
+            canUndo={canUndo}
+            canRedo={canRedo}
+            undoCount={undoCount}
+            redoCount={redoCount}
+            onUndo={onUndo}
+            onRedo={onRedo}
+            showCounts={true}
+          />
+          <div className="h-6 w-px bg-border" />
+        </>
+      )}
+
       {/* Chord section */}
       <div className="flex items-center gap-1">
         <span className="text-xs text-muted-foreground hidden sm:inline mr-1">Chords:</span>

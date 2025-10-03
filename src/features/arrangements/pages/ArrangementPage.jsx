@@ -1,10 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import {
-  getArrangementById,
-  getSongById,
-  getArrangementsBySongId
-} from '../../shared/utils/dataHelpers'
+import { useState } from 'react'
+import { useArrangementData } from '../hooks/useArrangementData'
 import ChordProViewer from '@/features/chordpro'
 import ArrangementSwitcher from '../components/ArrangementSwitcher'
 import ArrangementHeader from '../components/ArrangementHeader'
@@ -21,53 +17,17 @@ export function ArrangementPage() {
   const { arrangementId } = useParams()
   const navigate = useNavigate()
   const { breadcrumbs } = useNavigation()
-
-  const [arrangement, setArrangement] = useState(null)
-  const [song, setSong] = useState(null)
-  const [allArrangements, setAllArrangements] = useState([])
   const [showChords] = useState(true)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
 
-  useEffect(() => {
-    try {
-      setLoading(true)
-
-      // For backward compatibility, check if it's an old song ID format
-      const id = arrangementId
-      let arrangementData = null
-
-      // Try to get as arrangement first
-      arrangementData = getArrangementById(id)
-
-      if (!arrangementData) {
-        setError('Arrangement not found')
-        setLoading(false)
-        return
-      }
-
-      // Get parent song
-      const songData = getSongById(arrangementData.songId)
-      if (!songData) {
-        setError('Parent song not found')
-        setLoading(false)
-        return
-      }
-
-      // Get all arrangements for this song
-      const siblingArrangements = getArrangementsBySongId(arrangementData.songId)
-
-      setArrangement(arrangementData)
-      setSong(songData)
-      setAllArrangements(siblingArrangements)
-      setError(null)
-    } catch (err) {
-      setError('Failed to load arrangement')
-      console.error('Error loading arrangement:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [arrangementId])
+  // Use IndexedDB hook instead of mock data
+  const {
+    arrangement,
+    song,
+    allArrangements,
+    loading,
+    error,
+    updateArrangement
+  } = useArrangementData(arrangementId)
 
   // Loading state
   if (loading) {
@@ -128,12 +88,22 @@ export function ArrangementPage() {
         {/* ChordPro Content */}
         <div className="mb-8">
           <ChordProViewer
-            content={arrangement.chordProContent}
+            content={arrangement.chordProContent || ''}
             showChords={showChords}
             showToggle={true}
             editable={true}
-            onContentChange={(newContent) => {
-              logger.debug('ChordPro content changed:', newContent.length)
+            arrangementId={arrangementId}
+            onContentChange={async (newContent) => {
+              logger.debug('ChordPro content changed, saving to IndexedDB:', newContent.length)
+              // Save via useArrangementData hook
+              const result = await updateArrangement({
+                chordProContent: newContent
+              })
+              if (result.success) {
+                logger.debug('Content saved to IndexedDB successfully')
+              } else {
+                logger.error('Failed to save content:', result.error)
+              }
             }}
             onLoad={(metadata) => {
               // Optional: Log or use metadata

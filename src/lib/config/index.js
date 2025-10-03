@@ -121,6 +121,49 @@ export const config = {
         enableVirtualization: false,    // Virtual scrolling for very large docs
         maxUndoHistory: 100             // Maximum undo/redo history entries
       }
+    },
+    persistence: {
+      save: {
+        debounceMs: 1000,               // Debounce arrangement save operations
+        retryAttempts: 3,               // Retry failed saves
+        retryDelayMs: 2000,             // Delay between retry attempts
+        showSuccessToast: true,         // Show success notification after save
+        successToastDurationMs: 3000,   // Duration to show success message
+        performanceTarget: 200          // Target save time in ms
+      },
+      recovery: {
+        enableDraftRecovery: true,      // Enable draft recovery on editor load
+        enableSessionRecovery: true,    // Enable session recovery after crash
+        draftComparisonLines: 10,       // Lines to show in recovery preview
+        autoApplyThreshold: 0,          // Auto-apply if changes < threshold (0 = always ask)
+        recoveryDialogTimeout: 30000,   // Auto-dismiss recovery dialog after (ms)
+        checkOnMount: true              // Check for recovery on component mount
+      },
+      session: {
+        snapshotIntervalMs: 30000,      // Create session snapshot every 30s
+        snapshotOnVisibilityChange: true, // Snapshot when tab loses focus
+        snapshotOnBeforeUnload: true,   // Snapshot before page unload
+        maxSnapshots: 5,                // Maximum session snapshots to keep
+        snapshotRetentionHours: 24,     // Hours to retain session snapshots
+        includeScrollPosition: true,    // Save scroll position in snapshot
+        includeCursorPosition: true,    // Save cursor position in snapshot
+        includeUndoHistory: false       // Save undo/redo history (large)
+      },
+      conflict: {
+        enableDetection: true,          // Detect conflicting edits
+        resolutionStrategy: 'ask',      // 'ask' | 'local' | 'remote' | 'merge'
+        showDiffView: true,             // Show diff in conflict resolution UI
+        autoMergeIfPossible: false,     // Attempt automatic merge
+        conflictMarkers: true           // Add conflict markers to content
+      },
+      ui: {
+        showSaveButton: true,           // Show explicit save button
+        showSaveStatus: true,           // Show save status indicator
+        showUndoRedoButtons: true,      // Show visual undo/redo controls
+        showDirtyIndicator: true,       // Show asterisk when unsaved
+        saveButtonPosition: 'toolbar',  // 'toolbar' | 'fixed' | 'floating'
+        statusPosition: 'toolbar'       // 'toolbar' | 'fixed' | 'floating'
+      }
     }
   }
 };
