@@ -371,8 +371,8 @@ export function ChordProSplitView({
 
       <div className="flex-1 min-h-0">
         {viewMode === 'edit' && (
-          <div className="h-full overflow-auto" ref={editorScrollRef}>
-            <div className="w-full max-w-4xl mx-auto px-4">
+          <div className="h-full flex flex-col" ref={editorScrollRef}>
+            <div className="w-full max-w-4xl mx-auto px-4 flex-1 min-h-0">
               <ChordProEditor
                 value={content}
                 onChange={handleContentChange}
@@ -405,10 +405,10 @@ export function ChordProSplitView({
             <Panel
               defaultSize={50}
               minSize={20}
-              className="overflow-auto"
+              className="flex flex-col"
               ref={editorScrollRef}
             >
-              <div className="w-full max-w-4xl mx-auto px-4">
+              <div className="w-full max-w-4xl mx-auto px-4 flex-1 min-h-0">
                 <ChordProEditor
                   value={content}
                   onChange={handleContentChange}

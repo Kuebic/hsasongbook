@@ -130,6 +130,7 @@ export default function ChordProEditor({
     'chordpro-editor',
     'relative',
     'w-full',
+    'h-full',
     className
   )
 
@@ -148,7 +149,7 @@ export default function ChordProEditor({
 
   return (
     <Card className={containerClasses} ref={containerRef}>
-      <CardContent className="p-0">
+      <CardContent className="p-0 flex flex-col h-full">
         {/* Toolbar */}
         {showToolbar && (
           <div className="border-b">
@@ -161,9 +162,9 @@ export default function ChordProEditor({
         )}
 
         {/* Editor container */}
-        <div className="relative">
+        <div className="relative flex-1 min-h-0">
           {/* CodeMirror Editor */}
-          <div className="chordpro-editor-container">
+          <div className="chordpro-editor-container h-full overflow-auto">
             <CodeMirror
               value={editor.content}
               placeholder={placeholder}
@@ -171,9 +172,7 @@ export default function ChordProEditor({
               editable={!disabled}
               onChange={handleChange}
               onCreateEditor={handleCreateEditor}
-              height="calc(100vh - 20rem)"
-              minHeight="400px"
-              maxHeight="calc(100vh - 10rem)"
+              height="100%"
               className={cn(
                 'chordpro-codemirror',
                 disabled && 'opacity-50 cursor-not-allowed'
