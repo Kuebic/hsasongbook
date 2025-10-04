@@ -6,6 +6,7 @@
  */
 
 import { StreamLanguage } from '@codemirror/language'
+import { tags as t } from '@lezer/highlight'
 
 /**
  * ChordPro stream parser implementation
@@ -129,6 +130,21 @@ const chordProParser = {
     indentOnInput: /^\s*[})]$/,
     closeBrackets: { brackets: ['[', '{'] },
     autocomplete: true
+  },
+
+  // Token table - maps custom token names to Lezer tags for syntax highlighting
+  tokenTable: {
+    'lyrics': t.content,
+    'chord': t.special(t.string),
+    'directive-name': t.keyword,
+    'directive-arg': t.string,
+    'directive-bracket': t.bracket,
+    'directive-separator': t.operator,
+    'directive-content': t.string,
+    'comment': t.lineComment,
+    'section-marker': t.labelName,
+    'chord-invalid': t.invalid,
+    'chord-partial': t.special(t.variableName)
   }
 }
 
