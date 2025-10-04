@@ -96,6 +96,7 @@ export function useTransposition(parsedSong, originalKey = 'C') {
       // Process lines with enharmonic conversion, preserving all content types
       processedSong.lines.forEach(line => {
         let lineText = ''
+        let lineHasDirective = false
 
         line.items.forEach(item => {
           if (item instanceof ChordSheetJS.ChordLyricsPair) {
@@ -113,6 +114,7 @@ export function useTransposition(parsedSong, originalKey = 'C') {
           } else if (item instanceof ChordSheetJS.Comment) {
             // Preserve comments
             chordProLines.push(`{comment: ${item.content}}`)
+            lineHasDirective = true
           } else if (item instanceof ChordSheetJS.Tag) {
             // Preserve tags (section markers, etc.)
             if (item.value) {
@@ -120,14 +122,18 @@ export function useTransposition(parsedSong, originalKey = 'C') {
             } else {
               chordProLines.push(`{${item.name}}`)
             }
+            lineHasDirective = true
           } else if (item.content) {
             // Handle any other content types
             lineText += item.content
           }
         })
 
-        // Always push the line to preserve empty lines and formatting
-        chordProLines.push(lineText)
+        // Only push lineText if it has content OR if no directive was pushed
+        // This prevents duplicate empty lines after tags/comments
+        if (!lineHasDirective || lineText) {
+          chordProLines.push(lineText)
+        }
       })
 
       // Re-parse to get proper Song object
