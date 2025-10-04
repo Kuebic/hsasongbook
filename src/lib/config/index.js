@@ -95,14 +95,7 @@ export const config = {
         minHeight: '300px',             // Minimum editor height
         maxHeight: '800px'              // Maximum editor height before scrolling
       },
-      completion: {
-        activateOnTyping: true,         // Show completions while typing
-        maxRenderedOptions: 20,         // Maximum completion items to show
-        debounceMs: 150,                // Debounce completion trigger
-        includeChords: true,            // Include chord completions
-        includeDirectives: true,        // Include directive completions
-        caseSensitive: false            // Case sensitive completion matching
-      },
+      // Note: completion config removed - autocomplete disabled
       validation: {
         enableLiveValidation: true,     // Real-time syntax validation
         showErrorTooltips: true,        // Show error details on hover

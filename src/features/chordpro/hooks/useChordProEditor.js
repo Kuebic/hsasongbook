@@ -13,7 +13,6 @@ import { bracketMatching, indentOnInput } from '@codemirror/language'
 import { chordproConfig } from '@/lib/config'
 import chordProLanguage from '../language/chordProLanguage'
 import { createChordProHighlighting } from '../language/chordProHighlight'
-import createChordProCompletion from '../language/chordProComplete'
 import { useChordSheet } from './useChordSheet'
 
 /**
@@ -93,8 +92,8 @@ export function useChordProEditor(options = {}) {
       chordProLanguage,
       createChordProHighlighting(),
 
-      // Auto-completion
-      createChordProCompletion(),
+      // Note: Autocomplete disabled - bracket auto-closing handled by language config
+      // See chordProLanguage.js: closeBrackets: { brackets: ['[', '{'] }
 
       // Basic editing features
       history(),
@@ -192,7 +191,7 @@ export function useChordProEditor(options = {}) {
       highlightSelectionMatches: false,
       searchKeymap: true,
       bracketMatching: true,
-      autocompletion: true,
+      autocompletion: false, // Disabled - no completion source provided
       rectangularSelection: false,
       history: true
     },

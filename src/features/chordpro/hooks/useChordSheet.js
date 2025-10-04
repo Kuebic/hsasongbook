@@ -9,6 +9,7 @@
 import { useMemo } from 'react'
 import ChordSheetJS from 'chordsheetjs'
 import { injectMetadata } from '../utils/metadataInjector'
+import logger from '@/lib/logger'
 
 export function useChordSheet(chordProText, showChords = true, arrangementMetadata = null, metadataKey = null) {
   const result = useMemo(() => {
@@ -103,7 +104,7 @@ export function useChordSheet(chordProText, showChords = true, arrangementMetada
         error: null
       }
     } catch (error) {
-      console.error('ChordPro parsing error:', error)
+      logger.error('ChordPro parsing error:', error)
 
       // Graceful fallback to display raw text
       return {

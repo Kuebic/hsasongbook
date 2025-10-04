@@ -34,4 +34,4 @@ export * from './utils/editorHelpers'
 // Language support
 export { chordProLanguage } from './language/chordProLanguage'
 export { chordProHighlight } from './language/chordProHighlight'
-export { chordProCompletion } from './language/chordProComplete'
+// Note: chordProCompletion removed - autocomplete disabled to prevent parsing errors
