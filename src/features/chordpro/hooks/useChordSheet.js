@@ -14,7 +14,7 @@ import logger from '@/lib/logger'
 export function useChordSheet(chordProText, showChords = true, arrangementMetadata = null, metadataKey = null) {
   const result = useMemo(() => {
     if (!chordProText) {
-      return { parsedSong: null, htmlOutput: '', metadata: {}, error: null, hasChords: false }
+      return { parsedSong: null, htmlOutput: '', metadata: {}, hasChords: false, error: null }
     }
 
     try {
@@ -62,44 +62,10 @@ export function useChordSheet(chordProText, showChords = true, arrangementMetada
         htmlOutput = `<div class="hide-chords">${htmlOutput}</div>`
       }
 
-      // Parse sections for navigation (future feature)
-      const sections = []
-      let currentSection = null
-
-      song.lines.forEach(line => {
-        line.items.forEach(item => {
-          if (item instanceof ChordSheetJS.Tag) {
-            if (item.name === 'start_of_chorus' || item.name === 'soc') {
-              currentSection = { type: 'chorus', lines: [] }
-              sections.push(currentSection)
-            } else if (item.name === 'start_of_verse' || item.name === 'sov') {
-              currentSection = { type: 'verse', lines: [] }
-              sections.push(currentSection)
-            } else if (item.name === 'start_of_bridge' || item.name === 'sob') {
-              currentSection = { type: 'bridge', lines: [] }
-              sections.push(currentSection)
-            } else if (item.name === 'start_of_tab' || item.name === 'sot') {
-              currentSection = { type: 'tab', lines: [] }
-              sections.push(currentSection)
-            } else if (item.name === 'end_of_chorus' || item.name === 'eoc' ||
-                      item.name === 'end_of_verse' || item.name === 'eov' ||
-                      item.name === 'end_of_bridge' || item.name === 'eob' ||
-                      item.name === 'end_of_tab' || item.name === 'eot') {
-              currentSection = null
-            }
-          }
-        })
-
-        if (currentSection) {
-          currentSection.lines.push(line)
-        }
-      })
-
       return {
         parsedSong: song,
         htmlOutput,
         metadata,
-        sections,
         hasChords,
         error: null
       }
@@ -111,7 +77,6 @@ export function useChordSheet(chordProText, showChords = true, arrangementMetada
         parsedSong: null,
         htmlOutput: `<pre class="chord-pro-fallback">${chordProText}</pre>`,
         metadata: {},
-        sections: [],
         hasChords: false,
         error: error.message || 'Failed to parse ChordPro content'
       }

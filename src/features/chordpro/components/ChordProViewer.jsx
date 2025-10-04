@@ -13,7 +13,7 @@ import ChordToggle from './ChordToggle'
 import TransposeControl from './TransposeControl'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Edit3, Eye } from 'lucide-react'
+import { Edit3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import logger from '@/lib/logger'
 
@@ -59,8 +59,7 @@ export default function ChordProViewer({
     parsedSong,
     metadata,
     hasChords,
-    error,
-    sections
+    error
   } = useChordSheet(content, showChords, arrangementMetadata, metadataKey)
 
   // Determine original key (from metadata or default)
@@ -188,61 +187,14 @@ export default function ChordProViewer({
   // Build the viewer UI
   const viewerContent = (
     <Card className={containerClasses}>
-      <CardContent className="px-1 py-2 sm:p-2 lg:p-4">
-        {/* Header controls */}
-        <div className="flex flex-col gap-3">
-          {/* Control buttons - Metadata now shown only in ArrangementHeader */}
-          <div className="flex justify-between items-center flex-wrap gap-2">
-            <div className="flex gap-2 items-center ml-auto">
-              {editable && (
-                <Button
-                  variant={isEditMode ? "default" : "outline"}
-                  size="sm"
-                  onClick={handleEditModeToggle}
-                  className="text-xs"
-                >
-                  {isEditMode ? (
-                    <>
-                      <Eye className="h-3 w-3 mr-1" />
-                      View
-                    </>
-                  ) : (
-                    <>
-                      <Edit3 className="h-3 w-3 mr-1" />
-                      Edit
-                    </>
-                  )}
-                </Button>
-              )}
-              {showToggle && hasChords && !isEditMode && (
-                <ChordToggle
-                  showChords={showChords}
-                  onToggle={handleToggleChords}
-                  size="sm"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Transpose controls */}
-          {showTranspose && hasChords && !isEditMode && (
-            <TransposeControl
-              currentKey={currentKey}
-              transpositionOffset={transpositionOffset}
-              onTranspose={transposeBy}
-              onReset={reset}
-              onToggleEnharmonic={toggleEnharmonic}
-              preferFlats={preferFlats}
-            />
-          )}
-        </div>
-
+      <CardContent className="p-0">
         {/* Edit Mode Content */}
-        {isEditMode && editable && SplitViewComponent && (
-          <div className="mt-4 border rounded-lg overflow-hidden h-[calc(100vh-16rem)] min-h-[400px] lg:h-[calc(100vh-12rem)]">
+        {isEditMode && editable && SplitViewComponent ? (
+          <div className="border rounded-lg overflow-hidden h-[calc(100vh-16rem)] min-h-[400px] lg:h-[calc(100vh-12rem)]">
             <SplitViewComponent
               initialContent={editContent}
               onContentChange={handleContentChange}
+              onViewModeExit={handleEditModeToggle}
               viewerOptions={{
                 showChords,
                 showToggle: false,
@@ -250,6 +202,48 @@ export default function ChordProViewer({
               }}
             />
           </div>
+        ) : (
+          <>
+            {/* View Mode Header controls */}
+            <div className="flex flex-col gap-3 px-1 py-2 sm:p-2 lg:p-4">
+              <div className="flex justify-between items-center flex-wrap gap-2">
+                <div className="flex gap-2 items-center">
+                  {showToggle && hasChords && (
+                    <ChordToggle
+                      showChords={showChords}
+                      onToggle={handleToggleChords}
+                      size="sm"
+                    />
+                  )}
+                </div>
+                <div className="flex gap-2 items-center">
+                  {editable && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEditModeToggle}
+                      className="text-xs"
+                    >
+                      <Edit3 className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Transpose controls */}
+              {showTranspose && hasChords && (
+                <TransposeControl
+                  currentKey={currentKey}
+                  transpositionOffset={transpositionOffset}
+                  onTranspose={transposeBy}
+                  onReset={reset}
+                  onToggleEnharmonic={toggleEnharmonic}
+                  preferFlats={preferFlats}
+                />
+              )}
+            </div>
+          </>
         )}
 
         {/* View Mode Content */}
@@ -277,25 +271,7 @@ export default function ChordProViewer({
           </>
         )}
 
-        {/* Section navigation (if sections exist) */}
-        {sections && sections.length > 0 && (
-          <div className="mt-6 pt-4 border-t">
-            <p className="text-xs text-muted-foreground mb-2">Sections:</p>
-            <div className="flex flex-wrap gap-2">
-              {sections.map((section, index) => (
-                <span
-                  key={index}
-                  className="text-xs px-2 py-1 bg-muted rounded-full capitalize"
-                >
-                  {section.type}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
       </CardContent>
-
     </Card>
   )
 

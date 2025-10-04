@@ -42,6 +42,7 @@ const { editor: editorConfig } = config.chordpro;
  * @param {boolean} props.enableSyncScroll - Enable synchronized scrolling
  * @param {boolean} props.enableGestures - Enable mobile gestures
  * @param {string} props.arrangementId - Arrangement ID for auto-save
+ * @param {Function} props.onViewModeExit - Callback to exit edit mode and return to view mode
  * @returns {JSX.Element}
  */
 export function ChordProSplitView({
@@ -51,7 +52,8 @@ export function ChordProSplitView({
   viewerOptions = {},
   className = '',
   enableGestures = true,
-  arrangementId = null
+  arrangementId = null,
+  onViewModeExit = null
 }) {
   // View modes: 'edit' | 'preview' | 'split'
   const [viewMode, setViewMode] = useState(() => {
@@ -269,6 +271,17 @@ export function ChordProSplitView({
   const ToolbarHeader = () => (
     <div className="flex items-center justify-between p-2 bg-background border-b">
       <ViewModeControls />
+      {onViewModeExit && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onViewModeExit}
+          className="gap-1 ml-auto"
+        >
+          <Eye className="h-4 w-4" />
+          <span className="hidden sm:inline">View</span>
+        </Button>
+      )}
     </div>
   );
 
