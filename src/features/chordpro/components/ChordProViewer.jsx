@@ -19,6 +19,7 @@ import logger from '@/lib/logger'
 
 // Import CSS styles
 import '../styles/chordpro.css'
+import '../styles/print.css'
 
 export default function ChordProViewer({
   content,

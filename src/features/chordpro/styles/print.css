@@ -93,6 +93,46 @@
     margin-right: 1em;
   }
 
+  /* ArrangementHeader print styles */
+  h1 {
+    text-align: center;
+    font-size: 18pt;
+    font-weight: bold;
+    margin-bottom: 0.25em;
+    page-break-after: avoid;
+  }
+
+  h1 span {
+    display: block;
+    font-size: 14pt;
+    font-weight: normal;
+    color: #333 !important;
+    margin-top: 0.25em;
+  }
+
+  /* Artist name */
+  h1 + p {
+    text-align: center;
+    font-size: 12pt;
+    font-style: italic;
+    margin-bottom: 0.75em;
+    color: #333 !important;
+  }
+
+  /* Metadata badges - convert to text */
+  .lucide,
+  .lucide-music,
+  .lucide-clock,
+  .lucide-guitar,
+  .lucide-hash {
+    display: none !important;
+  }
+
+  /* Tags - hide in print for cleaner output */
+  .lucide-hash {
+    display: none !important;
+  }
+
   /* Chord positioning */
   .chord {
     position: relative;

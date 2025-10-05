@@ -12,7 +12,7 @@ import { useNavigation } from '../../shared/hooks/useNavigation'
 import { Button } from '@/components/ui/button'
 import logger from '@/lib/logger'
 import { Card, CardContent } from '@/components/ui/card'
-import { ArrowLeft, Music } from 'lucide-react'
+import { ArrowLeft, Music, Printer } from 'lucide-react'
 import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSanitizer'
 
 export function ArrangementPage() {
@@ -67,15 +67,27 @@ export function ArrangementPage() {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-4xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-screen-2xl">
           {/* Navigation Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 no-print">
             <Breadcrumbs items={breadcrumbs} />
 
-            {/* Arrangement Switcher */}
-            <ArrangementSwitcher
-              currentArrangement={arrangement}
-              allArrangements={allArrangements}
-              songTitle={song.title}
-            />
+            <div className="flex gap-2 items-center">
+              {/* Print Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Print
+              </Button>
+
+              {/* Arrangement Switcher */}
+              <ArrangementSwitcher
+                currentArrangement={arrangement}
+                allArrangements={allArrangements}
+                songTitle={song.title}
+              />
+            </div>
           </div>
 
         {/* Arrangement Header */}
@@ -89,7 +101,7 @@ export function ArrangementPage() {
 
         {/* Metadata Form - Only show in edit mode */}
         {isEditMode && (
-          <div className="mb-6">
+          <div className="mb-6 no-print">
             <ArrangementMetadataForm
               metadata={{
                 key: arrangement.key,
@@ -151,7 +163,7 @@ export function ArrangementPage() {
         </div>
 
         {/* Navigation Footer */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between no-print">
           <Button
             variant="outline"
             onClick={() => navigate(`/song/${song.id}`)}
