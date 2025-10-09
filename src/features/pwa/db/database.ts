@@ -25,25 +25,6 @@ export interface DatabaseStats {
 }
 
 /**
- * Storage health information interface
- */
-export interface StorageHealthInfo {
-  supported: boolean;
-  used: number;
-  available: number;
-  percentage: number;
-  healthy: boolean;
-  status?: string;
-  databaseRecords?: DatabaseStats;
-  recommendations?: string[];
-  formattedUsage?: string;
-  formattedQuota?: string;
-  formattedAvailable?: string;
-  message?: string;
-  error?: string;
-}
-
-/**
  * Initialize the IndexedDB database with proper schema and migrations
  */
 export async function initDatabase(): Promise<IDBPDatabase<HSASongbookDB>> {
@@ -114,61 +95,16 @@ export function closeDatabase(): void {
 }
 
 /**
- * Check database health and storage quota
- */
-export async function checkStorageHealth(): Promise<StorageHealthInfo> {
-  try {
-    const quota = await storageManager.getStorageQuota();
-    const stats = await getDatabaseStats();
-
-    if (!quota.supported) {
-      return {
-        supported: false,
-        used: 0,
-        available: 0,
-        percentage: 0,
-        healthy: true,
-        message: 'Storage API not supported'
-      };
-    }
-
-    return {
-      supported: true,
-      used: quota.usage,
-      available: quota.available,
-      percentage: quota.percentage * 100,
-      healthy: quota.status !== 'critical',
-      status: quota.status,
-      databaseRecords: stats,
-      recommendations: storageManager.getStorageRecommendations(quota.percentage, stats),
-      formattedUsage: quota.formattedUsage,
-      formattedQuota: quota.formattedQuota,
-      formattedAvailable: quota.formattedAvailable
-    };
-  } catch (error) {
-    logger.error('Error checking storage health:', error);
-    return {
-      supported: false,
-      used: 0,
-      available: 0,
-      percentage: 0,
-      healthy: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-  }
-}
-
-/**
  * Clear all data from the database (for testing/development)
  */
 export async function clearDatabase(): Promise<void> {
   const db = await getDatabase();
-  const stores: Array<keyof HSASongbookDB> = ['songs', 'arrangements', 'setlists', 'syncQueue', 'preferences'];
+  const stores = ['songs', 'arrangements', 'chordproDrafts', 'setlists', 'syncQueue', 'preferences'] as const;
 
-  const tx = db.transaction(stores, 'readwrite');
+  const tx = db.transaction([...stores], 'readwrite');
 
   await Promise.all(stores.map(storeName => {
-    if (db.objectStoreNames.contains(storeName as string)) {
+    if (db.objectStoreNames.contains(storeName)) {
       return tx.objectStore(storeName).clear();
     }
     return Promise.resolve();

@@ -29,10 +29,6 @@ export interface StorageConfig {
   /** Monitoring interval (milliseconds) */
   /** How often to check storage quota */
   STORAGE_CHECK_INTERVAL: number;
-
-  /** Display settings */
-  /** Show storage indicator in UI */
-  SHOW_STORAGE_INDICATOR: boolean;
 }
 
 export const STORAGE_CONFIG: StorageConfig = {
@@ -51,8 +47,5 @@ export const STORAGE_CONFIG: StorageConfig = {
   ENABLE_STORAGE_EVENTS: true,
 
   // Monitoring interval (milliseconds)
-  STORAGE_CHECK_INTERVAL: 60000, // Check every 60 seconds
-
-  // Display settings
-  SHOW_STORAGE_INDICATOR: true
+  STORAGE_CHECK_INTERVAL: 60000 // Check every 60 seconds
 };
