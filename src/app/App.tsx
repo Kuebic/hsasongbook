@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { SearchPage } from '../features/search'
 import { SongPage } from '../features/songs'
 import { ArrangementPage } from '../features/arrangements'
+import { SetlistsIndexPage, SetlistPage, SetlistPerformancePage } from '../features/setlists'
 import { NotFound } from '../features/shared/pages/NotFound'
 import ScrollRestoration from '../features/shared/components/ScrollRestoration'
 import MobileNav from '../features/shared/components/MobileNav'
@@ -92,6 +93,9 @@ function AppWithFeatures() {
         <Route path="/" element={<SearchPage />} />
         <Route path="/song/:songId" element={<SongPage />} />
         <Route path="/arrangement/:arrangementId" element={<ArrangementPage />} />
+        <Route path="/setlists" element={<SetlistsIndexPage />} />
+        <Route path="/setlist/:setlistId" element={<SetlistPage />} />
+        <Route path="/setlist/:setlistId/performance/:arrangementIndex?" element={<SetlistPerformancePage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
