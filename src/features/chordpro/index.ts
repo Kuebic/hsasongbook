@@ -35,3 +35,37 @@ export * from './utils/editorHelpers'
 export { chordProLanguage } from './language/chordProLanguage'
 export { chordProHighlight } from './language/chordProHighlight'
 // Note: chordProCompletion removed - autocomplete disabled to prevent parsing errors
+
+// Type exports
+export type {
+  ChordSheetResult,
+  ChordSheetMetadata,
+  TranspositionState,
+  EditorState,
+  DraftMetadata,
+  UseTranspositionReturn,
+  AutoSaveStatus,
+  UseAutoSaveOptions,
+  UseAutoSaveReturn,
+  SaveStatus,
+  ConflictData,
+  SaveResult,
+  UseArrangementSaveOptions,
+  UseArrangementSaveReturn,
+  EditorSelection,
+  UseChordProEditorOptions,
+  UseChordProEditorReturn,
+  DraftComparison,
+  DraftPreview,
+  UseDraftRecoveryReturn,
+  ShortcutItem,
+  UseEditorShortcutsOptions,
+  UseEditorShortcutsReturn,
+  KeySignature,
+  AlternativeKey,
+  UseKeyDetectionReturn,
+  UseSynchronizedScrollOptions,
+  UseSynchronizedScrollReturn,
+  UndoRedoState,
+  UseUndoRedoReturn,
+} from './types'

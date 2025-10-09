@@ -6,10 +6,12 @@
  */
 
 import { useMemo } from 'react'
+import { Song as ChordSheetSong } from 'chordsheetjs'
 import logger from '@/lib/logger'
+import type { UseKeyDetectionReturn, KeySignature, AlternativeKey } from '../types'
 
 // Key signatures with their characteristic chords
-const KEY_SIGNATURES = {
+const KEY_SIGNATURES: Record<string, string[]> = {
   // Major keys with their diatonic chords
   'C': ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim'],
   'G': ['G', 'Am', 'Bm', 'C', 'D', 'Em', 'F#dim'],
@@ -50,10 +52,10 @@ const CHORD_WEIGHTS = {
 
 /**
  * Extract root note from chord string
- * @param {string} chordString - Full chord notation (e.g., "Cmaj7", "F#m")
- * @returns {string} Root note (e.g., "C", "F#m")
+ * @param chordString - Full chord notation (e.g., "Cmaj7", "F#m")
+ * @returns Root note (e.g., "C", "F#m")
  */
-function extractRootChord(chordString) {
+function extractRootChord(chordString: string): string | null {
   if (!chordString) return null
 
   // Remove bass note if present (e.g., "C/G" -> "C")
@@ -73,11 +75,11 @@ function extractRootChord(chordString) {
 
 /**
  * Build chord histogram from parsed song
- * @param {object} parsedSong - ChordSheetJS Song object
- * @returns {object} Chord frequency map
+ * @param parsedSong - ChordSheetJS Song object
+ * @returns Chord frequency map
  */
-function buildChordHistogram(parsedSong) {
-  const histogram = {}
+function buildChordHistogram(parsedSong: ChordSheetSong | null): Record<string, number> {
+  const histogram: Record<string, number> = {}
 
   if (!parsedSong || !parsedSong.lines) {
     return histogram
@@ -107,11 +109,11 @@ function buildChordHistogram(parsedSong) {
 
 /**
  * Calculate confidence score for a key based on chord histogram
- * @param {object} histogram - Chord frequency map
- * @param {array} keyChords - Diatonic chords for the key
- * @returns {number} Confidence score (0-1)
+ * @param histogram - Chord frequency map
+ * @param keyChords - Diatonic chords for the key
+ * @returns Confidence score (0-1)
  */
-function calculateKeyConfidence(histogram, keyChords) {
+function calculateKeyConfidence(histogram: Record<string, number>, keyChords: string[]): number {
   const totalChordCount = Object.values(histogram).reduce((sum, count) => sum + count, 0)
   if (totalChordCount === 0) return 0
 
@@ -148,12 +150,12 @@ function calculateKeyConfidence(histogram, keyChords) {
 
 /**
  * Determine if a key is major or minor based on tonic chord
- * @param {string} key - Key name
- * @returns {object} Key signature information
+ * @param key - Key name
+ * @returns Key signature information
  */
-function getKeySignature(key) {
+function getKeySignature(key: string): KeySignature {
   const isMinor = key.endsWith('m')
-  const sharpsFlats = {
+  const sharpsFlats: Record<string, { sharps: number; flats: number }> = {
     // Major keys
     'C': { sharps: 0, flats: 0 },
     'G': { sharps: 1, flats: 0 },
@@ -192,10 +194,10 @@ function getKeySignature(key) {
 
 /**
  * Main key detection hook
- * @param {object} parsedSong - ChordSheetJS Song object
- * @returns {object} Detected key information
+ * @param parsedSong - ChordSheetJS Song object
+ * @returns Detected key information
  */
-export function useKeyDetection(parsedSong) {
+export function useKeyDetection(parsedSong: ChordSheetSong | null): UseKeyDetectionReturn {
   const result = useMemo(() => {
     if (!parsedSong) {
       return {
@@ -224,7 +226,7 @@ export function useKeyDetection(parsedSong) {
       }
 
       // Calculate confidence for each possible key
-      const keyScores = []
+      const keyScores: Array<{ key: string; confidence: number }> = []
 
       Object.entries(KEY_SIGNATURES).forEach(([key, chords]) => {
         const confidence = calculateKeyConfidence(histogram, chords)
@@ -250,7 +252,7 @@ export function useKeyDetection(parsedSong) {
 
       // Get the most likely key
       const bestMatch = keyScores[0]
-      const alternativeKeys = keyScores.slice(1, 4).map(k => ({
+      const alternativeKeys: AlternativeKey[] = keyScores.slice(1, 4).map(k => ({
         key: k.key,
         confidence: k.confidence
       }))

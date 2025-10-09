@@ -1,50 +1,52 @@
-import { useParams, useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import { getSongById, getArrangementsBySongId } from '../../shared/utils/dataHelpers'
-import SongMetadata from '../components/SongMetadata'
-import ArrangementList from '../../arrangements/components/ArrangementList'
-import Breadcrumbs from '../../shared/components/Breadcrumbs'
-import { PageSpinner } from '../../shared/components/LoadingStates'
-import { SimplePageTransition } from '../../shared/components/PageTransition'
-import { useNavigation } from '../../shared/hooks/useNavigation'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft, Music } from 'lucide-react'
+import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { getSongById, getArrangementsBySongId } from '../../shared/utils/dataHelpers';
+import SongMetadata from '../components/SongMetadata';
+import ArrangementList from '../../arrangements/components/ArrangementList';
+import Breadcrumbs from '../../shared/components/Breadcrumbs';
+import { PageSpinner } from '../../shared/components/LoadingStates';
+import { SimplePageTransition } from '../../shared/components/PageTransition';
+import { useNavigation } from '../../shared/hooks/useNavigation';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Music } from 'lucide-react';
+import type { Song } from '@/types/Song.types';
+import type { Arrangement } from '@/types/Arrangement.types';
 
 export function SongPage() {
-  const { songId } = useParams()
-  const navigate = useNavigate()
-  const { breadcrumbs } = useNavigation()
-  const [song, setSong] = useState(null)
-  const [arrangements, setArrangements] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { songId } = useParams<{ songId: string }>();
+  const navigate = useNavigate();
+  const { breadcrumbs } = useNavigation();
+  const [song, setSong] = useState<Song | null>(null);
+  const [arrangements, setArrangements] = useState<Arrangement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
-      setLoading(true)
-      const songData = getSongById(songId)
+      setLoading(true);
+      const songData = getSongById(songId);
 
       if (!songData) {
-        setError('Song not found')
-        setLoading(false)
-        return
+        setError('Song not found');
+        setLoading(false);
+        return;
       }
 
-      setSong(songData)
-      setArrangements(getArrangementsBySongId(songId))
-      setError(null)
+      setSong(songData);
+      setArrangements(getArrangementsBySongId(songId));
+      setError(null);
     } catch (err) {
-      setError('Failed to load song')
-      console.error('Error loading song:', err)
+      setError('Failed to load song');
+      console.error('Error loading song:', err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [songId])
+  }, [songId]);
 
   // Loading state
   if (loading) {
-    return <PageSpinner message="Loading song details..." />
+    return <PageSpinner message="Loading song details..." />;
   }
 
   // Error state
@@ -69,7 +71,7 @@ export function SongPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -111,5 +113,5 @@ export function SongPage() {
         </div>
       </div>
     </SimplePageTransition>
-  )
+  );
 }

@@ -11,13 +11,14 @@
  * - Print-optimized CSS support
  */
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, RefObject } from 'react';
 import {
   Panel,
   PanelGroup,
   PanelResizeHandle,
 } from 'react-resizable-panels';
 import { useGesture } from '@use-gesture/react';
+import { EditorView } from '@uiw/react-codemirror';
 import ChordProEditor from './ChordProEditor';
 import ChordProViewer from './ChordProViewer';
 import { Button } from '@/components/ui/button';
@@ -31,19 +32,21 @@ import '../styles/print.css'; // Import print styles for professional chord shee
 
 const { editor: editorConfig } = config.chordpro;
 
+type ViewMode = 'edit' | 'preview' | 'split';
+
+interface ChordProSplitViewProps {
+  initialContent?: string;
+  onContentChange?: (content: string) => void;
+  editorOptions?: Record<string, unknown>;
+  viewerOptions?: Record<string, unknown>;
+  className?: string;
+  enableGestures?: boolean;
+  arrangementId?: string | null;
+  onViewModeExit?: (() => void) | null;
+}
+
 /**
  * Split view component for editing and previewing ChordPro content
- * @param {Object} props
- * @param {string} props.initialContent - Initial ChordPro content
- * @param {Function} props.onContentChange - Callback when content changes
- * @param {Object} props.editorOptions - Options for the editor
- * @param {Object} props.viewerOptions - Options for the viewer
- * @param {string} props.className - Additional CSS classes
- * @param {boolean} props.enableSyncScroll - Enable synchronized scrolling
- * @param {boolean} props.enableGestures - Enable mobile gestures
- * @param {string} props.arrangementId - Arrangement ID for auto-save
- * @param {Function} props.onViewModeExit - Callback to exit edit mode and return to view mode
- * @returns {JSX.Element}
  */
 export function ChordProSplitView({
   initialContent = '',
@@ -54,12 +57,12 @@ export function ChordProSplitView({
   enableGestures = true,
   arrangementId = null,
   onViewModeExit = null
-}) {
+}: ChordProSplitViewProps) {
   // View modes: 'edit' | 'preview' | 'split'
-  const [viewMode, setViewMode] = useState(() => {
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
     // Restore from sessionStorage if available
     const stored = sessionStorage.getItem('chordpro-view-mode');
-    return stored || 'split';
+    return (stored as ViewMode) || 'split';
   });
   const [content, setContent] = useState(initialContent);
   const [debouncedContent, setDebouncedContent] = useState(initialContent);
@@ -68,15 +71,15 @@ export function ChordProSplitView({
   const [mobileTabIndex, setMobileTabIndex] = useState(0); // 0: editor, 1: preview
 
   // Refs for component instances
-  const containerRef = useRef(null);
-  const editorViewRef = useRef(null);
-  const editorScrollRef = useRef(null);
-  const viewerScrollRef = useRef(null);
-  const debounceTimerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const editorViewRef = useRef<EditorView | null>(null);
+  const editorScrollRef = useRef<HTMLDivElement>(null);
+  const viewerScrollRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<number | null>(null);
 
   // Detect mobile viewport
   useEffect(() => {
-    const checkMobile = () => {
+    const checkMobile = (): void => {
       const mobile = window.innerWidth < editorConfig.mobileBreakpoint;
       setIsMobile(mobile);
 
@@ -97,7 +100,7 @@ export function ChordProSplitView({
   }, [viewMode]);
 
   // Handle content changes with debouncing for preview
-  const handleContentChange = useCallback((newContent) => {
+  const handleContentChange = useCallback((newContent: string) => {
     setContent(newContent);
     onContentChange?.(newContent);
 
@@ -112,7 +115,7 @@ export function ChordProSplitView({
   }, [onContentChange]);
 
   // Store EditorView reference when editor is ready
-  const handleEditorReady = useCallback((view) => {
+  const handleEditorReady = useCallback((view: EditorView) => {
     editorViewRef.current = view;
     logger.debug('EditorView ready', view);
   }, []);
@@ -172,7 +175,7 @@ export function ChordProSplitView({
 
   // Handle escape key for fullscreen
   useEffect(() => {
-    const handleEscape = (e) => {
+    const handleEscape = (e: KeyboardEvent): void => {
       if (e.key === 'Escape' && isFullscreen) {
         toggleFullscreen();
       }
@@ -406,7 +409,7 @@ export function ChordProSplitView({
               defaultSize={50}
               minSize={20}
               className="flex flex-col"
-              ref={editorScrollRef}
+              ref={editorScrollRef as RefObject<HTMLDivElement>}
             >
               <div className="w-full max-w-4xl mx-auto px-4 flex-1 min-h-0">
                 <ChordProEditor

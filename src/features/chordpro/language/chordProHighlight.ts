@@ -5,8 +5,9 @@
  * Supports both light and dark themes with CSS custom properties
  */
 
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
-import { tags as t } from '@lezer/highlight'
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import type { Extension } from '@codemirror/state';
+import { tags as t } from '@lezer/highlight';
 
 /**
  * ChordPro highlight style definition
@@ -71,7 +72,7 @@ export const chordProHighlight = HighlightStyle.define([
     tag: t.special(t.variableName),
     class: 'cm-chord-partial'
   }
-])
+]);
 
 /**
  * CSS styles for ChordPro syntax highlighting
@@ -222,17 +223,17 @@ export const chordProStyles = `
     border-left-width: 3px;
   }
 }
-`
+`;
 
 /**
  * Create ChordPro syntax highlighting extension
- * @returns {Extension} CodeMirror extension for ChordPro highlighting
+ * @returns CodeMirror extension for ChordPro highlighting
  */
-export function createChordProHighlighting() {
-  return syntaxHighlighting(chordProHighlight)
+export function createChordProHighlighting(): Extension {
+  return syntaxHighlighting(chordProHighlight);
 }
 
 /**
  * Default export for convenient importing
  */
-export default chordProHighlight
+export default chordProHighlight;

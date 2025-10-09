@@ -6,35 +6,36 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { persistenceService } from '../services/PersistenceService.js'
+import { persistenceService } from '../services/PersistenceService'
 import { chordproConfig } from '@/lib/config'
 import logger from '@/lib/logger'
+import type { UseDraftRecoveryReturn, DraftPreview } from '../types'
 
 /**
  * useDraftRecovery Hook
  *
- * @param {string} arrangementId - Arrangement ID
- * @param {boolean} enabled - Whether recovery is enabled
- * @returns {Object} Recovery state and operations
+ * @param arrangementId - Arrangement ID
+ * @param enabled - Whether recovery is enabled
+ * @returns Recovery state and operations
  */
-export function useDraftRecovery(arrangementId, enabled = true) {
+export function useDraftRecovery(arrangementId: string | null, enabled: boolean = true): UseDraftRecoveryReturn {
   const config = chordproConfig.persistence.recovery
 
   // Recovery state
-  const [hasDraft, setHasDraft] = useState(false)
-  const [draftContent, setDraftContent] = useState('')
-  const [arrangementContent, setArrangementContent] = useState('')
-  const [draftTimestamp, setDraftTimestamp] = useState(null)
-  const [arrangementTimestamp, setArrangementTimestamp] = useState(null)
-  const [isDraftNewer, setIsDraftNewer] = useState(false)
-  const [contentDiffers, setContentDiffers] = useState(false)
-  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false)
-  const [checking, setChecking] = useState(false)
+  const [hasDraft, setHasDraft] = useState<boolean>(false)
+  const [draftContent, setDraftContent] = useState<string>('')
+  const [arrangementContent, setArrangementContent] = useState<string>('')
+  const [draftTimestamp, setDraftTimestamp] = useState<Date | null>(null)
+  const [arrangementTimestamp, setArrangementTimestamp] = useState<Date | null>(null)
+  const [isDraftNewer, setIsDraftNewer] = useState<boolean>(false)
+  const [contentDiffers, setContentDiffers] = useState<boolean>(false)
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState<boolean>(false)
+  const [checking, setChecking] = useState<boolean>(false)
 
   /**
    * Check for draft and compare with arrangement
    */
-  const checkForDraft = useCallback(async () => {
+  const checkForDraft = useCallback(async (): Promise<void> => {
     if (!arrangementId || !enabled || !config.enableDraftRecovery) {
       return
     }
@@ -79,7 +80,7 @@ export function useDraftRecovery(arrangementId, enabled = true) {
   /**
    * Apply recovered draft content
    */
-  const applyDraft = useCallback(() => {
+  const applyDraft = useCallback((): string | null => {
     if (!hasDraft || !draftContent) {
       return null
     }
@@ -93,7 +94,7 @@ export function useDraftRecovery(arrangementId, enabled = true) {
   /**
    * Discard draft and use arrangement content
    */
-  const discardDraft = useCallback(async () => {
+  const discardDraft = useCallback(async (): Promise<void> => {
     if (!arrangementId) {
       return
     }
@@ -115,14 +116,14 @@ export function useDraftRecovery(arrangementId, enabled = true) {
   /**
    * Close recovery dialog without action
    */
-  const closeDialog = useCallback(() => {
+  const closeDialog = useCallback((): void => {
     setShowRecoveryDialog(false)
   }, [])
 
   /**
    * Get preview of changes (first N lines)
    */
-  const getPreview = useCallback(() => {
+  const getPreview = useCallback((): DraftPreview => {
     if (!draftContent || !arrangementContent) {
       return {
         draftPreview: '',

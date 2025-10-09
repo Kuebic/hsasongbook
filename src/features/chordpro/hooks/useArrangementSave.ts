@@ -6,14 +6,21 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { persistenceService } from '../services/PersistenceService.js'
+import { persistenceService } from '../services/PersistenceService'
 import { chordproConfig } from '@/lib/config'
 import logger from '@/lib/logger'
+import type {
+  SaveStatus,
+  ConflictData,
+  SaveResult,
+  UseArrangementSaveOptions,
+  UseArrangementSaveReturn
+} from '../types'
 
 /**
- * Save status types
+ * Save status types (for backwards compatibility)
  */
-export const SAVE_STATUS = {
+export const SAVE_STATUS: Record<string, SaveStatus> = {
   IDLE: 'idle',
   SAVING: 'saving',
   SAVED: 'saved',
@@ -25,16 +32,16 @@ export const SAVE_STATUS = {
 /**
  * useArrangementSave Hook
  *
- * @param {string} arrangementId - Arrangement ID
- * @param {string} content - Current content
- * @param {Object} options - Save options
- * @param {Function} options.onSaveSuccess - Callback on successful save
- * @param {Function} options.onSaveError - Callback on save error
- * @param {Function} options.onConflict - Callback on conflict detection
- * @param {number} options.currentVersion - Current arrangement version
- * @returns {Object} Save state and operations
+ * @param arrangementId - Arrangement ID
+ * @param content - Current content
+ * @param options - Save options
+ * @returns Save state and operations
  */
-export function useArrangementSave(arrangementId, content, options = {}) {
+export function useArrangementSave(
+  arrangementId: string | null,
+  content: string,
+  options: UseArrangementSaveOptions = {}
+): UseArrangementSaveReturn {
   const {
     onSaveSuccess,
     onSaveError,
@@ -45,15 +52,15 @@ export function useArrangementSave(arrangementId, content, options = {}) {
   const config = chordproConfig.persistence.save
 
   // Save state
-  const [saveStatus, setSaveStatus] = useState(SAVE_STATUS.IDLE)
-  const [lastSaved, setLastSaved] = useState(null)
-  const [saveError, setSaveError] = useState(null)
-  const [conflictData, setConflictData] = useState(null)
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(SAVE_STATUS.IDLE)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [conflictData, setConflictData] = useState<ConflictData | null>(null)
 
   // Track last saved content for dirty state
-  const lastSavedContentRef = useRef('')
-  const savingRef = useRef(false)
-  const savedVersionRef = useRef(currentVersion)
+  const lastSavedContentRef = useRef<string>('')
+  const savingRef = useRef<boolean>(false)
+  const savedVersionRef = useRef<number | null>(currentVersion)
 
   /**
    * Check if content has unsaved changes
@@ -72,7 +79,7 @@ export function useArrangementSave(arrangementId, content, options = {}) {
   /**
    * Perform save operation to arrangement
    */
-  const saveToArrangement = useCallback(async () => {
+  const saveToArrangement = useCallback(async (): Promise<SaveResult> => {
     if (!arrangementId || savingRef.current) {
       return {
         success: false,
@@ -183,7 +190,7 @@ export function useArrangementSave(arrangementId, content, options = {}) {
   /**
    * Retry save after error
    */
-  const retrySave = useCallback(async () => {
+  const retrySave = useCallback(async (): Promise<SaveResult | undefined> => {
     if (saveStatus !== SAVE_STATUS.ERROR) {
       return
     }
@@ -195,7 +202,7 @@ export function useArrangementSave(arrangementId, content, options = {}) {
   /**
    * Resolve conflict by choosing local or remote
    */
-  const resolveConflict = useCallback(async (resolution = 'local') => {
+  const resolveConflict = useCallback(async (resolution: 'local' | 'remote' = 'local'): Promise<SaveResult> => {
     if (saveStatus !== SAVE_STATUS.CONFLICT || !conflictData) {
       return {
         success: false,
@@ -226,7 +233,7 @@ export function useArrangementSave(arrangementId, content, options = {}) {
    * Handle Ctrl+S / Cmd+S keyboard shortcut
    */
   useEffect(() => {
-    const handleKeydown = (event) => {
+    const handleKeydown = (event: KeyboardEvent): void => {
       if ((event.ctrlKey || event.metaKey) && event.key === 's') {
         event.preventDefault()
         saveToArrangement()
