@@ -8,4 +8,6 @@ export const SORT_OPTIONS = {
   RATING: 'rating',
   NEWEST: 'newest',
   OLDEST: 'oldest'
-}
+} as const;
+
+export type SortOption = typeof SORT_OPTIONS[keyof typeof SORT_OPTIONS];
