@@ -1,9 +1,6 @@
-export const SORT_OPTIONS = {
-  POPULAR: 'popular',
-  RATING: 'rating',
-  NEWEST: 'newest',
-  OLDEST: 'oldest'
-}
+import { SORT_OPTIONS } from '../../shared/utils/constants'
+
+export { SORT_OPTIONS } // Re-export for backward compatibility
 
 export function sortArrangements(arrangements, sortBy = SORT_OPTIONS.POPULAR) {
   // Create a copy to avoid mutating original
