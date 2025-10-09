@@ -15,8 +15,8 @@ import logger from '@/lib/logger'
 
 // PWA imports
 import { usePWA, UpdateNotification, OfflineIndicator } from '../features/pwa'
-import { initDatabase } from '../features/pwa/db/database'
-import { importMockData } from '../features/pwa/db/dataMigration'
+import { initDatabase } from '../features/pwa/db/database.js'
+import { importMockData } from '../features/pwa/db/dataMigration.js'
 
 import '../App.css'
 

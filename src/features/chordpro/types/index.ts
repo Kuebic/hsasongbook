@@ -8,4 +8,8 @@ export type {
   TranspositionState,
   EditorState,
   DraftMetadata,
+  UseTranspositionReturn,
+  AutoSaveStatus,
+  UseAutoSaveOptions,
+  UseAutoSaveReturn,
 } from './ChordSheet.types';

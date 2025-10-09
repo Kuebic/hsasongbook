@@ -57,3 +57,67 @@ export interface DraftMetadata {
   savedAt: string;
   contentLength: number;
 }
+
+/**
+ * Transposition hook return type
+ */
+export interface UseTranspositionReturn {
+  // State
+  transposedSong: ChordSheetSong | null;
+  currentKey: string;
+  originalKey: string;
+  transpositionOffset: number;
+  preferFlats: boolean;
+
+  // Actions
+  transposeBy: (semitones: number) => void;
+  transposeUp: () => void;
+  transposeDown: () => void;
+  reset: () => void;
+  toggleEnharmonic: () => void;
+
+  // Utils
+  isTransposed: boolean;
+  canTransposeUp: boolean;
+  canTransposeDown: boolean;
+}
+
+/**
+ * Auto-save status
+ */
+export type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'disabled';
+
+/**
+ * Auto-save hook options
+ */
+export interface UseAutoSaveOptions {
+  arrangementId?: string;
+  onSave?: (draft: unknown) => void;
+  debounceMs?: number;
+  idleTimeoutMs?: number;
+  enabled?: boolean;
+  enablePeriodicSave?: boolean;
+}
+
+/**
+ * Auto-save hook return type
+ */
+export interface UseAutoSaveReturn {
+  // Status and state
+  saveStatus: AutoSaveStatus;
+  lastSaved: Date | null;
+  saveError: string | null;
+  isDirty: boolean;
+  hasUnsavedChanges: boolean;
+  enabled: boolean;
+
+  // Actions
+  forceSave: () => Promise<boolean>;
+  getLatestDraft: () => Promise<unknown | null>;
+  clearDrafts: () => Promise<boolean>;
+
+  // Utilities
+  isAutoSaving: boolean;
+  isError: boolean;
+  isSaved: boolean;
+}
