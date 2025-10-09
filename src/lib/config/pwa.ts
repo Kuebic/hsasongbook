@@ -3,14 +3,53 @@
  * Provides cache configurations for the PWA plugin
  */
 
-import { getConfig } from './environment.js';
+import { getConfig } from './environment';
+
+interface PWACacheConfig {
+  maxEntries: number;
+  maxAgeSeconds: number;
+}
+
+interface PWAAPIConfig extends PWACacheConfig {
+  networkTimeoutSeconds: number;
+}
+
+export interface PWABuildConfig {
+  images: PWACacheConfig;
+  googleFontsStylesheets: PWACacheConfig;
+  googleFontsWebfonts: PWACacheConfig;
+  json: PWACacheConfig;
+  chordpro: PWACacheConfig;
+  api: PWAAPIConfig;
+}
+
+export interface PWAManifestIcon {
+  src: string;
+  sizes: string;
+  type: string;
+  purpose?: string;
+}
+
+export interface PWAManifest {
+  name: string;
+  short_name: string;
+  description: string;
+  theme_color: string;
+  background_color: string;
+  display: string;
+  orientation: string;
+  scope: string;
+  start_url: string;
+  categories: string[];
+  icons: PWAManifestIcon[];
+}
 
 /**
  * Get PWA configuration for Vite
- * @param {boolean} isDev - Whether in development mode
- * @returns {Object} PWA cache configuration
+ * @param isDev - Whether in development mode
+ * @returns PWA cache configuration
  */
-export function getPWAConfig(isDev = false) {
+export function getPWAConfig(isDev: boolean = false): PWABuildConfig {
   const config = getConfig(isDev ? 'development' : 'production');
 
   return {
@@ -44,10 +83,10 @@ export function getPWAConfig(isDev = false) {
 
 /**
  * Get complete PWA manifest configuration
- * @param {boolean} isDev - Whether in development mode
- * @returns {Object} PWA manifest configuration
+ * @param isDev - Whether in development mode
+ * @returns PWA manifest configuration
  */
-export function getPWAManifest(isDev = false) {
+export function getPWAManifest(isDev: boolean = false): PWAManifest {
   const config = getConfig(isDev ? 'development' : 'production');
 
   return {

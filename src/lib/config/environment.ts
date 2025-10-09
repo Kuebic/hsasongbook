@@ -3,22 +3,26 @@
  * Allows customization of configuration values based on the current environment
  */
 
-import { config as baseConfig } from './index.js';
+import { config as baseConfig, type Config } from './index';
 
 // Deep merge utility for configuration objects
-function mergeDeep(target, source) {
+function mergeDeep<T extends Record<string, unknown>>(target: T, source: Partial<T>): T {
   const output = { ...target };
 
   if (isObject(target) && isObject(source)) {
     Object.keys(source).forEach(key => {
-      if (isObject(source[key])) {
+      const sourceValue = source[key as keyof T];
+      if (isObject(sourceValue)) {
         if (!(key in target)) {
-          Object.assign(output, { [key]: source[key] });
+          Object.assign(output, { [key]: sourceValue });
         } else {
-          output[key] = mergeDeep(target[key], source[key]);
+          output[key as keyof T] = mergeDeep(
+            target[key as keyof T] as Record<string, unknown>,
+            sourceValue as Record<string, unknown>
+          ) as T[keyof T];
         }
       } else {
-        Object.assign(output, { [key]: source[key] });
+        Object.assign(output, { [key]: sourceValue });
       }
     });
   }
@@ -26,12 +30,14 @@ function mergeDeep(target, source) {
   return output;
 }
 
-function isObject(item) {
-  return item && typeof item === 'object' && !Array.isArray(item);
+function isObject(item: unknown): item is Record<string, unknown> {
+  return item !== null && typeof item === 'object' && !Array.isArray(item);
 }
 
+type Environment = 'development' | 'production' | 'test';
+
 // Environment-specific configuration overrides
-const envOverrides = {
+const envOverrides: Record<Environment, Partial<Config>> = {
   development: {
     sync: {
       simulationFailureRate: 0.2, // Higher failure rate for testing
@@ -87,11 +93,12 @@ const envOverrides = {
 };
 
 // Get configuration for the current environment
-export const getConfig = (env = 'development') => {
+export const getConfig = (env: string = 'development'): Config => {
   // Handle NODE_ENV for backward compatibility
-  const environment = env === 'production' || env === 'development' || env === 'test'
-    ? env
-    : 'development';
+  const environment: Environment =
+    env === 'production' || env === 'development' || env === 'test'
+      ? env
+      : 'development';
 
   const override = envOverrides[environment] || {};
   const finalConfig = mergeDeep(baseConfig, override);
@@ -100,27 +107,28 @@ export const getConfig = (env = 'development') => {
 };
 
 // Get current environment (for runtime use only, not build time)
-export const getCurrentEnvironment = () => {
+export const getCurrentEnvironment = (): Environment => {
   // This will only work at runtime, not during build
   try {
-    return import.meta.env.MODE || 'development';
+    const mode = import.meta.env.MODE;
+    return (mode === 'production' || mode === 'test') ? mode : 'development';
   } catch {
     return 'development';
   }
 };
 
 // Check if in development mode
-export const isDevelopment = () => {
+export const isDevelopment = (): boolean => {
   return getCurrentEnvironment() === 'development';
 };
 
 // Check if in production mode
-export const isProduction = () => {
+export const isProduction = (): boolean => {
   return getCurrentEnvironment() === 'production';
 };
 
 // Check if in test mode
-export const isTest = () => {
+export const isTest = (): boolean => {
   return getCurrentEnvironment() === 'test';
 };
 

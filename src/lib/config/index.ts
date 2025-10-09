@@ -3,7 +3,171 @@
  * All hardcoded values and magic numbers are extracted here for maintainability
  */
 
-export const config = {
+export interface AppConfig {
+  name: string;
+  shortName: string;
+  version: string;
+}
+
+export interface DatabaseConfig {
+  name: string;
+  version: number;
+  reconnectionDelay: number;
+  healthThreshold: number;
+}
+
+export interface SyncConfig {
+  maxRetries: number;
+  baseDelay: number;
+  maxDelay: number;
+  jitterPercent: number;
+  cleanupAgeHours: number;
+  simulationFailureRate: number;
+  simulationTimeout: number;
+}
+
+export interface CacheConfig {
+  version: string;
+  names: {
+    static: string;
+    dynamic: string;
+    api: string;
+    images: string;
+  };
+  maxAge: {
+    dynamic: number;
+    api: number;
+  };
+  storage: {
+    warningThreshold: number;
+    criticalThreshold: number;
+    largeEntriesThreshold: number;
+  };
+}
+
+export interface PerformanceConfig {
+  webVitals: {
+    fcp: { good: number; poor: number };
+    lcp: { good: number; poor: number };
+    fid: { good: number; poor: number };
+    cls: { good: number; poor: number };
+  };
+  network: {
+    fastResponseMs: number;
+    slowResponseMs: number;
+  };
+}
+
+export interface PWAConfig {
+  cacheExpiration: {
+    images: number;
+    fonts: number;
+    json: number;
+    chordpro: number;
+    api: number;
+  };
+  cacheMaxEntries: {
+    images: number;
+    fontsStylesheets: number;
+    fontsWebfonts: number;
+    json: number;
+    chordpro: number;
+    api: number;
+  };
+  networkTimeoutSeconds: number;
+}
+
+export interface ChordProConfig {
+  editor: {
+    mobileBreakpoint: number;
+    autoSave: {
+      debounceMs: number;
+      idleTimeoutMs: number;
+      enablePeriodicSave: boolean;
+      maxDraftsPerEntity: number;
+      cleanupIntervalHours: number;
+    };
+    editor: {
+      lineNumbers: boolean;
+      bracketMatching: boolean;
+      autoIndent: boolean;
+      fontSize: string;
+      lineWrapping: boolean;
+      tabSize: number;
+      spellcheck: boolean;
+      minHeight: string;
+      maxHeight: string;
+    };
+    validation: {
+      enableLiveValidation: boolean;
+      showErrorTooltips: boolean;
+      highlightErrors: boolean;
+      warnOnUnknownChords: boolean;
+      validateDirectives: boolean;
+    };
+    performance: {
+      syntaxHighlightThrottle: number;
+      largeDocumentThreshold: number;
+      enableVirtualization: boolean;
+      maxUndoHistory: number;
+    };
+  };
+  persistence: {
+    save: {
+      debounceMs: number;
+      retryAttempts: number;
+      retryDelayMs: number;
+      showSuccessToast: boolean;
+      successToastDurationMs: number;
+      performanceTarget: number;
+    };
+    recovery: {
+      enableDraftRecovery: boolean;
+      enableSessionRecovery: boolean;
+      draftComparisonLines: number;
+      autoApplyThreshold: number;
+      recoveryDialogTimeout: number;
+      checkOnMount: boolean;
+    };
+    session: {
+      snapshotIntervalMs: number;
+      snapshotOnVisibilityChange: boolean;
+      snapshotOnBeforeUnload: boolean;
+      maxSnapshots: number;
+      snapshotRetentionHours: number;
+      includeScrollPosition: boolean;
+      includeCursorPosition: boolean;
+      includeUndoHistory: boolean;
+    };
+    conflict: {
+      enableDetection: boolean;
+      resolutionStrategy: 'ask' | 'local' | 'remote' | 'merge';
+      showDiffView: boolean;
+      autoMergeIfPossible: boolean;
+      conflictMarkers: boolean;
+    };
+    ui: {
+      showSaveButton: boolean;
+      showSaveStatus: boolean;
+      showUndoRedoButtons: boolean;
+      showDirtyIndicator: boolean;
+      saveButtonPosition: 'toolbar' | 'fixed' | 'floating';
+      statusPosition: 'toolbar' | 'fixed' | 'floating';
+    };
+  };
+}
+
+export interface Config {
+  app: AppConfig;
+  database: DatabaseConfig;
+  sync: SyncConfig;
+  cache: CacheConfig;
+  performance: PerformanceConfig;
+  pwa: PWAConfig;
+  chordpro: ChordProConfig;
+}
+
+export const config: Config = {
   app: {
     name: 'HSA Songbook',
     shortName: 'HSA Songs',
