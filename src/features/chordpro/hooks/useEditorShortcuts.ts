@@ -6,19 +6,19 @@
  */
 
 import { useCallback, useEffect } from 'react';
-import { keymap } from '@codemirror/view';
+import { EditorView, keymap } from '@codemirror/view';
+import type { UseEditorShortcutsOptions, UseEditorShortcutsReturn, ShortcutItem } from '../types';
 
 /**
  * Hook for managing editor keyboard shortcuts
- * @param {Object} editorView - CodeMirror 6 editor view instance
- * @param {Object} options - Configuration options
- * @param {Function} options.onSave - Callback for save shortcut (Ctrl+S)
- * @param {Function} options.onPreview - Callback for preview toggle (Ctrl+P)
- * @param {Function} options.onFind - Callback for find shortcut (Ctrl+F)
- * @param {boolean} options.disabled - Whether shortcuts are disabled
- * @returns {Object} Shortcut handlers and keymap configuration
+ * @param editorView - CodeMirror 6 editor view instance
+ * @param options - Configuration options
+ * @returns Shortcut handlers and keymap configuration
  */
-export function useEditorShortcuts(editorView, options = {}) {
+export function useEditorShortcuts(
+  editorView: EditorView | null,
+  options: UseEditorShortcutsOptions = {}
+): UseEditorShortcutsReturn {
   const {
     onSave,
     onPreview,
@@ -90,7 +90,7 @@ export function useEditorShortcuts(editorView, options = {}) {
   }, [onSave, onPreview, onFind, disabled, insertChordBrackets, insertDirectiveBraces]);
 
   // Insert chord brackets at cursor
-  const insertChordBrackets = useCallback((view) => {
+  const insertChordBrackets = useCallback((view: EditorView | null): void => {
     if (!view) return;
 
     const { from, to } = view.state.selection.main;
@@ -109,7 +109,7 @@ export function useEditorShortcuts(editorView, options = {}) {
   }, []);
 
   // Insert directive braces at cursor
-  const insertDirectiveBraces = useCallback((view) => {
+  const insertDirectiveBraces = useCallback((view: EditorView | null): void => {
     if (!view) return;
 
     const { from, to } = view.state.selection.main;
@@ -131,7 +131,7 @@ export function useEditorShortcuts(editorView, options = {}) {
   useEffect(() => {
     if (disabled) return;
 
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       const isCtrlCmd = event.ctrlKey || event.metaKey;
 
       // Only handle shortcuts when editor is focused
@@ -158,7 +158,7 @@ export function useEditorShortcuts(editorView, options = {}) {
   }, [editorView, onSave, onPreview, disabled]);
 
   // Get list of available shortcuts for display
-  const getShortcutList = useCallback(() => {
+  const getShortcutList = useCallback((): ShortcutItem[] => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const modKey = isMac ? '⌘' : 'Ctrl';
 

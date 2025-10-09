@@ -6,10 +6,10 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
 
-    // Strict Type Checking (Start lenient, enable gradually)
-    "strict": false,
+    // Strict Type Checking (Fully enabled)
+    "strict": true,
     "noImplicitAny": true,
-    "strictNullChecks": false,
+    "strictNullChecks": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,

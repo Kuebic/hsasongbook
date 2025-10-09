@@ -8,13 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle, FileText, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-interface DraftPreview {
-  draftPreview: string;
-  arrangementPreview: string;
-  draftHasMore?: boolean;
-  arrangementHasMore?: boolean;
-}
+import type { DraftPreview } from '../types/ChordSheet.types'
 
 interface DraftRecoveryDialogProps {
   isOpen: boolean;

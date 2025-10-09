@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { getPWAConfig, getPWAManifest } from './src/lib/config/pwa.js'
+import { getPWAConfig, getPWAManifest } from './src/lib/config/pwa'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 

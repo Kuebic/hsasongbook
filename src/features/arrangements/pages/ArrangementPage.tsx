@@ -1,26 +1,27 @@
-import { useParams, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { useArrangementData } from '../hooks/useArrangementData'
-import ChordProViewer from '@/features/chordpro'
-import ArrangementSwitcher from '../components/ArrangementSwitcher'
-import ArrangementHeader from '../components/ArrangementHeader'
-import ArrangementMetadataForm from '../components/ArrangementMetadataForm'
-import Breadcrumbs from '../../shared/components/Breadcrumbs'
-import { PageSpinner } from '../../shared/components/LoadingStates'
-import { SimplePageTransition } from '../../shared/components/PageTransition'
-import { useNavigation } from '../../shared/hooks/useNavigation'
-import { Button } from '@/components/ui/button'
-import logger from '@/lib/logger'
-import { Card, CardContent } from '@/components/ui/card'
-import { ArrowLeft, Music, Printer } from 'lucide-react'
-import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSanitizer'
+import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useArrangementData } from '../hooks/useArrangementData';
+import ChordProViewer from '@/features/chordpro';
+import ArrangementSwitcher from '../components/ArrangementSwitcher';
+import ArrangementHeader from '../components/ArrangementHeader';
+import ArrangementMetadataForm from '../components/ArrangementMetadataForm';
+import Breadcrumbs from '../../shared/components/Breadcrumbs';
+import { PageSpinner } from '../../shared/components/LoadingStates';
+import { SimplePageTransition } from '../../shared/components/PageTransition';
+import { useNavigation } from '../../shared/hooks/useNavigation';
+import { Button } from '@/components/ui/button';
+import logger from '@/lib/logger';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowLeft, Music, Printer } from 'lucide-react';
+import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSanitizer';
+import type { ArrangementMetadata } from '@/types/Arrangement.types';
 
 export function ArrangementPage() {
-  const { arrangementId } = useParams()
-  const navigate = useNavigate()
-  const { breadcrumbs } = useNavigation()
-  const [showChords] = useState(true)
-  const [isEditMode, setIsEditMode] = useState(false)
+  const { arrangementId } = useParams<{ arrangementId: string }>();
+  const navigate = useNavigate();
+  const { breadcrumbs } = useNavigation();
+  const [showChords] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Use IndexedDB hook instead of mock data
   const {
@@ -30,11 +31,11 @@ export function ArrangementPage() {
     loading,
     error,
     updateArrangement
-  } = useArrangementData(arrangementId)
+  } = useArrangementData(arrangementId);
 
   // Loading state
   if (loading) {
-    return <PageSpinner message="Loading arrangement..." />
+    return <PageSpinner message="Loading arrangement..." />;
   }
 
   // Error state
@@ -59,7 +60,7 @@ export function ArrangementPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -109,14 +110,14 @@ export function ArrangementPage() {
                 timeSignature: arrangement.timeSignature,
                 capo: arrangement.capo
               }}
-              onChange={async (newMetadata) => {
-                logger.debug('Metadata changed, saving to IndexedDB:', newMetadata)
+              onChange={async (newMetadata: ArrangementMetadata) => {
+                logger.debug('Metadata changed, saving to IndexedDB:', newMetadata);
                 // Save metadata via useArrangementData hook
-                const result = await updateArrangement(newMetadata)
+                const result = await updateArrangement(newMetadata);
                 if (result.success) {
-                  logger.debug('Metadata saved to IndexedDB successfully')
+                  logger.debug('Metadata saved to IndexedDB successfully');
                 } else {
-                  logger.error('Failed to save metadata:', result.error)
+                  logger.error('Failed to save metadata:', result.error);
                 }
               }}
             />
@@ -139,25 +140,25 @@ export function ArrangementPage() {
               timeSignature: arrangement.timeSignature,
               capo: arrangement.capo
             }}
-            onContentChange={async (newContent) => {
+            onContentChange={async (newContent: string) => {
               // Strip metadata directives before saving (controlled via dropdowns)
-              const sanitizedContent = sanitizeChordProContent(newContent)
+              const sanitizedContent = sanitizeChordProContent(newContent);
 
-              logger.debug('ChordPro content changed, saving sanitized content to IndexedDB:', sanitizedContent.length)
+              logger.debug('ChordPro content changed, saving sanitized content to IndexedDB:', sanitizedContent.length);
 
               // Save via useArrangementData hook
               const result = await updateArrangement({
                 chordProContent: sanitizedContent
-              })
+              });
               if (result.success) {
-                logger.debug('Content saved to IndexedDB successfully')
+                logger.debug('Content saved to IndexedDB successfully');
               } else {
-                logger.error('Failed to save content:', result.error)
+                logger.error('Failed to save content:', result.error);
               }
             }}
             onLoad={(metadata) => {
               // Optional: Log or use metadata
-              logger.debug('ChordPro metadata:', metadata)
+              logger.debug('ChordPro metadata:', metadata);
             }}
           />
         </div>
@@ -194,5 +195,5 @@ export function ArrangementPage() {
       </div>
     </div>
     </SimplePageTransition>
-  )
+  );
 }

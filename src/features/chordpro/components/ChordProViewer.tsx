@@ -5,7 +5,7 @@
  * Mobile-first design with responsive layout and real-time transposition
  */
 
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo, ComponentType } from 'react'
 import ChordSheetJS from 'chordsheetjs'
 import { useChordSheet } from '../hooks/useChordSheet'
 import { useTransposition } from '../hooks/useTransposition'
@@ -16,10 +16,26 @@ import { Button } from '@/components/ui/button'
 import { Edit3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import logger from '@/lib/logger'
+import { ArrangementMetadata } from '@/types/Arrangement.types'
 
 // Import CSS styles
 import '../styles/chordpro.css'
 import '../styles/print.css'
+
+interface ChordProViewerProps {
+  content?: string;
+  showChords?: boolean;
+  className?: string;
+  onLoad?: (metadata: Record<string, unknown>) => void;
+  showToggle?: boolean;
+  showTranspose?: boolean;
+  editable?: boolean;
+  onContentChange?: (content: string) => void;
+  onEditModeChange?: (editMode: boolean) => void;
+  editMode?: boolean;  // Controlled edit mode from parent
+  initialEditMode?: boolean;  // DEPRECATED: Use editMode instead
+  arrangementMetadata?: ArrangementMetadata | null;  // Optional metadata to inject before parsing
+}
 
 export default function ChordProViewer({
   content,
@@ -31,13 +47,13 @@ export default function ChordProViewer({
   editable = false,
   onContentChange,
   onEditModeChange,
-  editMode,  // NEW: Controlled edit mode from parent
+  editMode,  // Controlled edit mode from parent
   initialEditMode = false,  // DEPRECATED: Use editMode instead
   arrangementMetadata = null  // Optional metadata to inject before parsing
-}) {
+}: ChordProViewerProps) {
   const [showChords, setShowChords] = useState(showChordsProp)
   const [editContent, setEditContent] = useState(content)
-  const containerRef = useRef(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Use controlled editMode if provided, otherwise fall back to internal state
   const isControlled = editMode !== undefined
@@ -45,8 +61,8 @@ export default function ChordProViewer({
   const isEditMode = isControlled ? editMode : internalEditMode
 
   // Lazy import editor components when needed
-  const [EditorComponent, setEditorComponent] = useState(null)
-  const [SplitViewComponent, setSplitViewComponent] = useState(null)
+  const [EditorComponent, setEditorComponent] = useState<ComponentType<unknown> | null>(null)
+  const [SplitViewComponent, setSplitViewComponent] = useState<ComponentType<unknown> | null>(null)
 
   // Serialize metadata to force re-parse when metadata changes
   // This ensures the viewer updates when dropdown values change
@@ -127,8 +143,8 @@ export default function ChordProViewer({
         import('./ChordProEditor').then(module => module.ChordProEditor),
         import('./ChordProSplitView').then(module => module.ChordProSplitView)
       ]).then(([Editor, SplitView]) => {
-        setEditorComponent(() => Editor)
-        setSplitViewComponent(() => SplitView)
+        setEditorComponent(() => Editor as ComponentType<unknown>)
+        setSplitViewComponent(() => SplitView as ComponentType<unknown>)
       }).catch(error => {
         logger.error('Failed to load editor components:', error)
       })
@@ -136,7 +152,7 @@ export default function ChordProViewer({
   }, [isEditMode, editable, EditorComponent])
 
   // Handle edit mode toggle
-  const handleEditModeToggle = () => {
+  const handleEditModeToggle = (): void => {
     const newEditMode = !isEditMode
 
     if (isControlled) {
@@ -150,14 +166,14 @@ export default function ChordProViewer({
   }
 
   // Handle content changes from editor
-  const handleContentChange = (newContent) => {
+  const handleContentChange = (newContent: string): void => {
     setEditContent(newContent)
     onContentChange?.(newContent)
   }
 
 
   // Handle chord toggle
-  const handleToggleChords = () => {
+  const handleToggleChords = (): void => {
     setShowChords(!showChords)
   }
 

@@ -1,30 +1,30 @@
-import { useState, useMemo, useEffect } from 'react'
-import { searchSongs } from '../../shared/utils/dataHelpers'
-import SongList from '../components/SongList'
-import SearchBar from '../components/SearchBar'
-import { SongListSkeleton } from '../../shared/components/LoadingStates'
-import { SimplePageTransition } from '../../shared/components/PageTransition'
+import { useState, useMemo, useEffect } from 'react';
+import { searchSongs } from '../../shared/utils/dataHelpers';
+import SongList from '../components/SongList';
+import SearchBar from '../components/SearchBar';
+import { SongListSkeleton } from '../../shared/components/LoadingStates';
+import { SimplePageTransition } from '../../shared/components/PageTransition';
 
 export function SearchPage() {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isSearching, setIsSearching] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   const filteredSongs = useMemo(() => {
-    return searchSongs(searchTerm)
-  }, [searchTerm])
+    return searchSongs(searchTerm);
+  }, [searchTerm]);
 
   // Simulate search delay for better UX
   useEffect(() => {
     if (searchTerm) {
-      setIsSearching(true)
+      setIsSearching(true);
       const timer = setTimeout(() => {
-        setIsSearching(false)
-      }, 300)
-      return () => clearTimeout(timer)
+        setIsSearching(false);
+      }, 300);
+      return () => clearTimeout(timer);
     } else {
-      setIsSearching(false)
+      setIsSearching(false);
     }
-  }, [searchTerm])
+  }, [searchTerm]);
 
   return (
     <SimplePageTransition>
@@ -61,5 +61,5 @@ export function SearchPage() {
         </div>
       </div>
     </SimplePageTransition>
-  )
+  );
 }

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { ErrorBoundary } from 'react-error-boundary'
+import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 import { useEffect } from 'react'
 import { SearchPage } from '../features/search'
 import { SongPage } from '../features/songs'
@@ -15,12 +15,12 @@ import logger from '@/lib/logger'
 
 // PWA imports
 import { usePWA, UpdateNotification, OfflineIndicator } from '../features/pwa'
-import { initDatabase } from '../features/pwa/db/database.js'
-import { importMockData } from '../features/pwa/db/dataMigration.js'
+import { initDatabase } from '../features/pwa/db/database'
+import { importMockData } from '../features/pwa/db/dataMigration'
 
 import '../App.css'
 
-function ErrorFallback({ error, resetErrorBoundary }) {
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -68,7 +68,7 @@ function AppWithFeatures() {
           await importMockData()
         }
       } catch (error) {
-        console.error('Failed to initialize PWA features:', error)
+        logger.error('Failed to initialize PWA features:', error)
       }
     }
 

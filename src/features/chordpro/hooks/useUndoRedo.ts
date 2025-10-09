@@ -6,17 +6,19 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { EditorView } from '@codemirror/view'
 import { undo, redo, undoDepth, redoDepth } from '@codemirror/commands'
 import logger from '@/lib/logger'
+import type { UndoRedoState, UseUndoRedoReturn } from '../types'
 
 /**
  * useUndoRedo Hook
  *
- * @param {EditorView} editorView - CodeMirror EditorView instance
- * @returns {Object} Undo/redo state and operations
+ * @param editorView - CodeMirror EditorView instance
+ * @returns Undo/redo state and operations
  */
-export function useUndoRedo(editorView) {
-  const [undoRedoState, setUndoRedoState] = useState({
+export function useUndoRedo(editorView: EditorView | null): UseUndoRedoReturn {
+  const [undoRedoState, setUndoRedoState] = useState<UndoRedoState>({
     canUndo: false,
     canRedo: false,
     undoCount: 0,
@@ -26,13 +28,13 @@ export function useUndoRedo(editorView) {
   /**
    * Update undo/redo state from EditorView
    */
-  const updateState = useCallback(() => {
+  const updateState = useCallback((): void => {
     if (!editorView) return
 
     try {
       const state = editorView.state
 
-      const newState = {
+      const newState: UndoRedoState = {
         canUndo: undoDepth(state) > 0,
         canRedo: redoDepth(state) > 0,
         undoCount: undoDepth(state),
@@ -50,7 +52,7 @@ export function useUndoRedo(editorView) {
   /**
    * Execute undo command
    */
-  const executeUndo = useCallback(() => {
+  const executeUndo = useCallback((): boolean => {
     if (!editorView || !undoRedoState.canUndo) {
       logger.debug('Undo not available')
       return false
@@ -70,7 +72,7 @@ export function useUndoRedo(editorView) {
   /**
    * Execute redo command
    */
-  const executeRedo = useCallback(() => {
+  const executeRedo = useCallback((): boolean => {
     if (!editorView || !undoRedoState.canRedo) {
       logger.debug('Redo not available')
       return false

@@ -40,7 +40,7 @@ export interface HSASongbookDB extends DBSchema {
     key: string; // Primary key (id field)
     value: Draft; // Draft object
     indexes: {
-      'by-arrangement-id': string; // Link to arrangement
+      'arrangementId': string; // Link to arrangement
       'by-saved-at': string; // When draft was saved
     };
   };
@@ -81,6 +81,11 @@ export interface Draft {
   content: string; // ChordPro content
   metadata?: Record<string, unknown>;
   savedAt: string;
+  expiresAt: string;
+  isAutoSave: boolean;
+  version: number;
+  syncStatus: 'draft' | 'pending' | 'synced' | 'conflict';
+  lastAccessedAt: number;
 }
 
 /**

@@ -6,7 +6,7 @@
  */
 
 import { useRef, useEffect, useState, useCallback } from 'react'
-import CodeMirror from '@uiw/react-codemirror'
+import CodeMirror, { EditorView } from '@uiw/react-codemirror'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useChordProEditor } from '../hooks/useChordProEditor'
@@ -14,6 +14,21 @@ import { useAutoSave } from '../hooks/useAutoSave'
 import EditorToolbar from './EditorToolbar'
 import AutoSaveIndicator from './AutoSaveIndicator'
 import { chordProStyles } from '../language/chordProHighlight'
+
+interface ChordProEditorProps {
+  value?: string;
+  onChange?: (value: string) => void;
+  onSave?: (content: string) => void;
+  onEditorReady?: (view: EditorView) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  arrangementId?: string;
+  autoSave?: boolean;
+  showToolbar?: boolean;
+  showAutoSaveIndicator?: boolean;
+  className?: string;
+  editorConfig?: Record<string, unknown>;
+}
 
 export default function ChordProEditor({
   value = '',
@@ -28,10 +43,10 @@ export default function ChordProEditor({
   showAutoSaveIndicator = true,
   className,
   editorConfig = {}
-}) {
+}: ChordProEditorProps) {
   // Refs for editor management
-  const editorViewRef = useRef(null)
-  const containerRef = useRef(null)
+  const editorViewRef = useRef<EditorView | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [isMounted, setIsMounted] = useState(false)
 
   // Editor state management
@@ -77,14 +92,14 @@ export default function ChordProEditor({
   }, [])
 
   // Handle content change
-  const handleChange = useCallback((newValue) => {
+  const handleChange = useCallback((newValue: string) => {
     if (onChange) {
       onChange(newValue)
     }
   }, [onChange])
 
   // Handle editor creation - get the EditorView reference
-  const handleCreateEditor = useCallback((view) => {
+  const handleCreateEditor = useCallback((view: EditorView) => {
     // Store the EditorView instance for toolbar and other operations
     editorViewRef.current = view
 
@@ -108,7 +123,7 @@ export default function ChordProEditor({
 
   // Keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       // Ctrl+S / Cmd+S for manual save
       if ((event.ctrlKey || event.metaKey) && event.key === 's') {
         event.preventDefault()
@@ -264,6 +279,15 @@ export default function ChordProEditor({
 /**
  * Simplified ChordPro Editor without toolbar for embedding
  */
+interface SimpleChordProEditorProps {
+  value?: string;
+  onChange?: (value: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  className?: string;
+  height?: string;
+}
+
 export function SimpleChordProEditor({
   value,
   onChange,
@@ -271,7 +295,7 @@ export function SimpleChordProEditor({
   placeholder = 'Enter ChordPro content...',
   className,
   height = '300px'
-}) {
+}: SimpleChordProEditorProps) {
   const [isMounted, setIsMounted] = useState(false)
 
   const editor = useChordProEditor({

@@ -14,20 +14,15 @@ import { chordproConfig } from '@/lib/config'
 import chordProLanguage from '../language/chordProLanguage'
 import { createChordProHighlighting } from '../language/chordProHighlight'
 import { useChordSheet } from './useChordSheet'
+import type { UseChordProEditorOptions, UseChordProEditorReturn, EditorSelection } from '../types'
 
 /**
  * useChordProEditor Hook
  *
- * @param {Object} options - Editor configuration options
- * @param {string} options.value - Initial editor content
- * @param {Function} options.onChange - Content change callback
- * @param {boolean} options.disabled - Whether editor is disabled
- * @param {boolean} options.autoSave - Whether auto-save is enabled
- * @param {string} options.placeholder - Placeholder text
- * @param {Object} options.editorConfig - Override editor configuration
- * @returns {Object} Editor state and configuration
+ * @param options - Editor configuration options
+ * @returns Editor state and configuration
  */
-export function useChordProEditor(options = {}) {
+export function useChordProEditor(options: UseChordProEditorOptions = {}): UseChordProEditorReturn {
   const {
     value = '',
     onChange,
@@ -43,14 +38,14 @@ export function useChordProEditor(options = {}) {
   }), [editorConfig])
 
   // Editor state
-  const [content, setContent] = useState(value)
-  const [isDirty, setIsDirty] = useState(false)
-  const [hasErrors, setHasErrors] = useState(false)
-  const [cursorPosition, setCursorPosition] = useState(0)
-  const [selection, setSelection] = useState(null)
+  const [content, setContent] = useState<string>(value)
+  const [isDirty, setIsDirty] = useState<boolean>(false)
+  const [hasErrors, setHasErrors] = useState<boolean>(false)
+  const [cursorPosition, setCursorPosition] = useState<number>(0)
+  const [selection, setSelection] = useState<EditorSelection | null>(null)
 
   // Refs for editor management
-  const editorViewRef = useRef(null)
+  const editorViewRef = useRef<EditorView | null>(null)
 
   // Integrate with existing ChordSheet parsing for compatibility
   const chordSheetResult = useChordSheet(content, true)
@@ -64,7 +59,7 @@ export function useChordProEditor(options = {}) {
   }, [value, content])
 
   // Handle content changes
-  const handleChange = useCallback((newContent) => {
+  const handleChange = useCallback((newContent: string): void => {
     setContent(newContent)
     setIsDirty(newContent !== value)
 
@@ -199,12 +194,12 @@ export function useChordProEditor(options = {}) {
   }), [content, placeholder, extensions, disabled, config.editor.lineNumbers, handleChange])
 
   // Expose editor view for toolbar integration
-  const setEditorView = useCallback((view) => {
+  const setEditorView = useCallback((view: EditorView | null): void => {
     editorViewRef.current = view
   }, [])
 
   // Editor utility functions
-  const insertText = useCallback((text, position = null) => {
+  const insertText = useCallback((text: string, position: number | null = null): void => {
     if (!editorViewRef.current) return
 
     const view = editorViewRef.current
@@ -216,23 +211,23 @@ export function useChordProEditor(options = {}) {
     })
   }, [])
 
-  const insertChord = useCallback((chord) => {
+  const insertChord = useCallback((chord: string): void => {
     insertText(`[${chord}]`)
   }, [insertText])
 
-  const insertDirective = useCallback((directive, argument = '') => {
+  const insertDirective = useCallback((directive: string, argument: string = ''): void => {
     const text = argument ? `{${directive}: ${argument}}` : `{${directive}}`
     insertText(text)
   }, [insertText])
 
-  const getSelectedText = useCallback(() => {
+  const getSelectedText = useCallback((): string => {
     if (!editorViewRef.current || !selection) return ''
 
     const state = editorViewRef.current.state
     return state.doc.sliceString(selection.from, selection.to)
   }, [selection])
 
-  const replaceSelection = useCallback((text) => {
+  const replaceSelection = useCallback((text: string): void => {
     if (!editorViewRef.current) return
 
     const view = editorViewRef.current
@@ -244,7 +239,7 @@ export function useChordProEditor(options = {}) {
     })
   }, [])
 
-  const focusEditor = useCallback(() => {
+  const focusEditor = useCallback((): void => {
     if (editorViewRef.current) {
       editorViewRef.current.focus()
     }

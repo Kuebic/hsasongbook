@@ -7,28 +7,25 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import logger from '@/lib/logger';
+import type { UseSynchronizedScrollOptions, UseSynchronizedScrollReturn } from '../types';
 
 /**
  * Custom hook for synchronized scrolling between two elements
- * @param {Object} params
- * @param {React.RefObject} params.leftRef - Ref to left/editor panel
- * @param {React.RefObject} params.rightRef - Ref to right/viewer panel
- * @param {boolean} params.enabled - Whether synchronization is enabled
- * @param {number} params.debounceMs - Debounce delay in milliseconds
- * @returns {Object} Sync control methods
+ * @param params - Scroll sync configuration
+ * @returns Sync control methods
  */
 export function useSynchronizedScroll({
   leftRef,
   rightRef,
   enabled = true,
   debounceMs = 50
-}) {
-  const isScrollingRef = useRef(false);
-  const scrollSourceRef = useRef(null);
-  const debounceTimerRef = useRef(null);
+}: UseSynchronizedScrollOptions): UseSynchronizedScrollReturn {
+  const isScrollingRef = useRef<boolean>(false);
+  const scrollSourceRef = useRef<string | null>(null);
+  const debounceTimerRef = useRef<number | null>(null);
 
   // Calculate scroll percentage
-  const getScrollPercentage = useCallback((element) => {
+  const getScrollPercentage = useCallback((element: HTMLElement | null): number => {
     if (!element) return 0;
 
     const { scrollTop, scrollHeight, clientHeight } = element;
@@ -39,7 +36,7 @@ export function useSynchronizedScroll({
   }, []);
 
   // Apply scroll percentage to element
-  const setScrollPercentage = useCallback((element, percentage) => {
+  const setScrollPercentage = useCallback((element: HTMLElement | null, percentage: number): void => {
     if (!element) return;
 
     const { scrollHeight, clientHeight } = element;
@@ -50,7 +47,7 @@ export function useSynchronizedScroll({
   }, []);
 
   // Sync scroll from source to target
-  const syncScroll = useCallback((source, target, sourceName) => {
+  const syncScroll = useCallback((source: HTMLElement | null, target: HTMLElement | null, sourceName: string): void => {
     if (!enabled || !source || !target) return;
     if (isScrollingRef.current && scrollSourceRef.current !== sourceName) return;
 
@@ -75,11 +72,11 @@ export function useSynchronizedScroll({
   }, [enabled, getScrollPercentage, setScrollPercentage, debounceMs]);
 
   // Handle scroll events
-  const handleLeftScroll = useCallback(() => {
+  const handleLeftScroll = useCallback((): void => {
     syncScroll(leftRef.current, rightRef.current, 'left');
   }, [syncScroll, leftRef, rightRef]);
 
-  const handleRightScroll = useCallback(() => {
+  const handleRightScroll = useCallback((): void => {
     syncScroll(rightRef.current, leftRef.current, 'right');
   }, [syncScroll, leftRef, rightRef]);
 
@@ -115,14 +112,14 @@ export function useSynchronizedScroll({
   }, [enabled, handleLeftScroll, handleRightScroll, leftRef, rightRef]);
 
   // Manual sync methods
-  const syncToLeft = useCallback(() => {
+  const syncToLeft = useCallback((): void => {
     if (leftRef.current && rightRef.current) {
       const percentage = getScrollPercentage(leftRef.current);
       setScrollPercentage(rightRef.current, percentage);
     }
   }, [leftRef, rightRef, getScrollPercentage, setScrollPercentage]);
 
-  const syncToRight = useCallback(() => {
+  const syncToRight = useCallback((): void => {
     if (leftRef.current && rightRef.current) {
       const percentage = getScrollPercentage(rightRef.current);
       setScrollPercentage(leftRef.current, percentage);
@@ -130,7 +127,7 @@ export function useSynchronizedScroll({
   }, [leftRef, rightRef, getScrollPercentage, setScrollPercentage]);
 
   // Reset scroll positions
-  const resetScroll = useCallback(() => {
+  const resetScroll = useCallback((): void => {
     if (leftRef.current) leftRef.current.scrollTop = 0;
     if (rightRef.current) rightRef.current.scrollTop = 0;
   }, [leftRef, rightRef]);
