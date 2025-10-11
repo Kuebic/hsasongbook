@@ -5,6 +5,7 @@ import { SearchPage } from '../features/search'
 import { SongPage } from '../features/songs'
 import { ArrangementPage } from '../features/arrangements'
 import { SetlistsIndexPage, SetlistPage, SetlistPerformancePage } from '../features/setlists'
+import { SettingsPage } from '../features/settings'
 import { NotFound } from '../features/shared/pages/NotFound'
 import ScrollRestoration from '../features/shared/components/ScrollRestoration'
 import MobileNav from '../features/shared/components/MobileNav'
@@ -15,6 +16,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
 import logger from '@/lib/logger'
+
+// Theme imports
+import { ThemeProvider } from '@/lib/theme/ThemeProvider'
 
 // PWA imports
 import { usePWA, UpdateNotification, OfflineIndicator } from '../features/pwa'
@@ -109,6 +113,7 @@ function AppWithFeatures() {
           <Route path="/setlists" element={<SetlistsIndexPage />} />
           <Route path="/setlist/:setlistId" element={<SetlistPage />} />
           <Route path="/setlist/:setlistId/performance/:arrangementIndex?" element={<SetlistPerformancePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
@@ -129,17 +134,19 @@ function AppWithFeatures() {
 
 function App() {
   return (
-    <ErrorBoundary
-      FallbackComponent={ErrorFallback}
-      onReset={() => {
-        // Reset app state if needed
-        window.location.href = '/'
-      }}
-    >
-      <BrowserRouter>
-        <AppWithFeatures />
-      </BrowserRouter>
-    </ErrorBoundary>
+    <ThemeProvider defaultTheme="system" storageKey="hsasongbook-theme">
+      <ErrorBoundary
+        FallbackComponent={ErrorFallback}
+        onReset={() => {
+          // Reset app state if needed
+          window.location.href = '/'
+        }}
+      >
+        <BrowserRouter>
+          <AppWithFeatures />
+        </BrowserRouter>
+      </ErrorBoundary>
+    </ThemeProvider>
   )
 }
 

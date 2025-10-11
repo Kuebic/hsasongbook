@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Home, ArrowLeft, List } from 'lucide-react'
+import { Home, ArrowLeft, List, Settings } from 'lucide-react'
 import { useNavigation } from '../hooks/useNavigation'
 import { cn } from '@/lib/utils'
 import { getZIndexClass } from '@/lib/config/zIndex'
@@ -17,7 +17,7 @@ interface MobileNavProps {
  *
  * Bottom navigation bar for mobile viewports (< 768px).
  * Features:
- * - 3 buttons: Back, Home, Setlists
+ * - 4 buttons: Back, Home, Setlists, Settings
  * - 48px touch targets (WCAG 2.5.5 compliance)
  * - Auto-hide on scroll down, reveal on scroll up
  * - Active page highlighting
@@ -121,6 +121,25 @@ export default function MobileNav({ className }: MobileNavProps) {
         >
           <List className="h-5 w-5" aria-hidden="true" />
           <span className="text-xs">Sets</span>
+        </Button>
+
+        {/* Settings Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/settings')}
+          aria-label="Open settings"
+          aria-current={currentPath === '/settings' ? 'page' : undefined}
+          className={cn(
+            'flex-1 h-12 flex-col gap-1',
+            'touch-manipulation',
+            'active:scale-95',
+            'transition-transform',
+            'focus:outline-none focus:ring-2 focus:ring-ring',
+            currentPath === '/settings' && 'bg-accent text-accent-foreground'
+          )}
+        >
+          <Settings className="h-5 w-5" aria-hidden="true" />
+          <span className="text-xs">Settings</span>
         </Button>
       </div>
     </div>
