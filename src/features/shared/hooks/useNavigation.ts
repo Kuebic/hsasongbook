@@ -13,6 +13,7 @@ export interface UseNavigationReturn {
   goToSong: (songSlug: string) => void
   goToArrangement: (songSlug: string, arrangementSlug: string) => void
   goBack: () => void
+  navigate: (path: string | number) => void
   currentPath: string
 }
 
@@ -72,6 +73,7 @@ export function useNavigation(): UseNavigationReturn {
     goToSong,
     goToArrangement,
     goBack,
+    navigate,
     currentPath: location.pathname
   }
 }

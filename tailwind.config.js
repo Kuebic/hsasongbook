@@ -1,3 +1,5 @@
+import { Z_INDEX } from './src/lib/config/zIndex.ts';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["class"],
@@ -14,6 +16,7 @@ export default {
       },
     },
     extend: {
+      zIndex: Z_INDEX,
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

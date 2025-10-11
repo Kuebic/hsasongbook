@@ -8,6 +8,8 @@ import { SetlistsIndexPage, SetlistPage, SetlistPerformancePage } from '../featu
 import { NotFound } from '../features/shared/pages/NotFound'
 import ScrollRestoration from '../features/shared/components/ScrollRestoration'
 import MobileNav from '../features/shared/components/MobileNav'
+import DesktopHeader from '../features/shared/components/DesktopHeader'
+import SkipLink from '../features/shared/components/SkipLink'
 import { useKeyboardShortcuts } from '../features/shared/hooks/useKeyboardShortcuts'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -88,9 +90,31 @@ function AppWithFeatures() {
   }, [])
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
+      {/* Accessibility: Skip to main content link */}
+      <SkipLink />
+
+      {/* Desktop Navigation Header (hidden on mobile) */}
+      <DesktopHeader className="hidden md:block" />
+
+      {/* Scroll Restoration */}
       <ScrollRestoration />
-      <MobileNav />
+
+      {/* Main Content Area */}
+      <main id="main-content" tabIndex={-1} className="flex-1 pb-16 md:pb-0">
+        <Routes>
+          <Route path="/" element={<SearchPage />} />
+          <Route path="/song/:songSlug" element={<SongPage />} />
+          <Route path="/song/:songSlug/:arrangementSlug" element={<ArrangementPage />} />
+          <Route path="/setlists" element={<SetlistsIndexPage />} />
+          <Route path="/setlist/:setlistId" element={<SetlistPage />} />
+          <Route path="/setlist/:setlistId/performance/:arrangementIndex?" element={<SetlistPerformancePage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+
+      {/* Mobile Navigation (hidden on desktop) */}
+      <MobileNav className="md:hidden" />
 
       {/* PWA UI Components */}
       <OfflineIndicator />
@@ -99,17 +123,7 @@ function AppWithFeatures() {
           onUpdate={updateServiceWorker}
         />
       )}
-
-      <Routes>
-        <Route path="/" element={<SearchPage />} />
-        <Route path="/song/:songSlug" element={<SongPage />} />
-        <Route path="/song/:songSlug/:arrangementSlug" element={<ArrangementPage />} />
-        <Route path="/setlists" element={<SetlistsIndexPage />} />
-        <Route path="/setlist/:setlistId" element={<SetlistPage />} />
-        <Route path="/setlist/:setlistId/performance/:arrangementIndex?" element={<SetlistPerformancePage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
+    </div>
   )
 }
 
