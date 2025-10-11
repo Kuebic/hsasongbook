@@ -444,6 +444,64 @@ export class SongRepository extends BaseRepository<Song> {
 
     return songs;
   }
+
+  /**
+   * Find song by slug (for URL routing)
+   * @param slug - Song slug (e.g., "amazing-grace-x4k9p")
+   * @returns Song or null if not found
+   */
+  async getBySlug(slug: string): Promise<Song | null> {
+    try {
+      const db = await this.getDB();
+      const tx = db.transaction(this.storeName, 'readonly');
+      const store = tx.objectStore(this.storeName);
+      const index = store.index('by-slug');
+
+      const song = await index.get(slug);
+      return song || null;
+    } catch (error) {
+      logger.error(`Error finding song by slug ${slug}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Update song title and regenerate slug
+   * Used when song title changes to keep URL in sync
+   *
+   * Note: MVP approach - generates completely new slug when title changes.
+   * Old URLs will break, but song title changes are rare in this use case.
+   *
+   * @param id - Song ID
+   * @param newTitle - New song title
+   * @returns Updated song
+   */
+  async updateTitleAndSlug(id: string, newTitle: string): Promise<Song> {
+    const song = await this.getById(id);
+    if (!song) {
+      throw new Error(`Song ${id} not found`);
+    }
+
+    // Import slug generator dynamically to avoid circular dependency
+    const { generateSlug } = await import('@/features/shared/utils/slugGenerator');
+
+    const oldSlug = song.slug;
+    const newSlug = generateSlug(newTitle, 'song');
+
+    const updatedSong: Song = {
+      ...song,
+      title: newTitle,
+      slug: newSlug,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.save(updatedSong);
+
+    // Log slug change for debugging
+    logger.info(`Song slug updated: ${oldSlug} → ${newSlug}`);
+
+    return updatedSong;
+  }
 }
 
 /**
@@ -530,11 +588,31 @@ export class ArrangementRepository extends BaseRepository<Arrangement> {
       case 'rating':
         return arrangements.sort((a, b) => (b.rating || 0) - (a.rating || 0));
       case 'newest':
-        return arrangements.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        return arrangements.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       case 'oldest':
-        return arrangements.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        return arrangements.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       default:
         return arrangements;
+    }
+  }
+
+  /**
+   * Find arrangement by slug (for URL routing)
+   * @param slug - Arrangement slug (e.g., "gh2lk")
+   * @returns Arrangement or null if not found
+   */
+  async getBySlug(slug: string): Promise<Arrangement | null> {
+    try {
+      const db = await this.getDB();
+      const tx = db.transaction(this.storeName, 'readonly');
+      const store = tx.objectStore(this.storeName);
+      const index = store.index('by-slug');
+
+      const arrangement = await index.get(slug);
+      return arrangement || null;
+    } catch (error) {
+      logger.error(`Error finding arrangement by slug ${slug}:`, error);
+      return null;
     }
   }
 }

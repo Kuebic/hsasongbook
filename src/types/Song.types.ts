@@ -7,6 +7,7 @@
 
 export interface Song {
   id: string;
+  slug: string; // URL-friendly slug (e.g., "amazing-grace-x4k9p")
   title: string;
   artist: string;
   themes?: string[];

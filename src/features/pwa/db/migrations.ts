@@ -10,14 +10,15 @@ const MIGRATIONS: Record<number, string> = {
   1: 'Initial schema with songs, arrangements, and setlists',
   2: 'Add sync queue and compound indexes for better performance',
   3: 'Add popularity tracking, preferences store, and performance date index',
-  4: 'Add chordproDrafts store for ChordPro editor auto-save'
+  4: 'Add chordproDrafts store for ChordPro editor auto-save',
+  5: 'Add slug indexes for URL-friendly song and arrangement slugs'
 };
 
 /**
  * Get the current database version
  */
 export function getCurrentVersion(): number {
-  return 4;
+  return 5;
 }
 
 /**
@@ -56,7 +57,8 @@ const migrationHandlers: Record<number, MigrationHandler> = {
   1: createInitialSchema,
   2: addSyncQueueAndIndexes,
   3: addPopularityAndPreferences,
-  4: createChordproDraftsStore
+  4: createChordproDraftsStore,
+  5: addSlugIndexes
 };
 
 /**
@@ -231,6 +233,30 @@ function createChordproDraftsStore(db: IDBPDatabase<HSASongbookDB>): void {
     draftsStore.createIndex('arrangementId', 'arrangementId', { unique: false });
     logger.log('Created chordproDrafts object store with arrangementId index');
   }
+}
+
+/**
+ * Version 5: Add slug indexes for URL-friendly slugs
+ */
+function addSlugIndexes(
+  db: IDBPDatabase<HSASongbookDB>,
+  transaction: IDBPTransaction<HSASongbookDB, ArrayLike<keyof HSASongbookDB>, 'versionchange'>
+): void {
+  // Add slug index to songs store
+  const songsStore = transaction.objectStore('songs');
+  if (!songsStore.indexNames.contains('by-slug')) {
+    songsStore.createIndex('by-slug', 'slug', { unique: true });
+    logger.log('Created by-slug index on songs store');
+  }
+
+  // Add slug index to arrangements store
+  const arrangementsStore = transaction.objectStore('arrangements');
+  if (!arrangementsStore.indexNames.contains('by-slug')) {
+    arrangementsStore.createIndex('by-slug', 'slug', { unique: true });
+    logger.log('Created by-slug index on arrangements store');
+  }
+
+  logger.log('Slug indexes added successfully');
 }
 
 /**

@@ -1,5 +1,6 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useSlugParams } from '../../shared/hooks/useSlugParams';
 import { useArrangementData } from '../hooks/useArrangementData';
 import ChordProViewer from '@/features/chordpro';
 import ArrangementSwitcher from '../components/ArrangementSwitcher';
@@ -17,7 +18,7 @@ import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSaniti
 import type { ArrangementMetadata } from '@/types/Arrangement.types';
 
 export function ArrangementPage() {
-  const { arrangementId } = useParams<{ arrangementId: string }>();
+  const { arrangementId, isLoading: isResolvingSlug } = useSlugParams();
   const navigate = useNavigate();
   const { breadcrumbs } = useNavigation();
   const [showChords] = useState(true);
@@ -33,8 +34,8 @@ export function ArrangementPage() {
     updateArrangement
   } = useArrangementData(arrangementId);
 
-  // Loading state
-  if (loading) {
+  // Loading state (slug resolution or data loading)
+  if (isResolvingSlug || loading) {
     return <PageSpinner message="Loading arrangement..." />;
   }
 
@@ -87,6 +88,7 @@ export function ArrangementPage() {
                 currentArrangement={arrangement}
                 allArrangements={allArrangements}
                 songTitle={song.title}
+                songSlug={song.slug}
               />
             </div>
           </div>
@@ -167,7 +169,7 @@ export function ArrangementPage() {
         <div className="flex flex-col sm:flex-row gap-4 justify-between no-print">
           <Button
             variant="outline"
-            onClick={() => navigate(`/song/${song.id}`)}
+            onClick={() => navigate(`/song/${song.slug}`)}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to {song.title}
@@ -184,7 +186,7 @@ export function ArrangementPage() {
                     key={arr.id}
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/arrangement/${arr.id}`)}
+                    onClick={() => navigate(`/song/${song.slug}/${arr.slug}`)}
                   >
                     {arr.name} ({arr.key})
                   </Button>
