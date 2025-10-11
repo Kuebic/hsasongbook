@@ -14,6 +14,7 @@ export interface UseSetlistSongsReturn {
   addSong: (arrangementId: string, customKey?: string) => Promise<void>;
   removeSong: (songId: string) => Promise<void>;
   reorderSongs: (sourceIndex: number, destinationIndex: number) => Promise<void>;
+  updateSongKey: (songId: string, newKey: string) => Promise<void>;
 }
 
 export function useSetlistSongs(
@@ -97,5 +98,27 @@ export function useSetlistSongs(
     logger.debug('Songs reordered:', { sourceIndex, destinationIndex });
   }, [setlist, repo, onUpdate]);
 
-  return { addSong, removeSong, reorderSongs };
+  const updateSongKey = useCallback(async (
+    songId: string,
+    newKey: string
+  ): Promise<void> => {
+    if (!setlist) return;
+
+    const updatedSongs = setlist.songs.map(song =>
+      song.id === songId
+        ? { ...song, customKey: newKey }
+        : song
+    );
+
+    const saved = await repo.save({
+      ...setlist,
+      songs: updatedSongs,
+      updatedAt: new Date().toISOString()
+    });
+
+    onUpdate(saved);
+    logger.debug('Song key updated:', { songId, newKey });
+  }, [setlist, repo, onUpdate]);
+
+  return { addSong, removeSong, reorderSongs, updateSongKey };
 }

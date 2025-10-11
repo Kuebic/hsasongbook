@@ -44,6 +44,9 @@ export function SetlistPerformancePage() {
     onExit: () => navigate(`/setlist/${setlistId}`)
   });
 
+  // Get the current setlist song to access customKey
+  const currentSetlistSong = setlist?.songs[currentIndex];
+
   // Sync URL with current index
   useEffect(() => {
     if (setlistId) {
@@ -103,7 +106,7 @@ export function SetlistPerformancePage() {
           <ChordProViewer
             content={currentArrangement.chordProContent}
             arrangementMetadata={{
-              key: currentArrangement.key,
+              key: currentSetlistSong?.customKey || currentArrangement.key,
               tempo: currentArrangement.tempo,
               capo: currentArrangement.capo,
               timeSignature: currentArrangement.timeSignature

@@ -105,6 +105,7 @@ export interface Setlist {
 }
 
 export interface SetlistSong {
+  id: string; // Unique identifier for this song in the setlist
   songId: string;
   arrangementId: string;
   order: number;
