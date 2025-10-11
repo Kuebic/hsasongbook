@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, X, Download } from 'lucide-react';
+import { getZIndexClass } from '@/lib/config/zIndex';
 import React from 'react';
 
 type NotificationPosition = 'top' | 'bottom';
@@ -29,8 +30,8 @@ export function UpdateNotification({
   }
 
   const positionClasses: Record<NotificationPosition, string> = {
-    top: 'fixed top-4 left-4 right-4 z-50',
-    bottom: 'fixed bottom-4 left-4 right-4 z-50'
+    top: `fixed top-4 left-4 right-4 ${getZIndexClass('updateNotification')}`,
+    bottom: `fixed bottom-4 left-4 right-4 ${getZIndexClass('updateNotification')}`
   };
 
   const animationClasses = position === 'bottom'
@@ -151,7 +152,7 @@ export function UpdateProgress({ show = false, progress = 0 }: UpdateProgressPro
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white p-4 animate-in slide-in-from-top-2">
+    <div className={`fixed top-0 left-0 right-0 ${getZIndexClass('updateNotification')} bg-blue-600 text-white p-4 animate-in slide-in-from-top-2`}>
       <div className="max-w-md mx-auto">
         <div className="flex items-center space-x-3 mb-2">
           <RefreshCw className="h-5 w-5 animate-spin" />
@@ -185,7 +186,7 @@ export function UpdateSuccess({ show = false, onClose }: UpdateSuccessProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center ${getZIndexClass('updateNotification')} p-4`}>
       <Card className="max-w-md animate-in fade-in-0 zoom-in-95">
         <CardHeader className="text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -227,7 +228,7 @@ export function UpdateError({
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 animate-in slide-in-from-bottom-2">
+    <div className={`fixed bottom-4 left-4 right-4 ${getZIndexClass('updateNotification')} animate-in slide-in-from-bottom-2`}>
       <Card className="shadow-lg border-red-200 bg-gradient-to-r from-red-50 to-rose-50">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
