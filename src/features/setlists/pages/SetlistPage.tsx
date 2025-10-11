@@ -5,6 +5,7 @@
  * Pattern: Uses @dnd-kit DndContext + SortableContext
  */
 
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSensor, useSensors, PointerSensor, KeyboardSensor } from '@dnd-kit/core';
 import { DndContext, closestCenter } from '@dnd-kit/core';
@@ -13,6 +14,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { useSetlistData } from '../hooks/useSetlistData';
 import { useSetlistSongs } from '../hooks/useSetlistSongs';
 import SetlistSongItem from '../components/SetlistSongItem';
+import { AddArrangementModal } from '../components/AddArrangementModal';
 import Breadcrumbs from '@/features/shared/components/Breadcrumbs';
 import { PageSpinner } from '@/features/shared/components/LoadingStates';
 import { SimplePageTransition } from '@/features/shared/components/PageTransition';
@@ -22,16 +24,18 @@ import { Plus, Play } from 'lucide-react';
 export function SetlistPage() {
   const { setlistId } = useParams<{ setlistId: string }>();
   const navigate = useNavigate();
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const {
     setlist,
     arrangements,
+    songs,
     loading,
     error,
     updateSetlist
   } = useSetlistData(setlistId);
 
-  const { removeSong, reorderSongs } = useSetlistSongs(
+  const { addSong, removeSong, reorderSongs, updateSongKey } = useSetlistSongs(
     setlist,
     (updated) => updateSetlist(updated)
   );
@@ -97,7 +101,7 @@ export function SetlistPage() {
             )}
           </div>
 
-          <Button onClick={() => {/* TODO: Add song modal */}} className="mb-6">
+          <Button onClick={() => setShowAddModal(true)} className="mb-6">
             <Plus className="mr-2 h-4 w-4" />
             Add Song
           </Button>
@@ -117,19 +121,34 @@ export function SetlistPage() {
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
-                  {setlist.songs.map((song, index) => (
-                    <SetlistSongItem
-                      key={song.id}
-                      song={song}
-                      arrangement={arrangements.get(song.arrangementId)}
-                      index={index}
-                      onRemove={removeSong}
-                    />
-                  ))}
+                  {setlist.songs.map((song, index) => {
+                    const arrangement = arrangements.get(song.arrangementId);
+                    const parentSong = arrangement ? songs.get(arrangement.songId) : undefined;
+                    return (
+                      <SetlistSongItem
+                        key={song.id}
+                        song={song}
+                        arrangement={arrangement}
+                        parentSong={parentSong}
+                        index={index}
+                        onRemove={removeSong}
+                        onKeyChange={updateSongKey}
+                      />
+                    );
+                  })}
                 </div>
               </SortableContext>
             </DndContext>
           )}
+
+          <AddArrangementModal
+            open={showAddModal}
+            onOpenChange={setShowAddModal}
+            onAdd={async (arrangementId, customKey) => {
+              await addSong(arrangementId, customKey);
+              setShowAddModal(false);
+            }}
+          />
         </div>
       </div>
     </SimplePageTransition>
