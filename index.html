@@ -29,6 +29,11 @@
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.json" />
 
+    <!-- FOUC Prevention: Apply theme before React loads -->
+    <script>
+      (function(){const t=localStorage.getItem("hsasongbook-theme")||"system",e=document.documentElement;if("dark"===t)e.classList.add("dark");else if("system"===t){window.matchMedia("(prefers-color-scheme: dark)").matches&&e.classList.add("dark")}})();
+    </script>
+
     <!-- iOS Splash Screens (optional, can be added later) -->
     <!-- <link rel="apple-touch-startup-image" href="/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"> -->
 

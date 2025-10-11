@@ -5,7 +5,8 @@
  * Features:
  * - Sticky positioning at top of viewport
  * - App branding with clickable logo (navigates to home)
- * - Main navigation links (Search, Setlists)
+ * - Main navigation links (Search, Setlists, Settings)
+ * - Theme toggle for quick access
  * - Active page highlighting
  * - Backdrop blur effect for frosted glass appearance
  *
@@ -13,9 +14,10 @@
  */
 
 import { Link, NavLink } from 'react-router-dom';
-import { Home, List, Search } from 'lucide-react';
+import { Home, List, Search, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getZIndexClass } from '@/lib/config/zIndex';
+import { ThemeToggle } from '@/lib/theme/ThemeToggle';
 
 interface DesktopHeaderProps {
   /**
@@ -71,9 +73,10 @@ export default function DesktopHeader({ className }: DesktopHeaderProps) {
           <h1 className="text-xl font-bold">HSA Songbook</h1>
         </Link>
 
-        {/* Navigation Links */}
-        <nav role="navigation" aria-label="Main navigation">
-          <ul className="flex items-center space-x-6">
+        {/* Navigation Links + Theme Toggle */}
+        <div className="flex items-center space-x-4">
+          <nav role="navigation" aria-label="Main navigation">
+            <ul className="flex items-center space-x-6">
             <li>
               <NavLink
                 to="/"
@@ -118,8 +121,34 @@ export default function DesktopHeader({ className }: DesktopHeaderProps) {
                 <span>Setlists</span>
               </NavLink>
             </li>
+            <li>
+              <NavLink
+                to="/settings"
+                className={({ isActive }) =>
+                  cn(
+                    // Base styles
+                    'inline-flex items-center space-x-2 px-3 py-2 rounded-md',
+                    'text-sm font-medium transition-colors',
+                    // Hover state
+                    'hover:bg-accent hover:text-accent-foreground',
+                    // Focus state (keyboard navigation)
+                    'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                    // Active state (current page)
+                    isActive && 'bg-accent text-accent-foreground'
+                  )
+                }
+                aria-current={({ isActive }) => (isActive ? 'page' : undefined)}
+              >
+                <Settings className="h-4 w-4" aria-hidden="true" />
+                <span>Settings</span>
+              </NavLink>
+            </li>
           </ul>
         </nav>
+
+        {/* Theme Toggle (quick access) */}
+        <ThemeToggle />
+        </div>
       </div>
     </header>
   );
