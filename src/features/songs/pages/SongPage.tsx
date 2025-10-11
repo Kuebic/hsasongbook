@@ -1,6 +1,7 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { getSongById, getArrangementsBySongId } from '../../shared/utils/dataHelpers';
+import { useSlugParams } from '../../shared/hooks/useSlugParams';
+import { SongRepository, ArrangementRepository } from '../../pwa/db/repository';
 import SongMetadata from '../components/SongMetadata';
 import ArrangementList from '../../arrangements/components/ArrangementList';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
@@ -14,7 +15,7 @@ import type { Song } from '@/types/Song.types';
 import type { Arrangement } from '@/types/Arrangement.types';
 
 export function SongPage() {
-  const { songId } = useParams<{ songId: string }>();
+  const { songId, isLoading: isResolvingSlug } = useSlugParams();
   const navigate = useNavigate();
   const { breadcrumbs } = useNavigation();
   const [song, setSong] = useState<Song | null>(null);
@@ -23,29 +24,40 @@ export function SongPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      setLoading(true);
-      const songData = getSongById(songId);
+    if (!songId) return;
 
-      if (!songData) {
-        setError('Song not found');
+    const loadSongData = async () => {
+      try {
+        setLoading(true);
+        const songRepo = new SongRepository();
+        const arrRepo = new ArrangementRepository();
+
+        const songData = await songRepo.getById(songId);
+
+        if (!songData) {
+          setError('Song not found');
+          setLoading(false);
+          return;
+        }
+
+        const arrangementData = await arrRepo.getBySong(songId);
+
+        setSong(songData);
+        setArrangements(arrangementData);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load song');
+        console.error('Error loading song:', err);
+      } finally {
         setLoading(false);
-        return;
       }
+    };
 
-      setSong(songData);
-      setArrangements(getArrangementsBySongId(songId));
-      setError(null);
-    } catch (err) {
-      setError('Failed to load song');
-      console.error('Error loading song:', err);
-    } finally {
-      setLoading(false);
-    }
+    loadSongData();
   }, [songId]);
 
-  // Loading state
-  if (loading) {
+  // Loading state (slug resolution or data loading)
+  if (isResolvingSlug || loading) {
     return <PageSpinner message="Loading song details..." />;
   }
 
@@ -97,7 +109,7 @@ export function SongPage() {
             {arrangements.length > 0 ? (
               <ArrangementList
                 arrangements={arrangements}
-                songTitle={song.title}
+                songSlug={song.slug}
               />
             ) : (
               <Card>

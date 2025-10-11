@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Music, User, Hash } from 'lucide-react';
-import { getArrangementsBySongId } from '../../shared/utils/dataHelpers';
+import { ArrangementRepository } from '../../pwa/db/repository';
 import type { Song } from '@/types';
 
 interface SongListProps {
@@ -10,6 +11,26 @@ interface SongListProps {
 }
 
 export default function SongList({ songs }: SongListProps) {
+  const [arrangementCounts, setArrangementCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const loadArrangementCounts = async () => {
+      const arrRepo = new ArrangementRepository();
+      const counts: Record<string, number> = {};
+
+      for (const song of songs) {
+        const arrangements = await arrRepo.getBySong(song.id);
+        counts[song.id] = arrangements.length;
+      }
+
+      setArrangementCounts(counts);
+    };
+
+    if (songs.length > 0) {
+      loadArrangementCounts();
+    }
+  }, [songs]);
+
   if (!songs || songs.length === 0) {
     return (
       <div className="text-center py-12">
@@ -25,12 +46,12 @@ export default function SongList({ songs }: SongListProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {songs.map((song: Song) => {
-        const arrangements = getArrangementsBySongId(song.id);
+        const arrangementCount = arrangementCounts[song.id] || 0;
 
         return (
           <Link
             key={song.id}
-            to={`/song/${song.id}`}
+            to={`/song/${song.slug}`}
             className="block transition-transform hover:scale-[1.02]"
           >
             <Card className="h-full hover:shadow-lg transition-shadow">
@@ -43,9 +64,9 @@ export default function SongList({ songs }: SongListProps) {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {arrangements.length > 0 && (
+                  {arrangementCount > 0 && (
                     <Badge variant="secondary" className="text-xs">
-                      {arrangements.length} {arrangements.length === 1 ? 'arrangement' : 'arrangements'}
+                      {arrangementCount} {arrangementCount === 1 ? 'arrangement' : 'arrangements'}
                     </Badge>
                   )}
                   {song.themes?.slice(0, 2).map((theme: string, index: number) => (

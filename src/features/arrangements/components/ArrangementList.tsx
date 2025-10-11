@@ -9,10 +9,11 @@ import type { Arrangement, SortOption } from '@/types'
 
 interface ArrangementListProps {
   arrangements: Arrangement[];
+  songSlug: string;
   isLoading?: boolean;
 }
 
-export default function ArrangementList({ arrangements, isLoading = false }: ArrangementListProps) {
+export default function ArrangementList({ arrangements, songSlug, isLoading = false }: ArrangementListProps) {
   const [sortBy, setSortBy] = useState<SortOption>(SORT_OPTIONS.POPULAR)
 
   // Memoize sorted arrangements to prevent unnecessary re-sorting
@@ -86,6 +87,7 @@ export default function ArrangementList({ arrangements, isLoading = false }: Arr
           <ArrangementCard
             key={arrangement.id}
             arrangement={arrangement}
+            songSlug={songSlug}
           />
         ))}
       </div>

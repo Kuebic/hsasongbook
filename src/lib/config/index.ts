@@ -175,7 +175,7 @@ export const config: Config = {
   },
   database: {
     name: 'HSASongbookDB',
-    version: 4,
+    version: 5, // Bumped for slug implementation
     reconnectionDelay: 1000, // ms
     healthThreshold: 0.8 // 80%
   },

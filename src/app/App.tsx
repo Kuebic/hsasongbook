@@ -18,6 +18,7 @@ import logger from '@/lib/logger'
 import { usePWA, UpdateNotification, OfflineIndicator } from '../features/pwa'
 import { initDatabase } from '../features/pwa/db/database'
 import { importMockData } from '../features/pwa/db/dataMigration'
+import { runSlugMigration } from '../features/pwa/db/slugMigration'
 
 import '../App.css'
 
@@ -68,6 +69,16 @@ function AppWithFeatures() {
           logger.info('First run detected, migrating mock data...')
           await importMockData()
         }
+
+        // Run slug migration to populate slugs for all existing data
+        // This is idempotent - safe to run multiple times
+        logger.info('Running slug migration...')
+        const migrationResult = await runSlugMigration()
+        if (migrationResult.success) {
+          logger.info(`Slug migration completed: ${migrationResult.songsMigrated} songs, ${migrationResult.arrangementsMigrated} arrangements`)
+        } else {
+          logger.error('Slug migration failed')
+        }
       } catch (error) {
         logger.error('Failed to initialize PWA features:', error)
       }
@@ -91,8 +102,8 @@ function AppWithFeatures() {
 
       <Routes>
         <Route path="/" element={<SearchPage />} />
-        <Route path="/song/:songId" element={<SongPage />} />
-        <Route path="/arrangement/:arrangementId" element={<ArrangementPage />} />
+        <Route path="/song/:songSlug" element={<SongPage />} />
+        <Route path="/song/:songSlug/:arrangementSlug" element={<ArrangementPage />} />
         <Route path="/setlists" element={<SetlistsIndexPage />} />
         <Route path="/setlist/:setlistId" element={<SetlistPage />} />
         <Route path="/setlist/:setlistId/performance/:arrangementIndex?" element={<SetlistPerformancePage />} />

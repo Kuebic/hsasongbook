@@ -7,6 +7,7 @@
 
 export interface Arrangement {
   id: string;
+  slug: string; // URL-friendly slug (e.g., "gh2lk" - 6-char nanoid only)
   songId: string;
   name: string;
   key: string; // Musical key (C, D, E, F, G, A, B, with sharps/flats)

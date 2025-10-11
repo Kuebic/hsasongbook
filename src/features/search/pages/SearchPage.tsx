@@ -1,30 +1,60 @@
-import { useState, useMemo, useEffect } from 'react';
-import { searchSongs } from '../../shared/utils/dataHelpers';
+import { useState, useEffect } from 'react';
+import { SongRepository } from '../../pwa/db/repository';
 import SongList from '../components/SongList';
 import SearchBar from '../components/SearchBar';
 import { SongListSkeleton } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
+import type { Song } from '@/types/Song.types';
 
 export function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [allSongs, setAllSongs] = useState<Song[]>([]);
+  const [filteredSongs, setFilteredSongs] = useState<Song[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredSongs = useMemo(() => {
-    return searchSongs(searchTerm);
-  }, [searchTerm]);
-
-  // Simulate search delay for better UX
+  // Load all songs from IndexedDB on mount
   useEffect(() => {
-    if (searchTerm) {
-      setIsSearching(true);
-      const timer = setTimeout(() => {
-        setIsSearching(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    } else {
+    const loadSongs = async () => {
+      try {
+        setIsLoading(true);
+        const songRepo = new SongRepository();
+        const songs = await songRepo.getAll();
+        setAllSongs(songs);
+        setFilteredSongs(songs);
+      } catch (error) {
+        console.error('Failed to load songs:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSongs();
+  }, []);
+
+  // Filter songs when search term changes
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredSongs(allSongs);
       setIsSearching(false);
+      return;
     }
-  }, [searchTerm]);
+
+    setIsSearching(true);
+    const timer = setTimeout(() => {
+      const query = searchTerm.toLowerCase();
+      const filtered = allSongs.filter(
+        (song) =>
+          song.title.toLowerCase().includes(query) ||
+          song.artist.toLowerCase().includes(query) ||
+          song.themes?.some((theme) => theme.toLowerCase().includes(query))
+      );
+      setFilteredSongs(filtered);
+      setIsSearching(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, allSongs]);
 
   return (
     <SimplePageTransition>
@@ -53,7 +83,7 @@ export function SearchPage() {
             </p>
           </div>
 
-          {isSearching ? (
+          {isLoading || isSearching ? (
             <SongListSkeleton count={6} />
           ) : (
             <SongList songs={filteredSongs} />

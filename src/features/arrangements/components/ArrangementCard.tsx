@@ -10,13 +10,14 @@ import type { Arrangement } from '@/types'
 
 interface ArrangementCardProps {
   arrangement: Arrangement;
+  songSlug: string;
 }
 
-function ArrangementCard({ arrangement }: ArrangementCardProps) {
+function ArrangementCard({ arrangement, songSlug }: ArrangementCardProps) {
   const navigate = useNavigate()
 
   const handleViewArrangement = (): void => {
-    navigate(`/arrangement/${arrangement.id}`)
+    navigate(`/song/${songSlug}/${arrangement.slug}`)
   }
 
   return (

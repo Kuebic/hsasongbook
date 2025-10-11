@@ -15,18 +15,20 @@ interface ArrangementSwitcherProps {
   currentArrangement: Arrangement;
   allArrangements: Arrangement[];
   songTitle: string;
+  songSlug: string;
 }
 
 export default function ArrangementSwitcher({
   currentArrangement,
   allArrangements,
-  songTitle
+  songTitle,
+  songSlug
 }: ArrangementSwitcherProps) {
   const navigate = useNavigate()
 
-  const handleSwitch = (arrangementId: string): void => {
-    if (arrangementId !== currentArrangement.id) {
-      navigate(`/arrangement/${arrangementId}`)
+  const handleSwitch = (arrangementSlug: string): void => {
+    if (arrangementSlug !== currentArrangement.slug) {
+      navigate(`/song/${songSlug}/${arrangementSlug}`)
     }
   }
 
@@ -49,7 +51,7 @@ export default function ArrangementSwitcher({
         {allArrangements.map((arrangement) => (
           <DropdownMenuItem
             key={arrangement.id}
-            onClick={() => handleSwitch(arrangement.id)}
+            onClick={() => handleSwitch(arrangement.slug)}
             className="cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
@@ -60,7 +62,7 @@ export default function ArrangementSwitcher({
                   ({arrangement.key})
                 </span>
               </div>
-              {arrangement.id === currentArrangement.id && (
+              {arrangement.slug === currentArrangement.slug && (
                 <Check className="h-4 w-4 text-primary" />
               )}
             </div>
