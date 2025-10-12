@@ -6,25 +6,44 @@ import { Button } from '@/components/ui/button'
 import { Music, Clock, Guitar, Hash, PlayCircle } from 'lucide-react'
 import RatingDisplay from '../../shared/components/RatingDisplay'
 import PopularityDisplay from '../../shared/components/PopularityDisplay'
-import type { Arrangement } from '@/types'
+import type { Arrangement, ArrangementWithSong } from '@/types'
 
 interface ArrangementCardProps {
-  arrangement: Arrangement;
-  songSlug: string;
+  arrangement: Arrangement | ArrangementWithSong;
+  songSlug?: string; // Optional - can be inferred from arrangement.song if available
 }
 
 function ArrangementCard({ arrangement, songSlug }: ArrangementCardProps) {
   const navigate = useNavigate()
 
+  // Type guard: Check if arrangement includes embedded song data
+  const hasEmbeddedSong = 'song' in arrangement;
+
+  // Resolve songSlug from embedded data or props
+  const resolvedSongSlug = hasEmbeddedSong ? arrangement.song.slug : songSlug;
+  const resolvedSongTitle = hasEmbeddedSong ? arrangement.song.title : undefined;
+
   const handleViewArrangement = (): void => {
-    navigate(`/song/${songSlug}/${arrangement.slug}`)
+    if (!resolvedSongSlug) {
+      console.error('ArrangementCard: Missing song slug for arrangement', arrangement.id);
+      return;
+    }
+    navigate(`/song/${resolvedSongSlug}/${arrangement.slug}`)
   }
 
   return (
     <Card className="h-full flex flex-col hover:shadow-lg transition-all duration-200 hover:scale-[1.01] hover:-translate-y-1 group">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg line-clamp-2 font-semibold">
-          <span>{arrangement.name}</span>
+          {resolvedSongTitle ? (
+            <>
+              <span className="text-muted-foreground">{resolvedSongTitle}</span>
+              <span className="mx-2 text-muted-foreground/60">—</span>
+              <span>{arrangement.name}</span>
+            </>
+          ) : (
+            <span>{arrangement.name}</span>
+          )}
         </CardTitle>
         <CardDescription className="space-y-1 mt-2">
           <div className="flex items-center gap-2 text-muted-foreground">

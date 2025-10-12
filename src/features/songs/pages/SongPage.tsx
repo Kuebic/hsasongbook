@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useSlugParams } from '../../shared/hooks/useSlugParams';
+import { useViewTracking } from '../../shared/hooks/useViewTracking';
 import { SongRepository, ArrangementRepository } from '../../pwa/db/repository';
 import SongMetadata from '../components/SongMetadata';
 import ArrangementList from '../../arrangements/components/ArrangementList';
@@ -22,6 +23,9 @@ export function SongPage() {
   const [arrangements, setArrangements] = useState<Arrangement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Track page view for recent songs widget
+  useViewTracking('song', songId);
 
   useEffect(() => {
     if (!songId) return;

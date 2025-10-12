@@ -42,3 +42,23 @@ export interface ArrangementMetadata {
  * Sort options for arrangements
  */
 export type SortOption = 'popular' | 'rating' | 'newest' | 'oldest';
+
+/**
+ * Arrangement with embedded song data for display purposes
+ *
+ * Used in widgets and cards where song context is needed without separate queries.
+ * This is a query-time join pattern (denormalization) for read-optimized scenarios.
+ *
+ * Example use cases:
+ * - Featured arrangements widget (shows "Song Title - Arrangement Name")
+ * - Search results (shows arrangement with parent song context)
+ * - Recently played (displays full context)
+ */
+export interface ArrangementWithSong extends Arrangement {
+  song: {
+    id: string;
+    slug: string;
+    title: string;
+    artist: string;
+  };
+}

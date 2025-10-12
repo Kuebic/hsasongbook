@@ -7,7 +7,7 @@ import { StorageQuotaExceededError } from '../utils/storageManager.js';
 import logger from '@/lib/logger';
 import type { HSASongbookDB, BaseEntity } from '@/types/Database.types';
 import type { Song } from '@/types/Song.types';
-import type { Arrangement } from '@/types/Arrangement.types';
+import type { Arrangement, ArrangementWithSong } from '@/types/Arrangement.types';
 import type { Setlist } from '@/types/Setlist.types';
 
 /**
@@ -502,6 +502,33 @@ export class SongRepository extends BaseRepository<Song> {
 
     return updatedSong;
   }
+
+  /**
+   * Get recently viewed songs (for homepage widget)
+   * Uses 'by-last-accessed' index for efficient querying
+   *
+   * @param limit - Maximum number of recent songs to return (default: 10)
+   * @returns Array of recently viewed songs, ordered by most recent first
+   */
+  async getRecentlyViewed(limit = 10): Promise<Song[]> {
+    const db = await this.getDB();
+    const tx = db.transaction(this.storeName, 'readonly');
+    const index = tx.store.index('by-last-accessed');
+
+    const songs: Song[] = [];
+    // Open cursor in descending order (most recent first)
+    let cursor = await index.openCursor(null, 'prev');
+
+    while (cursor && songs.length < limit) {
+      // Filter out songs with null/undefined lastAccessedAt
+      if (cursor.value.lastAccessedAt !== null && cursor.value.lastAccessedAt !== undefined) {
+        songs.push(cursor.value);
+      }
+      cursor = await cursor.continue();
+    }
+
+    return songs;
+  }
 }
 
 /**
@@ -614,6 +641,93 @@ export class ArrangementRepository extends BaseRepository<Arrangement> {
       logger.error(`Error finding arrangement by slug ${slug}:`, error);
       return null;
     }
+  }
+
+  /**
+   * Get featured arrangements (for homepage widget)
+   * Uses algorithm: score = (rating × 0.6) + (favorites × 0.004)
+   * This balances quality (rating) with popularity (favorites)
+   *
+   * @param limit - Maximum number of featured arrangements to return (default: 6)
+   * @returns Array of top featured arrangements, ordered by score descending
+   */
+  async getFeatured(limit = 6): Promise<Arrangement[]> {
+    const arrangements = await this.getAll();
+
+    // Calculate feature score for each arrangement
+    interface ScoredArrangement {
+      arrangement: Arrangement;
+      score: number;
+    }
+
+    const scored: ScoredArrangement[] = arrangements.map(arr => {
+      const rating = arr.rating || 0;
+      const favorites = arr.favorites || 0;
+      const score = rating * 0.6 + favorites * 0.004;
+      return { arrangement: arr, score };
+    });
+
+    // Sort by score descending and return top N
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map(s => s.arrangement);
+  }
+
+  /**
+   * Get featured arrangements WITH song data for display
+   *
+   * Performs query-time join of arrangements and their parent songs.
+   * This is a denormalization pattern for read-optimized display scenarios.
+   *
+   * Uses the same scoring algorithm as getFeatured():
+   * score = (rating × 0.6) + (favorites × 0.004)
+   *
+   * @param limit - Maximum number of featured arrangements to return (default: 6)
+   * @returns Array of top featured arrangements with embedded song data
+   */
+  async getFeaturedWithSongs(limit = 6): Promise<ArrangementWithSong[]> {
+    // Get top arrangements by feature score
+    const arrangements = await this.getFeatured(limit);
+
+    // Create song repository for lookups
+    const songRepo = new SongRepository();
+
+    // Fetch song data for each arrangement in parallel
+    const arrangementsWithSongs: ArrangementWithSong[] = await Promise.all(
+      arrangements.map(async (arr): Promise<ArrangementWithSong> => {
+        const song = await songRepo.getById(arr.songId);
+
+        if (!song) {
+          // Log error but don't fail the entire query
+          logger.error(`Song ${arr.songId} not found for arrangement ${arr.id} (${arr.name})`);
+
+          // Return arrangement with placeholder song data
+          return {
+            ...arr,
+            song: {
+              id: arr.songId,
+              slug: 'unknown',
+              title: 'Unknown Song',
+              artist: 'Unknown Artist',
+            }
+          };
+        }
+
+        // Return arrangement with embedded song data
+        return {
+          ...arr,
+          song: {
+            id: song.id,
+            slug: song.slug,
+            title: song.title,
+            artist: song.artist,
+          }
+        };
+      })
+    );
+
+    return arrangementsWithSongs;
   }
 }
 

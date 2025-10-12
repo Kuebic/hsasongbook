@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useSlugParams } from '../../shared/hooks/useSlugParams';
+import { useViewTracking } from '../../shared/hooks/useViewTracking';
 import { useArrangementData } from '../hooks/useArrangementData';
 import ChordProViewer from '@/features/chordpro';
 import ArrangementSwitcher from '../components/ArrangementSwitcher';
@@ -23,6 +24,9 @@ export function ArrangementPage() {
   const { breadcrumbs } = useNavigation();
   const [showChords] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // Track page view for recent songs widget
+  useViewTracking('arrangement', arrangementId);
 
   // Use IndexedDB hook instead of mock data
   const {

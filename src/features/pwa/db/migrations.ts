@@ -11,14 +11,15 @@ const MIGRATIONS: Record<number, string> = {
   2: 'Add sync queue and compound indexes for better performance',
   3: 'Add popularity tracking, preferences store, and performance date index',
   4: 'Add chordproDrafts store for ChordPro editor auto-save',
-  5: 'Add slug indexes for URL-friendly song and arrangement slugs'
+  5: 'Add slug indexes for URL-friendly song and arrangement slugs',
+  6: 'Add lastAccessedAt indexes for recent views tracking'
 };
 
 /**
  * Get the current database version
  */
 export function getCurrentVersion(): number {
-  return 5;
+  return 6;
 }
 
 /**
@@ -58,7 +59,8 @@ const migrationHandlers: Record<number, MigrationHandler> = {
   2: addSyncQueueAndIndexes,
   3: addPopularityAndPreferences,
   4: createChordproDraftsStore,
-  5: addSlugIndexes
+  5: addSlugIndexes,
+  6: addLastAccessedIndexes
 };
 
 /**
@@ -257,6 +259,30 @@ function addSlugIndexes(
   }
 
   logger.log('Slug indexes added successfully');
+}
+
+/**
+ * Version 6: Add lastAccessedAt indexes for recent views tracking
+ */
+function addLastAccessedIndexes(
+  db: IDBPDatabase<HSASongbookDB>,
+  transaction: IDBPTransaction<HSASongbookDB, ArrayLike<keyof HSASongbookDB>, 'versionchange'>
+): void {
+  // Add lastAccessedAt index to songs store
+  const songsStore = transaction.objectStore('songs');
+  if (!songsStore.indexNames.contains('by-last-accessed')) {
+    songsStore.createIndex('by-last-accessed', 'lastAccessedAt', { unique: false });
+    logger.log('Created by-last-accessed index on songs store');
+  }
+
+  // Add lastAccessedAt index to arrangements store
+  const arrangementsStore = transaction.objectStore('arrangements');
+  if (!arrangementsStore.indexNames.contains('by-last-accessed')) {
+    arrangementsStore.createIndex('by-last-accessed', 'lastAccessedAt', { unique: false });
+    logger.log('Created by-last-accessed index on arrangements store');
+  }
+
+  logger.log('lastAccessedAt indexes added successfully');
 }
 
 /**
