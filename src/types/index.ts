@@ -10,6 +10,7 @@ export type { Song } from './Song.types';
 export type {
   Arrangement,
   ArrangementMetadata,
+  ArrangementWithSong,
   SortOption,
 } from './Arrangement.types';
 export type { Setlist, SetlistSong } from './Setlist.types';

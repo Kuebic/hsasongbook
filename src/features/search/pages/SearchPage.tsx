@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { SongRepository } from '../../pwa/db/repository';
 import SongList from '../components/SongList';
 import SearchBar from '../components/SearchBar';
+import RecentSongsWidget from '../components/RecentSongsWidget';
+import StatsWidget from '../components/StatsWidget';
+import FeaturedArrangementsWidget from '../components/FeaturedArrangementsWidget';
 import { SongListSkeleton } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
 import type { Song } from '@/types/Song.types';
@@ -73,20 +76,34 @@ export function SearchPage() {
             <SearchBar value={searchTerm} onChange={setSearchTerm} />
           </div>
 
-          <div className="mb-4">
-            <p className="text-sm text-muted-foreground">
-              {isSearching ? (
-                'Searching...'
-              ) : (
-                `${filteredSongs.length} ${filteredSongs.length === 1 ? 'song' : 'songs'} found`
-              )}
-            </p>
-          </div>
+          {/* Show widgets only when not searching */}
+          {!searchTerm && !isSearching && (
+            <>
+              <StatsWidget />
+              <RecentSongsWidget limit={5} />
+              <FeaturedArrangementsWidget limit={6} />
+            </>
+          )}
 
-          {isLoading || isSearching ? (
-            <SongListSkeleton count={6} />
-          ) : (
-            <SongList songs={filteredSongs} />
+          {/* Show search results count and list */}
+          {(searchTerm || isSearching) && (
+            <>
+              <div className="mb-4">
+                <p className="text-sm text-muted-foreground">
+                  {isSearching ? (
+                    'Searching...'
+                  ) : (
+                    `${filteredSongs.length} ${filteredSongs.length === 1 ? 'song' : 'songs'} found`
+                  )}
+                </p>
+              </div>
+
+              {isLoading || isSearching ? (
+                <SongListSkeleton count={6} />
+              ) : (
+                <SongList songs={filteredSongs} />
+              )}
+            </>
           )}
         </div>
       </div>

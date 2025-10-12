@@ -6,6 +6,7 @@ import { SongPage } from '../features/songs'
 import { ArrangementPage } from '../features/arrangements'
 import { SetlistsIndexPage, SetlistPage, SetlistPerformancePage } from '../features/setlists'
 import { SettingsPage } from '../features/settings'
+import { ProfilePage } from '../features/profile'
 import { NotFound } from '../features/shared/pages/NotFound'
 import ScrollRestoration from '../features/shared/components/ScrollRestoration'
 import MobileNav from '../features/shared/components/MobileNav'
@@ -113,6 +114,7 @@ function AppWithFeatures() {
           <Route path="/setlists" element={<SetlistsIndexPage />} />
           <Route path="/setlist/:setlistId" element={<SetlistPage />} />
           <Route path="/setlist/:setlistId/performance/:arrangementIndex?" element={<SetlistPerformancePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
