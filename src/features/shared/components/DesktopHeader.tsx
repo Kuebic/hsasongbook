@@ -5,7 +5,7 @@
  * Features:
  * - Sticky positioning at top of viewport
  * - App branding with clickable logo (navigates to home)
- * - Main navigation links (Search, Setlists, Settings)
+ * - Main navigation links (Search, Setlists, Profile - Settings accessible via Profile)
  * - Theme toggle for quick access
  * - Active page highlighting
  * - Backdrop blur effect for frosted glass appearance
@@ -14,7 +14,7 @@
  */
 
 import { Link, NavLink } from 'react-router-dom';
-import { Home, List, Search, Settings } from 'lucide-react';
+import { Home, List, Search, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getZIndexClass } from '@/lib/config/zIndex';
 import { ThemeToggle } from '@/lib/theme/ThemeToggle';
@@ -123,7 +123,7 @@ export default function DesktopHeader({ className }: DesktopHeaderProps) {
             </li>
             <li>
               <NavLink
-                to="/settings"
+                to="/profile"
                 className={({ isActive }) =>
                   cn(
                     // Base styles
@@ -139,8 +139,8 @@ export default function DesktopHeader({ className }: DesktopHeaderProps) {
                 }
                 aria-current={({ isActive }) => (isActive ? 'page' : undefined)}
               >
-                <Settings className="h-4 w-4" aria-hidden="true" />
-                <span>Settings</span>
+                <User className="h-4 w-4" aria-hidden="true" />
+                <span>Profile</span>
               </NavLink>
             </li>
           </ul>
