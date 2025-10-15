@@ -12,14 +12,15 @@ const MIGRATIONS: Record<number, string> = {
   3: 'Add popularity tracking, preferences store, and performance date index',
   4: 'Add chordproDrafts store for ChordPro editor auto-save',
   5: 'Add slug indexes for URL-friendly song and arrangement slugs',
-  6: 'Add lastAccessedAt indexes for recent views tracking'
+  6: 'Add lastAccessedAt indexes for recent views tracking',
+  7: 'Add sessions store for Supabase auth session persistence (Phase 5)'
 };
 
 /**
  * Get the current database version
  */
 export function getCurrentVersion(): number {
-  return 6;
+  return 7;
 }
 
 /**
@@ -60,7 +61,8 @@ const migrationHandlers: Record<number, MigrationHandler> = {
   3: addPopularityAndPreferences,
   4: createChordproDraftsStore,
   5: addSlugIndexes,
-  6: addLastAccessedIndexes
+  6: addLastAccessedIndexes,
+  7: createSessionsStore
 };
 
 /**
@@ -286,10 +288,21 @@ function addLastAccessedIndexes(
 }
 
 /**
+ * Version 7: Add sessions store for Supabase auth session persistence (Phase 5)
+ */
+function createSessionsStore(db: IDBPDatabase<HSASongbookDB>): void {
+  // Create sessions store for Supabase auth session persistence
+  if (!db.objectStoreNames.contains('sessions')) {
+    db.createObjectStore('sessions');
+    logger.log('Created sessions object store for auth session persistence');
+  }
+}
+
+/**
  * Validate database schema after migration
  */
 export function validateSchema(db: IDBPDatabase<HSASongbookDB>): boolean {
-  const requiredStores = ['songs', 'arrangements', 'setlists', 'syncQueue', 'preferences', 'chordproDrafts'];
+  const requiredStores = ['songs', 'arrangements', 'setlists', 'syncQueue', 'preferences', 'chordproDrafts', 'sessions'];
 
   // Check all required stores exist
   for (const storeName of requiredStores) {

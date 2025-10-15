@@ -70,6 +70,12 @@ export interface HSASongbookDB extends DBSchema {
     key: string; // Preference key (e.g., 'theme', 'defaultKey')
     value: PreferenceValue; // Flexible value type
   };
+
+  // Auth session storage (Phase 5)
+  sessions: {
+    key: 'current'; // Single session key
+    value: AuthSession; // Session data
+  };
 }
 
 /**
@@ -134,6 +140,20 @@ export interface PreferenceValue {
   key: string;
   value: unknown;
   updatedAt: string;
+}
+
+/**
+ * Auth session data (Phase 5)
+ * Stored in IndexedDB for offline persistence
+ */
+export interface AuthSession {
+  userId: string;
+  isAnonymous: boolean;
+  email?: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number; // Unix timestamp
+  lastRefreshedAt: number; // Unix timestamp
 }
 
 /**
