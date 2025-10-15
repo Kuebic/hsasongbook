@@ -7,10 +7,12 @@
  * - App branding with clickable logo (navigates to home)
  * - Main navigation links (Search, Setlists, Profile - Settings accessible via Profile)
  * - Theme toggle for quick access
+ * - User dropdown with auth state (anonymous badge or email)
  * - Active page highlighting
  * - Backdrop blur effect for frosted glass appearance
  *
  * Hidden on mobile viewports (< 768px) where MobileNav is shown instead.
+ * Phase 5: Added UserDropdown for authentication display
  */
 
 import { Link, NavLink } from 'react-router-dom';
@@ -18,6 +20,7 @@ import { Home, List, Search, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getZIndexClass } from '@/lib/config/zIndex';
 import { ThemeToggle } from '@/lib/theme/ThemeToggle';
+import UserDropdown from '@/features/auth/components/UserDropdown';
 
 interface DesktopHeaderProps {
   /**
@@ -146,8 +149,11 @@ export default function DesktopHeader({ className }: DesktopHeaderProps) {
           </ul>
         </nav>
 
-        {/* Theme Toggle (quick access) */}
-        <ThemeToggle />
+        {/* Theme Toggle + User Dropdown */}
+        <div className="flex items-center space-x-2">
+          <ThemeToggle />
+          <UserDropdown />
+        </div>
         </div>
       </div>
     </header>

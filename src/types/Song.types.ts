@@ -16,7 +16,10 @@ export interface Song {
     en?: string;
     [language: string]: string | undefined;
   };
-  // Future fields for Phase 5
+  // Phase 5 fields (Authentication)
+  userId?: string;                     // Creator user ID (optional for backward compatibility)
+  isPublic?: boolean;                  // Public vs private (default: true for songs)
+  // Future fields
   compositionYear?: number;
   source?: string;
   notes?: string;

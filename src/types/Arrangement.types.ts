@@ -20,7 +20,10 @@ export interface Arrangement {
   chordProContent: string; // ChordPro formatted text
   createdAt: string;
   updatedAt: string;
-  // Future fields for Phase 5 (sync support)
+  // Phase 5 fields (Authentication)
+  userId?: string;                     // Creator user ID (optional for backward compatibility)
+  isPublic?: boolean;                  // Public vs private (default: true for arrangements)
+  // Phase 5 fields (Sync support)
   syncStatus?: 'pending' | 'synced' | 'conflict';
   version?: number;
   lastAccessedAt?: number;

@@ -34,7 +34,11 @@ export default defineConfig(({ mode }) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}'],
           navigateFallback: '/offline.html',
-          navigateFallbackDenylist: [/^\/api/],
+          // Don't intercept these routes with service worker
+          navigateFallbackDenylist: [
+            /^\/api/,  // API routes
+            /^.*\.supabase\.co/,  // Supabase API (Phase 5)
+          ],
           runtimeCaching: [
             // CacheFirst for static assets and fonts
             {

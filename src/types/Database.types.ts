@@ -65,10 +65,13 @@ export interface HSASongbookDB extends DBSchema {
     };
   };
 
-  // User preferences
+  // User preferences (Phase 5)
   preferences: {
-    key: string; // Preference key (e.g., 'theme', 'defaultKey')
-    value: PreferenceValue; // Flexible value type
+    key: string; // userId
+    value: UserPreferences; // User-specific preferences
+    indexes: {
+      'by-user-id': string;
+    };
   };
 
   // Auth session storage (Phase 5)
@@ -105,7 +108,10 @@ export interface Setlist {
   songs: SetlistSong[];
   createdAt: string;
   updatedAt: string;
-  // Future: sync support
+  // Phase 5 fields (Authentication)
+  userId?: string;                     // Owner user ID (optional for backward compatibility)
+  // Note: Setlists are always private (no isPublic field)
+  // Phase 5 fields (Sync support)
   syncStatus?: 'pending' | 'synced' | 'conflict';
   version?: number;
 }
@@ -134,12 +140,16 @@ export interface SyncQueueItem {
 }
 
 /**
- * User preference value
+ * User preferences (Phase 5)
+ * Settings and preferences for each user
  */
-export interface PreferenceValue {
-  key: string;
-  value: unknown;
-  updatedAt: string;
+export interface UserPreferences {
+  userId: string; // Owner of these preferences
+  theme: 'light' | 'dark' | 'system'; // Theme preference
+  defaultKey: string; // Default musical key for new arrangements
+  autoSync: boolean; // Enable automatic sync when online
+  syncOnMobileData: boolean; // Sync even on cellular data (default: false)
+  updatedAt: string; // Last updated timestamp
 }
 
 /**
