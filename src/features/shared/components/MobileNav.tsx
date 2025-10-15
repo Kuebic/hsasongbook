@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Home, ArrowLeft, List, Settings } from 'lucide-react'
+import { Home, User, List } from 'lucide-react'
 import { useNavigation } from '../hooks/useNavigation'
 import { cn } from '@/lib/utils'
 import { getZIndexClass } from '@/lib/config/zIndex'
@@ -17,7 +17,7 @@ interface MobileNavProps {
  *
  * Bottom navigation bar for mobile viewports (< 768px).
  * Features:
- * - 4 buttons: Back, Home, Setlists, Settings
+ * - 3 buttons: Profile, Home, Setlists (Settings accessible via Profile)
  * - 48px touch targets (WCAG 2.5.5 compliance)
  * - Auto-hide on scroll down, reveal on scroll up
  * - Active page highlighting
@@ -26,7 +26,7 @@ interface MobileNavProps {
  * Hidden on desktop viewports (≥ 768px) where DesktopHeader is shown instead.
  */
 export default function MobileNav({ className }: MobileNavProps) {
-  const { goToSearch, goBack, currentPath, navigate } = useNavigation()
+  const { goToSearch, currentPath, navigate } = useNavigation()
   const [isVisible, setIsVisible] = useState<boolean>(true)
   const [lastScrollY, setLastScrollY] = useState<number>(0)
 
@@ -68,21 +68,23 @@ export default function MobileNav({ className }: MobileNavProps) {
       )}
     >
       <div className="flex justify-around items-center p-2">
-        {/* Back Button */}
+        {/* Profile Button */}
         <Button
           variant="ghost"
-          onClick={goBack}
-          aria-label="Go back to previous page"
+          onClick={() => navigate('/profile')}
+          aria-label="View profile"
+          aria-current={currentPath === '/profile' ? 'page' : undefined}
           className={cn(
             'flex-1 h-12 flex-col gap-1',
             'touch-manipulation',
             'active:scale-95',
             'transition-transform',
-            'focus:outline-none focus:ring-2 focus:ring-ring'
+            'focus:outline-none focus:ring-2 focus:ring-ring',
+            currentPath === '/profile' && 'bg-accent text-accent-foreground'
           )}
         >
-          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-          <span className="text-xs">Back</span>
+          <User className="h-5 w-5" aria-hidden="true" />
+          <span className="text-xs">Profile</span>
         </Button>
 
         {/* Home Button */}
@@ -121,25 +123,6 @@ export default function MobileNav({ className }: MobileNavProps) {
         >
           <List className="h-5 w-5" aria-hidden="true" />
           <span className="text-xs">Sets</span>
-        </Button>
-
-        {/* Settings Button */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/settings')}
-          aria-label="Open settings"
-          aria-current={currentPath === '/settings' ? 'page' : undefined}
-          className={cn(
-            'flex-1 h-12 flex-col gap-1',
-            'touch-manipulation',
-            'active:scale-95',
-            'transition-transform',
-            'focus:outline-none focus:ring-2 focus:ring-ring',
-            currentPath === '/settings' && 'bg-accent text-accent-foreground'
-          )}
-        >
-          <Settings className="h-5 w-5" aria-hidden="true" />
-          <span className="text-xs">Settings</span>
         </Button>
       </div>
     </div>
