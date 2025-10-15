@@ -37,7 +37,7 @@ const indexedDBStorageAdapter = {
   /**
    * Retrieve session from IndexedDB
    */
-  async getItem(key: string): Promise<string | null> {
+  async getItem(_key: string): Promise<string | null> {
     try {
       const db = await getDatabase();
 
@@ -59,7 +59,7 @@ const indexedDBStorageAdapter = {
   /**
    * Store session in IndexedDB
    */
-  async setItem(key: string, value: string): Promise<void> {
+  async setItem(_key: string, value: string): Promise<void> {
     try {
       const db = await getDatabase();
 
@@ -79,7 +79,7 @@ const indexedDBStorageAdapter = {
   /**
    * Remove session from IndexedDB
    */
-  async removeItem(key: string): Promise<void> {
+  async removeItem(_key: string): Promise<void> {
     try {
       const db = await getDatabase();
       await db.delete('sessions', 'current');

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Home, User, List } from 'lucide-react'
 import { useNavigation } from '../hooks/useNavigation'
+import { useAuthState } from '@/features/auth/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { getZIndexClass } from '@/lib/config/zIndex'
 
@@ -18,17 +20,22 @@ interface MobileNavProps {
  * Bottom navigation bar for mobile viewports (< 768px).
  * Features:
  * - 3 buttons: Profile, Home, Setlists (Settings accessible via Profile)
+ * - Auth state indicator (badge on Profile icon for anonymous users)
  * - 48px touch targets (WCAG 2.5.5 compliance)
  * - Auto-hide on scroll down, reveal on scroll up
  * - Active page highlighting
  * - Touch feedback animation
  *
  * Hidden on desktop viewports (≥ 768px) where DesktopHeader is shown instead.
+ * Phase 5: Added auth state indicator on Profile button
  */
 export default function MobileNav({ className }: MobileNavProps) {
   const { goToSearch, currentPath, navigate } = useNavigation()
+  const { user } = useAuthState()
   const [isVisible, setIsVisible] = useState<boolean>(true)
   const [lastScrollY, setLastScrollY] = useState<number>(0)
+
+  const isAnonymous = user?.isAnonymous ?? true
 
   useEffect(() => {
     const handleScroll = (): void => {
@@ -72,10 +79,10 @@ export default function MobileNav({ className }: MobileNavProps) {
         <Button
           variant="ghost"
           onClick={() => navigate('/profile')}
-          aria-label="View profile"
+          aria-label={isAnonymous ? "View profile (sign in to sync)" : "View profile"}
           aria-current={currentPath === '/profile' ? 'page' : undefined}
           className={cn(
-            'flex-1 h-12 flex-col gap-1',
+            'flex-1 h-12 flex-col gap-1 relative',
             'touch-manipulation',
             'active:scale-95',
             'transition-transform',
@@ -83,7 +90,18 @@ export default function MobileNav({ className }: MobileNavProps) {
             currentPath === '/profile' && 'bg-accent text-accent-foreground'
           )}
         >
-          <User className="h-5 w-5" aria-hidden="true" />
+          <div className="relative">
+            <User className="h-5 w-5" aria-hidden="true" />
+            {isAnonymous && (
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-2 w-2 p-0 rounded-full"
+                aria-label="Not signed in"
+              >
+                <span className="sr-only">Sign in indicator</span>
+              </Badge>
+            )}
+          </div>
           <span className="text-xs">Profile</span>
         </Button>
 

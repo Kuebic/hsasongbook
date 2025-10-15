@@ -1,45 +1,44 @@
 /**
- * Auth Feature Barrel Export
- *
+ * Auth Module Barrel Export
  * Phase 5: Authentication Flow
  *
- * Exports:
- * - Components: AuthProvider, SignInModal, SignInPage, SignUpModal, SignUpPage, SignInBanner
- * - Hooks: useAuth, useSupabase, useSession
- * - Types: AuthContextData, SignInFormData, SignUpFormData, AuthError, AuthResult
- * - Utils: getUserFriendlyErrorMessage, isNetworkError, isRateLimitError
+ * Centralizes all auth exports for cleaner imports.
+ *
+ * Usage:
+ * ```tsx
+ * // Instead of:
+ * import { useAuth } from '@/features/auth/hooks/useAuth';
+ * import SignInForm from '@/features/auth/components/SignInForm';
+ *
+ * // Use:
+ * import { useAuth, SignInForm } from '@/features/auth';
+ * ```
  */
 
-// Components
-export { AuthProvider } from './components/AuthProvider';
-// TODO: Add exports as components are created
-// export { SignInModal } from './components/SignInModal';
-// export { SignInPage } from './components/SignInPage';
-// export { SignUpModal } from './components/SignUpModal';
-// export { SignUpPage } from './components/SignUpPage';
-// export { SignInBanner } from './components/SignInBanner';
-
 // Hooks
-export { useAuth } from './hooks/useAuth';
-// TODO: Add exports as hooks are created
-// export { useSupabase } from './hooks/useSupabase';
-// export { useSession } from './hooks/useSession';
+export { useAuth, useAuthState, useAuthActions } from './hooks/useAuth';
 
-// Types
+// Components
+export { default as SignInForm } from './components/SignInForm';
+export { default as SignUpForm } from './components/SignUpForm';
+export { default as SignInModal } from './components/SignInModal';
+export { default as UserDropdown } from './components/UserDropdown';
+
+// Pages
+export { default as SignInPage } from './pages/SignInPage';
+export { default as SignUpPage } from './pages/SignUpPage';
+
+// Context (rarely needed directly, use hooks instead)
+export { AuthProvider } from './context/AuthProvider';
+export { AuthStateContext, AuthActionsContext } from './context/AuthContext';
+
+// Validation schemas (for form usage)
+export { signInSchema, signUpSchema, emailSchema, passwordSchema } from './validation/authSchemas';
+
+// Types (re-exported from @/types/User.types.ts for convenience)
 export type {
-  AuthContextData,
-  SignInFormData,
-  SignUpFormData,
-  AuthError,
-  AuthResult,
   User,
-  Session,
-} from './types';
-
-// Utils
-export {
-  getUserFriendlyErrorMessage,
-  isNetworkError,
-  isRateLimitError,
-  calculateBackoffDelay,
-} from './utils/errors';
+  AuthSession,
+  AuthState,
+  AuthActions,
+} from '@/types/User.types';

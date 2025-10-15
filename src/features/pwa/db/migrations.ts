@@ -290,11 +290,22 @@ function addLastAccessedIndexes(
 /**
  * Version 7: Add sessions store for Supabase auth session persistence (Phase 5)
  */
-function createSessionsStore(db: IDBPDatabase<HSASongbookDB>): void {
+function createSessionsStore(
+  db: IDBPDatabase<HSASongbookDB>,
+  transaction: IDBPTransaction<HSASongbookDB, ArrayLike<keyof HSASongbookDB>, 'versionchange'>
+): void {
   // Create sessions store for Supabase auth session persistence
   if (!db.objectStoreNames.contains('sessions')) {
     db.createObjectStore('sessions');
     logger.log('Created sessions object store for auth session persistence');
+  }
+
+  // Update preferences store to add userId index (Phase 5)
+  // Note: Preferences store was created in v3 but without the userId index
+  const preferencesStore = transaction.objectStore('preferences');
+  if (!preferencesStore.indexNames.contains('by-user-id')) {
+    preferencesStore.createIndex('by-user-id', 'userId', { unique: false });
+    logger.log('Created by-user-id index on preferences store');
   }
 }
 

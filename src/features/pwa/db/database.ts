@@ -99,7 +99,7 @@ export function closeDatabase(): void {
  */
 export async function clearDatabase(): Promise<void> {
   const db = await getDatabase();
-  const stores = ['songs', 'arrangements', 'chordproDrafts', 'setlists', 'syncQueue', 'preferences'] as const;
+  const stores = ['songs', 'arrangements', 'chordproDrafts', 'setlists', 'syncQueue', 'preferences', 'sessions'] as const;
 
   const tx = db.transaction([...stores], 'readwrite');
 
