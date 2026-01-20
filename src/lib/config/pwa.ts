@@ -36,8 +36,8 @@ export interface PWAManifest {
   description: string;
   theme_color: string;
   background_color: string;
-  display: string;
-  orientation: string;
+  display: 'fullscreen' | 'standalone' | 'minimal-ui' | 'browser';
+  orientation: 'any' | 'natural' | 'landscape' | 'landscape-primary' | 'landscape-secondary' | 'portrait' | 'portrait-primary' | 'portrait-secondary';
   scope: string;
   start_url: string;
   categories: string[];
