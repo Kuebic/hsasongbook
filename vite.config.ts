@@ -37,7 +37,6 @@ export default defineConfig(({ mode }) => {
           // Don't intercept these routes with service worker
           navigateFallbackDenylist: [
             /^\/api/,  // API routes
-            /^.*\.supabase\.co/,  // Supabase API (Phase 5)
           ],
           runtimeCaching: [
             // CacheFirst for static assets and fonts

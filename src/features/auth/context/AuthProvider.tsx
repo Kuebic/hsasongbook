@@ -1,337 +1,138 @@
 /**
- * Auth Provider Component
- * Phase 5: Cloud Integration - Auth Foundation
- *
- * Responsibilities:
- * - Initialize with anonymous sign-in on first load
- * - Listen for auth state changes (onAuthStateChange)
- * - Handle token refresh with offline fallback
- * - Track offline days (14-day offline window)
- * - Provide auth methods (signIn, signUp, signOut, etc.)
- *
- * Pattern from: src/lib/theme/ThemeProvider.tsx + PRP AuthProvider example
+ * Auth Provider Component - Convex Implementation
+ * MVP: Minimal auth with anonymous + email/password
  */
 
-import { ReactNode, useEffect, useState, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
+import { ReactNode, useEffect, useState, useMemo, useCallback } from 'react';
+import { useConvexAuth } from "convex/react";
+import { useAuthActions as useConvexAuthActions } from "@convex-dev/auth/react";
 import { AuthStateContext, AuthActionsContext } from './AuthContext';
-import type { User, AuthSession, AuthState, AuthActions } from '@/types/User.types';
+import type { User, AuthState, AuthActions } from '@/types/User.types';
 import { useOnlineStatus } from '@/features/pwa/hooks/useOnlineStatus';
 import logger from '@/lib/logger';
-import type { Session as SupabaseSession, User as SupabaseUser } from '@supabase/supabase-js';
-
-const MAX_OFFLINE_DAYS = 14; // Maximum days user can stay offline before forced sign-out
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Helper: Map Supabase user to our User type
-function mapSupabaseUserToUser(supabaseUser: SupabaseUser): User {
-  return {
-    id: supabaseUser.id,
-    email: supabaseUser.email,
-    isAnonymous: supabaseUser.is_anonymous || false,
-    createdAt: supabaseUser.created_at,
-    lastSignInAt: supabaseUser.last_sign_in_at,
-  };
-}
-
-// Helper: Map Supabase session to our AuthSession type
-function mapSupabaseSessionToAuthSession(supabaseSession: SupabaseSession): AuthSession {
-  return {
-    accessToken: supabaseSession.access_token,
-    refreshToken: supabaseSession.refresh_token,
-    expiresAt: supabaseSession.expires_at || 0,
-    expiresIn: supabaseSession.expires_in || 0,
-    user: mapSupabaseUserToUser(supabaseSession.user),
-  };
-}
-
-/**
- * AuthProvider - Manages authentication state and actions
- */
 export function AuthProvider({ children }: AuthProviderProps) {
-  // State
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<AuthSession | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [offlineDays, setOfflineDays] = useState(0);
-
-  // Hooks
+  const { isLoading, isAuthenticated } = useConvexAuth();
+  const { signIn, signOut } = useConvexAuthActions();
   const isOnline = useOnlineStatus();
+  const [error, setError] = useState<Error | null>(null);
+  const [isAnonymous, setIsAnonymous] = useState(true);
 
-  // CRITICAL: Initialize with anonymous sign-in on first load
+  // Auto sign-in anonymously on first load if not authenticated
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        // 1. Check if session exists in storage (IndexedDB via custom adapter)
-        const { data: { session: existingSession } } = await supabase.auth.getSession();
-
-        if (existingSession) {
-          // Session found - restore user
-          logger.info('Session restored from storage');
-          setUser(mapSupabaseUserToUser(existingSession.user));
-          setSession(mapSupabaseSessionToAuthSession(existingSession));
-        } else {
-          // No session - sign in anonymously
+    const initAnonymous = async () => {
+      if (!isLoading && !isAuthenticated) {
+        try {
           logger.info('No session found - signing in anonymously');
-          const { data, error: anonError } = await supabase.auth.signInAnonymously();
-
-          if (anonError) throw anonError;
-
-          if (data.user && data.session) {
-            setUser(mapSupabaseUserToUser(data.user));
-            setSession(mapSupabaseSessionToAuthSession(data.session));
-          }
+          await signIn("anonymous");
+          setIsAnonymous(true);
+        } catch (err) {
+          logger.error('Anonymous sign-in failed:', err);
+          setError(err as Error);
         }
-      } catch (err) {
-        logger.error('Auth initialization failed:', err);
-        setError(err as Error);
-      } finally {
-        setLoading(false);
       }
     };
+    initAnonymous();
+  }, [isLoading, isAuthenticated, signIn]);
 
-    initAuth();
-  }, []);
+  // Map to existing User type
+  const user: User | null = useMemo(() => {
+    if (!isAuthenticated) return null;
+    return {
+      id: 'convex-user', // MVP: actual user ID can be fetched via query later
+      email: undefined,  // MVP: can add user query to get email
+      isAnonymous,
+      createdAt: new Date().toISOString(),
+    };
+  }, [isAuthenticated, isAnonymous]);
 
-  // CRITICAL: Listen for auth state changes (token refresh, sign-out, etc.)
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      logger.info('Auth event:', event);
-
-      switch (event) {
-        case 'INITIAL_SESSION':
-          // Already handled in initAuth
-          break;
-
-        case 'SIGNED_IN':
-          if (session) {
-            setUser(mapSupabaseUserToUser(session.user));
-            setSession(mapSupabaseSessionToAuthSession(session));
-          }
-          setError(null);
-          break;
-
-        case 'TOKEN_REFRESHED':
-          logger.debug('Token refreshed successfully');
-          if (session) {
-            setSession(mapSupabaseSessionToAuthSession(session));
-          }
-          setOfflineDays(0); // Reset offline counter
-
-          // Trigger sync queue processing (future Phase 5.2)
-          window.dispatchEvent(new CustomEvent('sync-queued-operations'));
-          break;
-
-        case 'SIGNED_OUT':
-          // CRITICAL: Check if this is offline sign-out (don't clear user)
-          if (!isOnline) {
-            logger.warn('Token expired while offline - keeping user logged in locally');
-            return; // Don't clear user state
-          }
-
-          // Online sign-out - clear everything
-          logger.info('User signed out');
-          setUser(null);
-          setSession(null);
-          setError(null);
-          window.dispatchEvent(new CustomEvent('clear-user-cache'));
-          break;
-
-        case 'USER_UPDATED':
-          if (session) {
-            setUser(mapSupabaseUserToUser(session.user));
-          }
-          break;
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [isOnline]);
-
-  // CRITICAL: Track offline duration (force sign-out after 14 days)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isOnline && session) {
-        const daysSinceRefresh = Math.floor(
-          (Date.now() - session.expiresAt) / (1000 * 60 * 60 * 24)
-        );
-
-        setOfflineDays(daysSinceRefresh);
-
-        // Force sign-out if offline too long
-        if (daysSinceRefresh > MAX_OFFLINE_DAYS) {
-          logger.warn(`Offline for ${daysSinceRefresh} days - forcing sign out`);
-          supabase.auth.signOut();
-        }
-      }
-    }, 1000 * 60 * 60 * 24); // Check daily
-
-    return () => clearInterval(interval);
-  }, [isOnline, session]);
-
-  // Actions
-  const signInAnonymously = async () => {
+  // Auth actions - maintain same API surface for components
+  const signInAnonymously = useCallback(async () => {
     try {
-      setLoading(true);
       setError(null);
-
-      const { error: anonError } = await supabase.auth.signInAnonymously();
-
-      if (anonError) throw anonError;
-
+      await signIn("anonymous");
+      setIsAnonymous(true);
       logger.info('User signed in anonymously');
     } catch (err) {
       logger.error('Anonymous sign-in failed:', err);
       setError(err as Error);
       throw err;
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [signIn]);
 
-  const signIn = async (email: string, password: string) => {
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
     try {
-      setLoading(true);
       setError(null);
-
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) throw signInError;
-
-      logger.info('User signed in:', data.user?.email);
+      await signIn("password", { email, password, flow: "signIn" });
+      setIsAnonymous(false);
+      logger.info('User signed in:', email);
     } catch (err) {
       logger.error('Sign in failed:', err);
       setError(err as Error);
       throw err;
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [signIn]);
 
-  const signUp = async (email: string, password: string) => {
+  const signUpWithPassword = useCallback(async (email: string, password: string) => {
     try {
-      setLoading(true);
       setError(null);
-
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (signUpError) throw signUpError;
-
-      logger.info('User signed up:', data.user?.email);
+      await signIn("password", { email, password, flow: "signUp" });
+      setIsAnonymous(false);
+      logger.info('User signed up:', email);
     } catch (err) {
       logger.error('Sign up failed:', err);
       setError(err as Error);
       throw err;
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [signIn]);
 
-  const signOut = async () => {
+  const handleSignOut = useCallback(async () => {
     try {
-      setLoading(true);
       setError(null);
-
-      const { error: signOutError } = await supabase.auth.signOut();
-
-      if (signOutError) throw signOutError;
-
+      await signOut();
       logger.info('User signed out');
-
-      // Sign in anonymously after sign-out (preserve offline-first UX)
-      await supabase.auth.signInAnonymously();
+      // Return to anonymous state
+      await signIn("anonymous");
+      setIsAnonymous(true);
     } catch (err) {
       logger.error('Sign out failed:', err);
       setError(err as Error);
       throw err;
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [signIn, signOut]);
 
-  const convertToAuthenticated = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const convertToAuthenticated = useCallback(async (email: string, password: string) => {
+    // MVP: Just sign up fresh - anonymous linking can be added later
+    await signUpWithPassword(email, password);
+  }, [signUpWithPassword]);
 
-      // CRITICAL: updateUser() converts anonymous → authenticated (preserves user ID)
-      const { data, error: updateError } = await supabase.auth.updateUser({
-        email,
-        password,
-      });
-
-      if (updateError) throw updateError;
-
-      logger.info('Anonymous user converted to authenticated:', data?.user?.email);
-
-      // Upload local data to Supabase
-      // (Handled by useAnonymousConversion hook in calling component)
-    } catch (err) {
-      logger.error('Conversion failed:', err);
-      setError(err as Error);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refreshSession = async () => {
-    try {
-      const { error: refreshError } = await supabase.auth.refreshSession();
-
-      if (refreshError) {
-        if (!isOnline) {
-          logger.debug('Token refresh skipped (offline)');
-          return;
-        }
-
-        throw refreshError;
-      }
-
-      logger.info('Session refreshed manually');
-    } catch (err) {
-      logger.error('Session refresh failed:', err);
-      throw err;
-    }
-  };
-
+  const refreshSession = useCallback(async () => {
+    // Convex handles this automatically - no-op for MVP
+    logger.debug('Session refresh requested (handled by Convex)');
+  }, []);
 
   // Context values
-  const stateValue: AuthState = useMemo(
-    () => ({
-      user,
-      session,
-      loading,
-      error,
-      isOnline,
-      offlineDays,
-    }),
-    [user, session, loading, error, isOnline, offlineDays]
-  );
+  const stateValue: AuthState = useMemo(() => ({
+    user,
+    session: null, // MVP: Not exposing session tokens
+    loading: isLoading,
+    error,
+    isOnline,
+    offlineDays: 0, // MVP: Skip offline tracking
+  }), [user, isLoading, error, isOnline]);
 
-  const actionsValue: AuthActions = useMemo(
-    () => ({
-      signInAnonymously,
-      signIn,
-      signUp,
-      signOut,
-      convertToAuthenticated,
-      refreshSession,
-    }),
-    // Actions never change, so empty dependency array
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  const actionsValue: AuthActions = useMemo(() => ({
+    signInAnonymously,
+    signIn: signInWithPassword,
+    signUp: signUpWithPassword,
+    signOut: handleSignOut,
+    convertToAuthenticated,
+    refreshSession,
+  }), [signInAnonymously, signInWithPassword, signUpWithPassword, handleSignOut, convertToAuthenticated, refreshSession]);
 
   return (
     <AuthStateContext.Provider value={stateValue}>

@@ -20,6 +20,10 @@ import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
 import logger from '@/lib/logger'
 
+// Convex imports
+import { ConvexReactClient } from "convex/react";
+import { ConvexAuthProvider } from "@convex-dev/auth/react";
+
 // Theme imports
 import { ThemeProvider } from '@/lib/theme/ThemeProvider'
 
@@ -33,6 +37,9 @@ import { importMockData } from '../features/pwa/db/dataMigration'
 import { runSlugMigration } from '../features/pwa/db/slugMigration'
 
 import '../App.css'
+
+// Initialize Convex client
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
@@ -144,21 +151,23 @@ function AppWithFeatures() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="hsasongbook-theme">
-      <AuthProvider>
-        <ErrorBoundary
-          FallbackComponent={ErrorFallback}
-          onReset={() => {
-            // Reset app state if needed
-            window.location.href = '/'
-          }}
-        >
-          <BrowserRouter>
-            <AppWithFeatures />
-          </BrowserRouter>
-        </ErrorBoundary>
-      </AuthProvider>
-    </ThemeProvider>
+    <ConvexAuthProvider client={convex}>
+      <ThemeProvider defaultTheme="system" storageKey="hsasongbook-theme">
+        <AuthProvider>
+          <ErrorBoundary
+            FallbackComponent={ErrorFallback}
+            onReset={() => {
+              // Reset app state if needed
+              window.location.href = '/'
+            }}
+          >
+            <BrowserRouter>
+              <AppWithFeatures />
+            </BrowserRouter>
+          </ErrorBoundary>
+        </AuthProvider>
+      </ThemeProvider>
+    </ConvexAuthProvider>
   )
 }
 
