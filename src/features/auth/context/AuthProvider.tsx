@@ -4,12 +4,13 @@
  */
 
 import { ReactNode, useEffect, useState, useMemo, useCallback } from 'react';
-import { useConvexAuth } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { useAuthActions as useConvexAuthActions } from "@convex-dev/auth/react";
 import { AuthStateContext, AuthActionsContext } from './AuthContext';
 import type { User, AuthState, AuthActions } from '@/types/User.types';
 import { useOnlineStatus } from '@/features/pwa/hooks/useOnlineStatus';
 import logger from '@/lib/logger';
+import { api } from "../../../../convex/_generated/api";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -18,9 +19,11 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const { signIn, signOut } = useConvexAuthActions();
-  const isOnline = useOnlineStatus();
+  const { isOnline } = useOnlineStatus();
   const [error, setError] = useState<Error | null>(null);
-  const [isAnonymous, setIsAnonymous] = useState(true);
+
+  // Fetch actual user data from Convex
+  const convexUser = useQuery(api.users.currentUser);
 
   // Auto sign-in anonymously on first load if not authenticated
   useEffect(() => {
@@ -29,7 +32,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           logger.info('No session found - signing in anonymously');
           await signIn("anonymous");
-          setIsAnonymous(true);
         } catch (err) {
           logger.error('Anonymous sign-in failed:', err);
           setError(err as Error);
@@ -39,23 +41,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initAnonymous();
   }, [isLoading, isAuthenticated, signIn]);
 
-  // Map to existing User type
+  // Map Convex user to existing User type
   const user: User | null = useMemo(() => {
-    if (!isAuthenticated) return null;
+    if (!isAuthenticated || !convexUser) return null;
+
+    // Check if user has email (authenticated) or is anonymous
+    const hasEmail = convexUser.email !== undefined && convexUser.email !== null;
+
     return {
-      id: 'convex-user', // MVP: actual user ID can be fetched via query later
-      email: undefined,  // MVP: can add user query to get email
-      isAnonymous,
-      createdAt: new Date().toISOString(),
+      id: convexUser._id,
+      email: convexUser.email,
+      isAnonymous: !hasEmail,
+      createdAt: new Date(convexUser._creationTime).toISOString(),
     };
-  }, [isAuthenticated, isAnonymous]);
+  }, [isAuthenticated, convexUser]);
 
   // Auth actions - maintain same API surface for components
   const signInAnonymously = useCallback(async () => {
     try {
       setError(null);
       await signIn("anonymous");
-      setIsAnonymous(true);
       logger.info('User signed in anonymously');
     } catch (err) {
       logger.error('Anonymous sign-in failed:', err);
@@ -68,7 +73,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setError(null);
       await signIn("password", { email, password, flow: "signIn" });
-      setIsAnonymous(false);
       logger.info('User signed in:', email);
     } catch (err) {
       logger.error('Sign in failed:', err);
@@ -81,7 +85,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setError(null);
       await signIn("password", { email, password, flow: "signUp" });
-      setIsAnonymous(false);
       logger.info('User signed up:', email);
     } catch (err) {
       logger.error('Sign up failed:', err);
@@ -97,7 +100,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logger.info('User signed out');
       // Return to anonymous state
       await signIn("anonymous");
-      setIsAnonymous(true);
     } catch (err) {
       logger.error('Sign out failed:', err);
       setError(err as Error);
