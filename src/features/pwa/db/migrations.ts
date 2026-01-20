@@ -13,14 +13,13 @@ const MIGRATIONS: Record<number, string> = {
   4: 'Add chordproDrafts store for ChordPro editor auto-save',
   5: 'Add slug indexes for URL-friendly song and arrangement slugs',
   6: 'Add lastAccessedAt indexes for recent views tracking',
-  7: 'Add sessions store for Supabase auth session persistence (Phase 5)'
 };
 
 /**
  * Get the current database version
  */
 export function getCurrentVersion(): number {
-  return 7;
+  return 6;
 }
 
 /**
@@ -62,7 +61,6 @@ const migrationHandlers: Record<number, MigrationHandler> = {
   4: createChordproDraftsStore,
   5: addSlugIndexes,
   6: addLastAccessedIndexes,
-  7: createSessionsStore
 };
 
 /**
@@ -288,32 +286,10 @@ function addLastAccessedIndexes(
 }
 
 /**
- * Version 7: Add sessions store for Supabase auth session persistence (Phase 5)
- */
-function createSessionsStore(
-  db: IDBPDatabase<HSASongbookDB>,
-  transaction: IDBPTransaction<HSASongbookDB, ArrayLike<keyof HSASongbookDB>, 'versionchange'>
-): void {
-  // Create sessions store for Supabase auth session persistence
-  if (!db.objectStoreNames.contains('sessions')) {
-    db.createObjectStore('sessions');
-    logger.log('Created sessions object store for auth session persistence');
-  }
-
-  // Update preferences store to add userId index (Phase 5)
-  // Note: Preferences store was created in v3 but without the userId index
-  const preferencesStore = transaction.objectStore('preferences');
-  if (!preferencesStore.indexNames.contains('by-user-id')) {
-    preferencesStore.createIndex('by-user-id', 'userId', { unique: false });
-    logger.log('Created by-user-id index on preferences store');
-  }
-}
-
-/**
  * Validate database schema after migration
  */
 export function validateSchema(db: IDBPDatabase<HSASongbookDB>): boolean {
-  const requiredStores = ['songs', 'arrangements', 'setlists', 'syncQueue', 'preferences', 'chordproDrafts', 'sessions'];
+  const requiredStores = ['songs', 'arrangements', 'setlists', 'syncQueue', 'preferences', 'chordproDrafts'];
 
   // Check all required stores exist
   for (const storeName of requiredStores) {

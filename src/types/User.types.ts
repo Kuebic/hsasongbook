@@ -4,11 +4,11 @@
  */
 
 /**
- * User type definition (extends Supabase user)
+ * User type definition
  * Represents authenticated or anonymous user
  */
 export interface User {
-  id: string;                          // UUID from Supabase Auth
+  id: string;                          // UUID from Convex Auth
   email?: string;                      // Email (only for authenticated users)
   isAnonymous: boolean;                // True for anonymous users
   createdAt: string;                   // ISO timestamp
@@ -16,7 +16,7 @@ export interface User {
 }
 
 /**
- * Auth session type (mirrors Supabase session)
+ * Auth session type
  */
 export interface AuthSession {
   accessToken: string;                 // JWT access token (1 hour expiry)

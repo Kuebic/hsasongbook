@@ -73,12 +73,6 @@ export interface HSASongbookDB extends DBSchema {
       'by-user-id': string;
     };
   };
-
-  // Auth session storage (Phase 5)
-  sessions: {
-    key: 'current'; // Single session key
-    value: AuthSession; // Session data
-  };
 }
 
 /**
@@ -150,20 +144,6 @@ export interface UserPreferences {
   autoSync: boolean; // Enable automatic sync when online
   syncOnMobileData: boolean; // Sync even on cellular data (default: false)
   updatedAt: string; // Last updated timestamp
-}
-
-/**
- * Auth session data (Phase 5)
- * Stored in IndexedDB for offline persistence
- */
-export interface AuthSession {
-  userId: string;
-  isAnonymous: boolean;
-  email?: string;
-  accessToken: string;
-  refreshToken: string;
-  expiresAt: number; // Unix timestamp
-  lastRefreshedAt: number; // Unix timestamp
 }
 
 /**

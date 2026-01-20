@@ -175,7 +175,7 @@ export const config: Config = {
   },
   database: {
     name: 'HSASongbookDB',
-    version: 7, // Bumped for sessions store (Phase 5 auth)
+    version: 6,
     reconnectionDelay: 1000, // ms
     healthThreshold: 0.8 // 80%
   },
