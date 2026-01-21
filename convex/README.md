@@ -9,6 +9,31 @@ This directory contains the Convex backend configuration for HSA Songbook.
 - `auth.config.ts` - Auth configuration
 - `http.ts` - HTTP routes for auth
 
+## First-Time Setup
+
+After cloning the repository:
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Set up Convex development server:
+   ```bash
+   npx convex dev
+   ```
+   This will create or connect to a Convex deployment and generate TypeScript types.
+
+3. Configure auth environment variables:
+   ```bash
+   npx @convex-dev/auth
+   ```
+   This automatically sets up the required environment variables (`JWT_PRIVATE_KEY`, `JWKS`, `SITE_URL`) in your Convex deployment.
+
+**Note**: If developing on multiple machines, you can either:
+- Use the same deployment (environment variables are already configured)
+- Create a separate deployment and run `npx @convex-dev/auth` again for that deployment
+
 ## Development
 
 Run the Convex dev server:
