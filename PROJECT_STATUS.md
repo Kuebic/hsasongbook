@@ -57,7 +57,7 @@ HSA Songbook is a Progressive Web App (PWA) for managing worship songs and chord
 | Anonymous auth | ✅ Complete | View-only for anonymous users |
 | Email/password auth | ✅ Complete | No email verification (MVP) |
 | AuthProvider w/ Convex | ✅ Complete | Fetches real user data |
-| **Convex schema (songs, arrangements, setlists)** | ❌ NOT STARTED | Only auth tables exist |
+| **Convex schema (songs, arrangements, setlists)** | ✅ Complete | 3 tables + queries + mutations |
 | **Real-time sync with Convex** | ❌ NOT STARTED | Replace IndexedDB as source of truth |
 | **"Add Song" form** | ❌ NOT STARTED | For authenticated users |
 | **"Add Arrangement" form** | ❌ NOT STARTED | For authenticated users |
@@ -148,7 +148,7 @@ Sources: [Convex OCC Docs](https://docs.convex.dev/database/advanced/occ), [How 
 | **Arrangements** | Everyone | Creator only |
 | **Setlists** | Creator only | Creator only |
 
-### Convex Schema (To Be Created)
+### Convex Schema (Implemented)
 
 ```typescript
 // songs - Global community library
@@ -163,6 +163,7 @@ songs: defineTable({
 })
   .index("by_slug", ["slug"])
   .index("by_title", ["title"])
+  .index("by_createdBy", ["createdBy"])
 
 // arrangements - User-owned versions of songs
 arrangements: defineTable({
@@ -175,10 +176,14 @@ arrangements: defineTable({
   chordProContent: v.string(),
   slug: v.string(),
   createdBy: v.id("users"),
+  rating: v.number(),           // Social: 0-5
+  favorites: v.number(),        // Social: count
+  tags: v.array(v.string()),    // Social: tags
+  updatedAt: v.optional(v.number()),
 })
-  .index("by_song", ["songId"])
   .index("by_slug", ["slug"])
-  .index("by_creator", ["createdBy"])
+  .index("by_song", ["songId"])
+  .index("by_createdBy", ["createdBy"])
 
 // setlists - Private to user
 setlists: defineTable({
@@ -187,19 +192,28 @@ setlists: defineTable({
   performanceDate: v.optional(v.string()),
   arrangementIds: v.array(v.id("arrangements")),
   userId: v.id("users"),
+  updatedAt: v.optional(v.number()),
 })
   .index("by_user", ["userId"])
 ```
+
+### Convex API (Implemented)
+
+| Module | Queries | Mutations |
+|--------|---------|-----------|
+| `songs` | `list`, `get`, `getBySlug` | `create` |
+| `arrangements` | `get`, `getBySlug`, `getBySong`, `getFeatured`, `getFeaturedWithSongs` | `create`, `update` |
+| `setlists` | `list`, `get`, `getWithArrangements` | `create`, `update`, `remove` |
 
 ---
 
 ## Remaining Work for MVP
 
-### Phase 5.1: Convex Schema & Queries
-- [ ] Add songs, arrangements, setlists tables to `convex/schema.ts`
-- [ ] Create queries: `songs.list`, `songs.get`, `arrangements.bySong`, etc.
-- [ ] Create mutations: `songs.create`, `arrangements.create`, etc.
-- [ ] Add proper auth checks (authenticated users only for writes)
+### Phase 5.1: Convex Schema & Queries ✅ COMPLETE
+- [x] Add songs, arrangements, setlists tables to `convex/schema.ts`
+- [x] Create queries: `songs.list`, `songs.get`, `arrangements.getBySong`, etc.
+- [x] Create mutations: `songs.create`, `arrangements.create`, etc.
+- [x] Add proper auth checks (authenticated users only for writes)
 
 ### Phase 5.2: Frontend Integration
 - [ ] Replace IndexedDB reads with Convex `useQuery` hooks
@@ -229,6 +243,9 @@ setlists: defineTable({
 | Auth Provider | `src/features/auth/context/AuthProvider.tsx` |
 | Convex Schema | `convex/schema.ts` |
 | Convex Auth | `convex/auth.ts` |
+| Convex Songs API | `convex/songs.ts` |
+| Convex Arrangements API | `convex/arrangements.ts` |
+| Convex Setlists API | `convex/setlists.ts` |
 | IndexedDB (keep for drafts) | `src/features/pwa/db/database.ts` |
 | Type Definitions | `src/types/` |
 
@@ -270,6 +287,7 @@ setlists: defineTable({
 
 | Date | Change |
 |------|--------|
+| 2026-01-21 | Phase 5.1 complete: Convex schema + queries + mutations |
 | 2026-01-21 | Updated with confirmed decisions, simplified architecture |
 | 2026-01-21 | Initial project status document created |
 | 2025-10-14 | Phase 5 architecture decisions approved (pre-Convex pivot) |
