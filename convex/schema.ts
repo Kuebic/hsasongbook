@@ -4,6 +4,22 @@ import { v } from "convex/values";
 
 export default defineSchema({
   ...authTables,
+  // Override users table to add custom fields
+  users: defineTable({
+    // Auth fields (from @convex-dev/auth)
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.number()),
+    isAnonymous: v.optional(v.boolean()),
+    // Custom fields
+    displayName: v.optional(v.string()),
+    avatarKey: v.optional(v.string()), // R2 object key for profile picture
+  })
+    .index("email", ["email"])
+    .index("by_displayName", ["displayName"]),
 
   // Songs - Global community library
   // Read: Everyone | Write: Authenticated users only
