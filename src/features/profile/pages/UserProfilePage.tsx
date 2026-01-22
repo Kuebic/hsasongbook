@@ -28,7 +28,7 @@ import Breadcrumbs from '../../shared/components/Breadcrumbs';
 import ArrangementCard from '@/features/arrangements/components/ArrangementCard';
 import UserAvatar from '@/components/UserAvatar';
 import { ArrowLeft, User, Music } from 'lucide-react';
-import type { ArrangementWithSong } from '@/types/Arrangement.types';
+import type { ArrangementWithSongAndCreator } from '@/types/Arrangement.types';
 
 export function UserProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -46,8 +46,8 @@ export function UserProfilePage() {
   );
 
   // Map arrangements to frontend type
-  const arrangements: ArrangementWithSong[] = useMemo(() => {
-    if (!userArrangements) return [];
+  const arrangements: ArrangementWithSongAndCreator[] = useMemo(() => {
+    if (!userArrangements || !userData) return [];
     return userArrangements
       .filter((arr) => arr.song !== null)
       .map((arr) => ({
@@ -71,10 +71,17 @@ export function UserProfilePage() {
           id: arr.song!._id,
           slug: arr.song!.slug,
           title: arr.song!.title,
-          artist: arr.song!.artist,
+          artist: arr.song!.artist ?? '',
+        },
+        creator: {
+          _id: userData._id,
+          username: userData.username,
+          displayName: userData.displayName,
+          showRealName: userData.showRealName,
+          avatarKey: userData.avatarKey,
         },
       }));
-  }, [userArrangements]);
+  }, [userArrangements, userData]);
 
   const breadcrumbs = [
     { label: 'Home', path: '/' },
