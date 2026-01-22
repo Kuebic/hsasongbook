@@ -6,6 +6,22 @@
 import { z } from 'zod';
 
 /**
+ * Username validation schema
+ * - 3-30 characters
+ * - Lowercase letters, numbers, underscores, hyphens only
+ * - Automatically lowercased
+ */
+export const usernameSchema = z
+  .string()
+  .min(3, 'Username must be at least 3 characters')
+  .max(30, 'Username must be at most 30 characters')
+  .regex(
+    /^[a-z0-9_-]+$/,
+    'Only lowercase letters, numbers, underscores, and hyphens allowed'
+  )
+  .transform((val) => val.toLowerCase());
+
+/**
  * Email validation schema
  */
 export const emailSchema = z
@@ -41,6 +57,7 @@ export type SignInFormData = z.infer<typeof signInSchema>;
  */
 export const signUpSchema = z
   .object({
+    username: usernameSchema,
     email: emailSchema,
     password: passwordSchema,
     confirmPassword: z.string(),

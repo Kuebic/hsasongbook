@@ -82,7 +82,13 @@ export default function UserDropdown() {
                 </>
               ) : (
                 <>
-                  <p className="text-sm font-medium">My Account</p>
+                  <p className="text-sm font-medium">
+                    {user?.showRealName && user?.displayName
+                      ? user.displayName
+                      : user?.username
+                        ? `@${user.username}`
+                        : 'My Account'}
+                  </p>
                   <p className="text-xs text-muted-foreground">{user?.email}</p>
                 </>
               )}

@@ -10,6 +10,9 @@
 export interface User {
   id: string;                          // UUID from Convex Auth
   email?: string;                      // Email (only for authenticated users)
+  username?: string;                   // Unique public username
+  displayName?: string;                // Optional real name
+  showRealName?: boolean;              // Toggle to show displayName on contributions
   isAnonymous: boolean;                // True for anonymous users
   createdAt: string;                   // ISO timestamp
   lastSignInAt?: string;               // ISO timestamp (last sign-in time)

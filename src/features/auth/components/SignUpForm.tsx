@@ -2,9 +2,10 @@
  * SignUpForm Component
  * Phase 5: Authentication Flow
  *
- * Form for creating a new account with email and password.
+ * Form for creating a new account with username, email, and password.
  * Features:
  * - React Hook Form with Zod validation
+ * - Username field with real-time availability check
  * - Email, password, and confirm password fields
  * - Password strength requirements display
  * - Loading state during submission
@@ -16,14 +17,17 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { z } from 'zod';
+import { useQuery, useMutation } from 'convex/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthActions } from '../hooks/useAuth';
 import { signUpSchema } from '../validation/authSchemas';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Check, X, Loader2 } from 'lucide-react';
+import { api } from '../../../../convex/_generated/api';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Infer TypeScript type from Zod schema
 type SignUpFormData = z.infer<typeof signUpSchema>;
@@ -46,26 +50,81 @@ interface SignUpFormProps {
  */
 export default function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
   const { signUp } = useAuthActions();
+  const setUsername = useMutation(api.users.setUsername);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Username availability checking
+  const [usernameToCheck, setUsernameToCheck] = useState('');
+  const debouncedUsername = useDebounce(usernameToCheck, 300);
+
+  // Only query when we have a valid-looking username (3+ chars, valid format)
+  const shouldCheckUsername =
+    debouncedUsername.length >= 3 && /^[a-z0-9_-]+$/.test(debouncedUsername);
+
+  const usernameAvailability = useQuery(
+    api.users.isUsernameAvailable,
+    shouldCheckUsername ? { username: debouncedUsername } : 'skip'
+  );
+
+  const isCheckingUsername =
+    usernameToCheck !== debouncedUsername ||
+    (shouldCheckUsername && usernameAvailability === undefined);
 
   // Initialize react-hook-form with Zod validation
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     mode: 'onBlur', // Validate on blur for better UX
   });
 
+  // Watch username field for availability checking
+  const watchedUsername = watch('username');
+  useEffect(() => {
+    if (watchedUsername) {
+      setUsernameToCheck(watchedUsername.toLowerCase());
+    } else {
+      setUsernameToCheck('');
+    }
+  }, [watchedUsername]);
+
+  // Get username availability status for display
+  const getUsernameStatus = useCallback(() => {
+    if (!usernameToCheck || usernameToCheck.length < 3) return null;
+    if (isCheckingUsername) return 'checking';
+    if (!usernameAvailability) return null;
+    if (usernameAvailability.available) return 'available';
+    return 'taken';
+  }, [usernameToCheck, isCheckingUsername, usernameAvailability]);
+
   const onSubmit = async (data: SignUpFormData) => {
+    // Prevent submission if username is taken
+    if (usernameAvailability && !usernameAvailability.available) {
+      setSubmitError(
+        usernameAvailability.reason || 'Username is already taken'
+      );
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setSubmitError(null);
 
-      // Call auth action
+      // 1. Create auth account
       await signUp(data.email, data.password);
+
+      // 2. Set username (user is now authenticated)
+      try {
+        await setUsername({ username: data.username });
+      } catch (usernameError) {
+        // Auth succeeded but username failed - still reload but show warning
+        console.error('Failed to set username:', usernameError);
+        // Username can be set later via profile - don't block signup
+      }
 
       // Workaround for Convex Auth state race condition:
       // useConvexAuth() doesn't update reliably after signUp resolves.
@@ -94,6 +153,57 @@ export default function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
           <p className="text-sm">{submitError}</p>
         </div>
       )}
+
+      {/* Username field */}
+      <div>
+        <Label htmlFor="username">Username</Label>
+        <div className="relative">
+          <Input
+            id="username"
+            type="text"
+            placeholder="your_username"
+            autoComplete="username"
+            disabled={isSubmitting}
+            aria-invalid={errors.username ? 'true' : 'false'}
+            aria-describedby={
+              errors.username
+                ? 'username-error username-requirements'
+                : 'username-requirements'
+            }
+            className="pr-10"
+            {...register('username')}
+          />
+          {/* Availability indicator */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            {getUsernameStatus() === 'checking' && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+            {getUsernameStatus() === 'available' && (
+              <Check className="h-4 w-4 text-green-500" />
+            )}
+            {getUsernameStatus() === 'taken' && (
+              <X className="h-4 w-4 text-destructive" />
+            )}
+          </div>
+        </div>
+        <p
+          id="username-requirements"
+          className="text-xs text-muted-foreground mt-1"
+        >
+          3-30 characters. Lowercase letters, numbers, underscores, and hyphens
+          only.
+        </p>
+        {errors.username && (
+          <p id="username-error" className="text-sm text-destructive mt-1">
+            {errors.username.message}
+          </p>
+        )}
+        {getUsernameStatus() === 'taken' && !errors.username && (
+          <p className="text-sm text-destructive mt-1">
+            {usernameAvailability?.reason || 'Username is already taken'}
+          </p>
+        )}
+      </div>
 
       {/* Email field */}
       <div>

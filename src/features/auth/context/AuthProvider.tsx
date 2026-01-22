@@ -54,6 +54,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return {
       id: convexUser._id,
       email: convexUser.email,
+      username: convexUser.username,
+      displayName: convexUser.displayName,
+      showRealName: convexUser.showRealName,
       isAnonymous: !hasEmail,
       createdAt: new Date(convexUser._creationTime).toISOString(),
     };

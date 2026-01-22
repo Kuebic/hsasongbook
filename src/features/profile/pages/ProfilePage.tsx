@@ -146,8 +146,14 @@ export function ProfilePage() {
                 // Authenticated User View
                 <>
                   <CardTitle className="text-2xl mb-2">
-                    {user?.email || 'User'}
+                    {user?.showRealName && user?.displayName
+                      ? user.displayName
+                      : user?.username || user?.email || 'User'}
                   </CardTitle>
+
+                  {user?.username && (
+                    <p className="text-muted-foreground mb-2">@{user.username}</p>
+                  )}
 
                   <CardDescription className="text-base mb-6">
                     Member since {formatDate(user?.createdAt)}
@@ -156,10 +162,22 @@ export function ProfilePage() {
                   {/* User Info */}
                   <div className="w-full max-w-md mb-8 p-4 rounded-md bg-muted text-left">
                     <dl className="space-y-2 text-sm">
+                      {user?.username && (
+                        <div className="flex justify-between">
+                          <dt className="text-muted-foreground">Username:</dt>
+                          <dd className="font-medium">@{user.username}</dd>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <dt className="text-muted-foreground">Email:</dt>
                         <dd className="font-medium">{user?.email}</dd>
                       </div>
+                      {user?.displayName && (
+                        <div className="flex justify-between">
+                          <dt className="text-muted-foreground">Display Name:</dt>
+                          <dd className="font-medium">{user.displayName}</dd>
+                        </div>
+                      )}
                     </dl>
                   </div>
 

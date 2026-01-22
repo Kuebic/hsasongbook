@@ -5,6 +5,34 @@ import { query, mutation } from "./_generated/server";
 // ============ QUERIES ============
 
 /**
+ * Check if a username is available
+ * Access: Everyone (for real-time availability check during signup)
+ */
+export const isUsernameAvailable = query({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    const normalized = args.username.toLowerCase().trim();
+
+    // Basic validation
+    if (normalized.length < 3 || normalized.length > 30) {
+      return { available: false, reason: "Username must be 3-30 characters" };
+    }
+
+    const usernameRegex = /^[a-z0-9_-]+$/;
+    if (!usernameRegex.test(normalized)) {
+      return { available: false, reason: "Only lowercase letters, numbers, underscores, and hyphens allowed" };
+    }
+
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", normalized))
+      .first();
+
+    return { available: existing === null };
+  },
+});
+
+/**
  * Get the currently authenticated user
  * Returns null if not authenticated
  */
@@ -66,6 +94,50 @@ export const getUserStats = query({
 });
 
 // ============ MUTATIONS ============
+
+/**
+ * Set username for current user (called after signup)
+ * Access: Authenticated users only, can only be set once
+ */
+export const setUsername = mutation({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Must be authenticated");
+    }
+
+    const user = await ctx.db.get(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (user.username) {
+      throw new Error("Username already set");
+    }
+
+    // Validate format
+    const normalized = args.username.toLowerCase().trim();
+    const usernameRegex = /^[a-z0-9_-]{3,30}$/;
+    if (!usernameRegex.test(normalized)) {
+      throw new Error(
+        "Username must be 3-30 characters, lowercase letters, numbers, underscores, or hyphens"
+      );
+    }
+
+    // Check uniqueness
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", normalized))
+      .first();
+    if (existing) {
+      throw new Error("Username is already taken");
+    }
+
+    await ctx.db.patch(userId, { username: normalized });
+    return { success: true };
+  },
+});
 
 /**
  * Update current user's display name
