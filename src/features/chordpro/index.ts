@@ -22,7 +22,6 @@ export { useEditorShortcuts } from './hooks/useEditorShortcuts'
 
 // Editor components
 export { default as ChordProEditor } from './components/ChordProEditor'
-export { default as EditorToolbar } from './components/EditorToolbar'
 export { default as AutoSaveIndicator } from './components/AutoSaveIndicator'
 
 // Database

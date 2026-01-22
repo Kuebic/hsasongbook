@@ -147,12 +147,8 @@ export interface ChordProConfig {
       conflictMarkers: boolean;
     };
     ui: {
-      showSaveButton: boolean;
       showSaveStatus: boolean;
-      showUndoRedoButtons: boolean;
       showDirtyIndicator: boolean;
-      saveButtonPosition: 'toolbar' | 'fixed' | 'floating';
-      statusPosition: 'toolbar' | 'fixed' | 'floating';
     };
   };
 }
@@ -309,12 +305,8 @@ export const config: Config = {
         conflictMarkers: true           // Add conflict markers to content
       },
       ui: {
-        showSaveButton: true,           // Show explicit save button
         showSaveStatus: true,           // Show save status indicator
-        showUndoRedoButtons: true,      // Show visual undo/redo controls
-        showDirtyIndicator: true,       // Show asterisk when unsaved
-        saveButtonPosition: 'toolbar',  // 'toolbar' | 'fixed' | 'floating'
-        statusPosition: 'toolbar'       // 'toolbar' | 'fixed' | 'floating'
+        showDirtyIndicator: true        // Show asterisk when unsaved
       }
     }
   }

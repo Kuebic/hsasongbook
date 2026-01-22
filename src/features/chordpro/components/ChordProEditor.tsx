@@ -1,17 +1,17 @@
 /**
  * ChordProEditor Component
  *
- * Main editor component wrapping CodeMirror with toolbar and auto-save
- * Integrates all ChordPro editor functionality with mobile optimization
+ * Main editor component wrapping CodeMirror with auto-save
+ * Integrates ChordPro editor functionality with mobile optimization
  */
 
 import { useRef, useEffect, useState, useCallback } from 'react'
 import CodeMirror, { EditorView } from '@uiw/react-codemirror'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/lib/theme/ThemeProvider'
 import { useChordProEditor } from '../hooks/useChordProEditor'
 import { useAutoSave } from '../hooks/useAutoSave'
-import EditorToolbar from './EditorToolbar'
 import AutoSaveIndicator from './AutoSaveIndicator'
 import { chordProStyles } from '../language/chordProHighlight'
 
@@ -24,7 +24,6 @@ interface ChordProEditorProps {
   placeholder?: string;
   arrangementId?: string;
   autoSave?: boolean;
-  showToolbar?: boolean;
   showAutoSaveIndicator?: boolean;
   className?: string;
   editorConfig?: Record<string, unknown>;
@@ -39,7 +38,6 @@ export default function ChordProEditor({
   placeholder = 'Enter ChordPro content...',
   arrangementId,
   autoSave = true,
-  showToolbar = true,
   showAutoSaveIndicator = true,
   className,
   editorConfig = {}
@@ -48,6 +46,28 @@ export default function ChordProEditor({
   const editorViewRef = useRef<EditorView | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isMounted, setIsMounted] = useState(false)
+
+  // Theme detection for CodeMirror
+  const { theme } = useTheme()
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
+
+  // Resolve the effective theme (handle 'system' mode)
+  useEffect(() => {
+    if (theme === 'system') {
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      setResolvedTheme(isDark ? 'dark' : 'light')
+
+      // Listen for OS theme changes
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      const handler = (e: MediaQueryListEvent) => {
+        setResolvedTheme(e.matches ? 'dark' : 'light')
+      }
+      mediaQuery.addEventListener('change', handler)
+      return () => mediaQuery.removeEventListener('change', handler)
+    } else {
+      setResolvedTheme(theme)
+    }
+  }, [theme])
 
   // Editor state management
   const editor = useChordProEditor({
@@ -165,17 +185,6 @@ export default function ChordProEditor({
   return (
     <Card className={containerClasses} ref={containerRef}>
       <CardContent className="p-0 flex flex-col h-full">
-        {/* Toolbar */}
-        {showToolbar && (
-          <div className="border-b">
-            <EditorToolbar
-              editorView={editorViewRef.current}
-              disabled={disabled}
-              className="border-none"
-            />
-          </div>
-        )}
-
         {/* Editor container */}
         <div className="relative flex-1 min-h-0">
           {/* CodeMirror Editor */}
@@ -193,7 +202,7 @@ export default function ChordProEditor({
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
               basicSetup={editor.editorProps.basicSetup}
-              theme="light"
+              theme={resolvedTheme}
               data-testid="chordpro-editor"
             />
           </div>
@@ -273,66 +282,5 @@ export default function ChordProEditor({
         </div>
       </CardContent>
     </Card>
-  )
-}
-
-/**
- * Simplified ChordPro Editor without toolbar for embedding
- */
-interface SimpleChordProEditorProps {
-  value?: string;
-  onChange?: (value: string) => void;
-  disabled?: boolean;
-  placeholder?: string;
-  className?: string;
-  height?: string;
-}
-
-export function SimpleChordProEditor({
-  value,
-  onChange,
-  disabled = false,
-  placeholder = 'Enter ChordPro content...',
-  className,
-  height = '300px'
-}: SimpleChordProEditorProps) {
-  const [isMounted, setIsMounted] = useState(false)
-
-  const editor = useChordProEditor({
-    value,
-    onChange,
-    disabled,
-    placeholder,
-    autoSave: false
-  })
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  if (!isMounted) {
-    return (
-      <div className={cn('border rounded-md p-4 bg-muted', className)}>
-        <div className="flex items-center justify-center h-32 text-muted-foreground">
-          Loading editor...
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className={cn('chordpro-simple-editor border rounded-md overflow-hidden', className)}>
-      <CodeMirror
-        value={editor.content}
-        placeholder={placeholder}
-        extensions={editor.editorProps.extensions}
-        editable={!disabled}
-        onChange={onChange}
-        height={height}
-        className={cn(disabled && 'opacity-50 cursor-not-allowed')}
-        basicSetup={editor.editorProps.basicSetup}
-        theme="light"
-      />
-    </div>
   )
 }

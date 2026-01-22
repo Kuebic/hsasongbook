@@ -93,8 +93,8 @@ export const chordProStyles = `
   --error-bg: rgba(220, 38, 38, 0.1);
 }
 
-/* Dark theme styles */
-.cm-editor.cm-theme-dark {
+/* Dark theme styles - uses .dark class on html element from ThemeProvider */
+.dark .cm-editor {
   --chord-color: #60a5fa;
   --chord-bg: rgba(96, 165, 250, 0.15);
   --directive-name-color: #a78bfa;
@@ -203,7 +203,7 @@ export const chordProStyles = `
   background-color: rgba(0, 0, 0, 0.02);
 }
 
-.cm-editor.cm-theme-dark.cm-focused .cm-activeLine {
+.dark .cm-editor.cm-focused .cm-activeLine {
   background-color: rgba(255, 255, 255, 0.02);
 }
 

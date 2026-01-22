@@ -293,10 +293,9 @@ export function ChordProSplitView({
     () => ({
       ...editorOptions,
       onEditorReady: handleEditorReady,
-      arrangementId,
-      showToolbar: !isMobile // Hide default toolbar on mobile, use FAB instead
+      arrangementId
     }),
-    [editorOptions, handleEditorReady, arrangementId, isMobile]
+    [editorOptions, handleEditorReady, arrangementId]
   );
 
   // Memoized viewer options with debounced content
