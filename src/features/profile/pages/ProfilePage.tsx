@@ -1,85 +1,39 @@
 /**
  * ProfilePage component
  *
- * Phase 5: Displays user authentication state and account info.
+ * Public-facing profile page that displays user information.
+ * This is what others see when clicking on a username in arrangements.
+ *
  * Features:
- * - Shows username and display name for authenticated users
- * - Editable display name
- * - Show real name toggle
- * - Username setup for existing users without one
- * - Anonymous user badge for guests
- * - Sign-in prompt for anonymous users
- * - Sign-out button for authenticated users
- * - Link to Settings page
+ * - Avatar display
+ * - Username and display name
+ * - Member since date
+ * - User's public arrangements (future)
+ *
+ * For editing profile settings, see Settings > Account section.
  */
 
-import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery, useMutation } from 'convex/react';
 import {
   Card,
   CardTitle,
   CardDescription,
   CardContent,
-  CardHeader,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
-import {
-  Settings,
-  LogOut,
-  Pencil,
-  Check,
-  X,
-  Loader2,
-  AlertCircle,
-} from 'lucide-react';
-import { useAuthState, useAuthActions } from '@/features/auth/hooks/useAuth';
+import { Settings } from 'lucide-react';
+import { useAuthState } from '@/features/auth/hooks/useAuth';
 import SignInModal from '@/features/auth/components/SignInModal';
 import UserAvatar from '@/components/UserAvatar';
-import { api } from '../../../../convex/_generated/api';
 import type { Id } from '../../../../convex/_generated/dataModel';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useState } from 'react';
 
 export function ProfilePage() {
   const { user, loading } = useAuthState();
-  const { signOut } = useAuthActions();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
-
-  // Edit states
-  const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
-  const [displayNameInput, setDisplayNameInput] = useState('');
-  const [displayNameError, setDisplayNameError] = useState<string | null>(null);
-  const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
-
-  // Username setup (for existing users without username)
-  const [isSettingUsername, setIsSettingUsername] = useState(false);
-  const [usernameInput, setUsernameInput] = useState('');
-  const [usernameError, setUsernameError] = useState<string | null>(null);
-  const [isSavingUsername, setIsSavingUsername] = useState(false);
-
-  // Mutations
-  const updateDisplayName = useMutation(api.users.updateDisplayName);
-  const updateShowRealName = useMutation(api.users.updateShowRealName);
-  const setUsername = useMutation(api.users.setUsername);
-
-  // Username availability check
-  const debouncedUsername = useDebounce(usernameInput.toLowerCase(), 300);
-  const shouldCheckUsername =
-    debouncedUsername.length >= 3 && /^[a-z0-9_-]+$/.test(debouncedUsername);
-  const usernameAvailability = useQuery(
-    api.users.isUsernameAvailable,
-    shouldCheckUsername ? { username: debouncedUsername } : 'skip'
-  );
-  const isCheckingUsername =
-    usernameInput.toLowerCase() !== debouncedUsername ||
-    (shouldCheckUsername && usernameAvailability === undefined);
 
   const breadcrumbs = [
     { label: 'Home', path: '/' },
@@ -87,17 +41,6 @@ export function ProfilePage() {
   ];
 
   const isAnonymous = user?.isAnonymous ?? true;
-
-  const handleSignOut = async () => {
-    try {
-      setIsSigningOut(true);
-      await signOut();
-    } catch {
-      // Error already logged by AuthProvider
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
 
   const formatDate = (dateString?: string | null) => {
     if (!dateString) return 'Unknown';
@@ -108,119 +51,16 @@ export function ProfilePage() {
     });
   };
 
-  // Display name editing
-  const startEditingDisplayName = () => {
-    setDisplayNameInput(user?.displayName || '');
-    setDisplayNameError(null);
-    setIsEditingDisplayName(true);
+  // Get display name based on user preferences
+  const getDisplayedName = () => {
+    if (user?.showRealName && user?.displayName) {
+      return user.displayName;
+    }
+    if (user?.username) {
+      return `@${user.username}`;
+    }
+    return user?.email || 'User';
   };
-
-  const cancelEditingDisplayName = () => {
-    setIsEditingDisplayName(false);
-    setDisplayNameError(null);
-  };
-
-  const saveDisplayName = async () => {
-    const trimmed = displayNameInput.trim();
-
-    // Allow clearing display name
-    if (trimmed === '') {
-      // For now, we require at least 3 chars if set
-      // Could add a clearDisplayName mutation if needed
-      setDisplayNameError('Display name must be at least 3 characters');
-      return;
-    }
-
-    if (trimmed.length < 3 || trimmed.length > 50) {
-      setDisplayNameError('Display name must be between 3 and 50 characters');
-      return;
-    }
-
-    try {
-      setIsSavingDisplayName(true);
-      setDisplayNameError(null);
-      await updateDisplayName({ displayName: trimmed });
-      setIsEditingDisplayName(false);
-    } catch (err) {
-      setDisplayNameError(
-        err instanceof Error ? err.message : 'Failed to update display name'
-      );
-    } finally {
-      setIsSavingDisplayName(false);
-    }
-  };
-
-  // Show real name toggle
-  const handleShowRealNameToggle = async (checked: boolean) => {
-    try {
-      await updateShowRealName({ showRealName: checked });
-    } catch (err) {
-      console.error('Failed to update showRealName:', err);
-    }
-  };
-
-  // Username setup
-  const startSettingUsername = () => {
-    setUsernameInput('');
-    setUsernameError(null);
-    setIsSettingUsername(true);
-  };
-
-  const cancelSettingUsername = () => {
-    setIsSettingUsername(false);
-    setUsernameError(null);
-  };
-
-  const getUsernameStatus = useCallback(() => {
-    if (!usernameInput || usernameInput.length < 3) return null;
-    if (isCheckingUsername) return 'checking';
-    if (!usernameAvailability) return null;
-    if (usernameAvailability.available) return 'available';
-    return 'taken';
-  }, [usernameInput, isCheckingUsername, usernameAvailability]);
-
-  const saveUsername = async () => {
-    const normalized = usernameInput.toLowerCase().trim();
-
-    if (normalized.length < 3 || normalized.length > 30) {
-      setUsernameError('Username must be between 3 and 30 characters');
-      return;
-    }
-
-    if (!/^[a-z0-9_-]+$/.test(normalized)) {
-      setUsernameError(
-        'Only lowercase letters, numbers, underscores, and hyphens allowed'
-      );
-      return;
-    }
-
-    if (usernameAvailability && !usernameAvailability.available) {
-      setUsernameError(
-        usernameAvailability.reason || 'Username is already taken'
-      );
-      return;
-    }
-
-    try {
-      setIsSavingUsername(true);
-      setUsernameError(null);
-      await setUsername({ username: normalized });
-      setIsSettingUsername(false);
-    } catch (err) {
-      setUsernameError(
-        err instanceof Error ? err.message : 'Failed to set username'
-      );
-    } finally {
-      setIsSavingUsername(false);
-    }
-  };
-
-  // Initialize display name input when user loads
-  useEffect(() => {
-    if (user?.displayName) {
-      setDisplayNameInput(user.displayName);
-    }
-  }, [user?.displayName]);
 
   if (loading) {
     return (
@@ -241,16 +81,8 @@ export function ProfilePage() {
             <Breadcrumbs items={breadcrumbs} />
           </div>
 
-          {/* Page Header */}
-          <header className="text-center mb-8">
-            <h1 className="text-4xl font-bold tracking-tight mb-2">Profile</h1>
-            <p className="text-muted-foreground">
-              Manage your account and preferences
-            </p>
-          </header>
-
           {/* Profile Card */}
-          <Card className="mb-6">
+          <Card>
             <CardContent className="flex flex-col items-center py-12 text-center">
               <div className="mb-6">
                 <UserAvatar
@@ -317,16 +149,13 @@ export function ProfilePage() {
                   </div>
                 </>
               ) : (
-                // Authenticated User View
+                // Authenticated User View (public profile)
                 <>
                   <CardTitle className="text-2xl mb-2">
-                    {user?.showRealName && user?.displayName
-                      ? user.displayName
-                      : user?.username
-                        ? `@${user.username}`
-                        : user?.email || 'User'}
+                    {getDisplayedName()}
                   </CardTitle>
 
+                  {/* Show username below display name if showing real name */}
                   {user?.username && user?.showRealName && user?.displayName && (
                     <p className="text-muted-foreground mb-2">
                       @{user.username}
@@ -337,210 +166,19 @@ export function ProfilePage() {
                     Member since {formatDate(user?.createdAt)}
                   </CardDescription>
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
-                    <Link to="/settings" className="flex-1">
-                      <Button variant="outline" className="w-full">
-                        <Settings className="h-4 w-4 mr-2" />
-                        Settings
-                      </Button>
-                    </Link>
-
-                    <Button
-                      variant="destructive"
-                      className="flex-1"
-                      onClick={handleSignOut}
-                      disabled={isSigningOut}
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+                  {/* Edit Profile link */}
+                  <Link to="/settings">
+                    <Button variant="outline">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Edit Profile
                     </Button>
-                  </div>
+                  </Link>
+
+                  {/* Future: User's public arrangements will go here */}
                 </>
               )}
             </CardContent>
           </Card>
-
-          {/* Account Details Card (Authenticated users only) */}
-          {!isAnonymous && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Account Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Username */}
-                <div>
-                  <Label className="text-muted-foreground">Username</Label>
-                  {user?.username ? (
-                    <p className="font-medium">@{user.username}</p>
-                  ) : isSettingUsername ? (
-                    <div className="space-y-2 mt-2">
-                      <div className="relative">
-                        <Input
-                          value={usernameInput}
-                          onChange={(e) =>
-                            setUsernameInput(e.target.value.toLowerCase())
-                          }
-                          placeholder="your_username"
-                          disabled={isSavingUsername}
-                          className="pr-10"
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          {getUsernameStatus() === 'checking' && (
-                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                          )}
-                          {getUsernameStatus() === 'available' && (
-                            <Check className="h-4 w-4 text-green-500" />
-                          )}
-                          {getUsernameStatus() === 'taken' && (
-                            <X className="h-4 w-4 text-destructive" />
-                          )}
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        3-30 characters. Lowercase letters, numbers, underscores,
-                        and hyphens only.
-                      </p>
-                      {usernameError && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-4 w-4" />
-                          {usernameError}
-                        </p>
-                      )}
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={saveUsername}
-                          disabled={
-                            isSavingUsername ||
-                            getUsernameStatus() === 'taken' ||
-                            getUsernameStatus() === 'checking' ||
-                            usernameInput.length < 3
-                          }
-                        >
-                          {isSavingUsername ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                          ) : (
-                            <Check className="h-4 w-4 mr-1" />
-                          )}
-                          Save
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={cancelSettingUsername}
-                          disabled={isSavingUsername}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-orange-600">
-                        Not set
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={startSettingUsername}
-                      >
-                        <Pencil className="h-4 w-4 mr-1" />
-                        Set Username
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Email */}
-                <div>
-                  <Label className="text-muted-foreground">Email</Label>
-                  <p className="font-medium">{user?.email}</p>
-                </div>
-
-                {/* Display Name */}
-                <div>
-                  <Label className="text-muted-foreground">Display Name</Label>
-                  {isEditingDisplayName ? (
-                    <div className="space-y-2 mt-2">
-                      <Input
-                        value={displayNameInput}
-                        onChange={(e) => setDisplayNameInput(e.target.value)}
-                        placeholder="Your display name"
-                        disabled={isSavingDisplayName}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        3-50 characters. This is your optional "real name" shown
-                        on contributions.
-                      </p>
-                      {displayNameError && (
-                        <p className="text-sm text-destructive flex items-center gap-1">
-                          <AlertCircle className="h-4 w-4" />
-                          {displayNameError}
-                        </p>
-                      )}
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={saveDisplayName}
-                          disabled={isSavingDisplayName}
-                        >
-                          {isSavingDisplayName ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                          ) : (
-                            <Check className="h-4 w-4 mr-1" />
-                          )}
-                          Save
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={cancelEditingDisplayName}
-                          disabled={isSavingDisplayName}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 mt-1">
-                      {user?.displayName ? (
-                        <p className="font-medium">{user.displayName}</p>
-                      ) : (
-                        <span className="text-muted-foreground italic">
-                          Not set
-                        </span>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={startEditingDisplayName}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Show Real Name Toggle */}
-                {user?.displayName && (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Show display name on contributions</Label>
-                      <p className="text-xs text-muted-foreground">
-                        When enabled, your display name will be shown instead of
-                        your username on songs and arrangements you create.
-                      </p>
-                    </div>
-                    <Switch
-                      checked={user?.showRealName ?? false}
-                      onCheckedChange={handleShowRealNameToggle}
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
 
