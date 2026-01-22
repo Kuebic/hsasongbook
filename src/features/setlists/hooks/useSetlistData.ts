@@ -96,7 +96,7 @@ export function useSetlistData(setlistId: string | undefined): UseSetlistDataRet
     const setlistSongs: SetlistSong[] = convexData.arrangementIds.map((arrId, index) => {
       const arrangement = arrangementsMap.get(arrId);
       return {
-        id: `setlist-song-${index}`,
+        id: arrId, // Stable ID for dnd-kit (index-based IDs break animations)
         songId: arrangement?.songId ?? '',
         arrangementId: arrId,
         order: index,

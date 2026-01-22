@@ -39,8 +39,8 @@ function mapConvexSetlist(convexSetlist: {
 }): Setlist {
   // Map arrangementIds to SetlistSong array
   const songs: SetlistSong[] = convexSetlist.arrangementIds.map((arrId, index) => ({
-    id: `setlist-song-${index}`,
-    songId: '', // Will be populated when loading full setlist data
+    id: arrId, // Stable ID for dnd-kit (index-based IDs break animations)
+    songId: '', // Populated when loading full setlist data
     arrangementId: arrId,
     order: index,
   }));

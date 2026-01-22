@@ -13,6 +13,7 @@ import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinat
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useSetlistData } from '../hooks/useSetlistData';
 import { useSetlistSongs } from '../hooks/useSetlistSongs';
+import { useDragReorder } from '../hooks/useDragReorder';
 import SetlistSongItem from '../components/SetlistSongItem';
 import { AddArrangementModal } from '../components/AddArrangementModal';
 import Breadcrumbs from '@/features/shared/components/Breadcrumbs';
@@ -42,6 +43,9 @@ export function SetlistPage() {
     (updated) => updateSetlist(updated)
   );
 
+  // Use local state during drag to prevent animation glitches from Convex reactivity
+  const { items: dragItems, handleReorder } = useDragReorder(setlist?.songs ?? []);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 }
@@ -54,9 +58,11 @@ export function SetlistPage() {
   const handleDragEnd = (event: DragEndEvent): void => {
     const { active, over } = event;
     if (over && active.id !== over.id && setlist) {
-      const oldIndex = setlist.songs.findIndex(s => s.id === active.id);
-      const newIndex = setlist.songs.findIndex(s => s.id === over.id);
-      reorderSongs(oldIndex, newIndex);
+      const oldIndex = dragItems.findIndex(s => s.id === active.id);
+      const newIndex = dragItems.findIndex(s => s.id === over.id);
+      // Use handleReorder which manages local state to prevent animation glitches
+      // It passes the reordered items to reorderSongs for persistence
+      handleReorder(oldIndex, newIndex, (reorderedItems) => reorderSongs(reorderedItems));
     }
   };
 
@@ -139,7 +145,7 @@ export function SetlistPage() {
             Add Song
           </Button>
 
-          {setlist.songs.length === 0 ? (
+          {dragItems.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <p>No songs in this setlist yet. Add songs to get started.</p>
             </div>
@@ -150,11 +156,11 @@ export function SetlistPage() {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={setlist.songs.map(s => s.id)}
+                items={dragItems.map(s => s.id)}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
-                  {setlist.songs.map((song, index) => {
+                  {dragItems.map((song, index) => {
                     const arrangement = arrangements.get(song.arrangementId);
                     const parentSong = arrangement ? songs.get(arrangement.songId) : undefined;
                     return (

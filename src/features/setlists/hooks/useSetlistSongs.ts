@@ -15,7 +15,7 @@ import type { Setlist, SetlistSong } from '@/types';
 export interface UseSetlistSongsReturn {
   addSong: (arrangementId: string, customKey?: string) => Promise<void>;
   removeSong: (songId: string) => Promise<void>;
-  reorderSongs: (sourceIndex: number, destinationIndex: number) => Promise<void>;
+  reorderSongs: (reorderedSongs: SetlistSong[]) => Promise<void>;
   updateSongKey: (songId: string, newKey: string) => Promise<void>;
 }
 
@@ -47,8 +47,8 @@ export function useSetlistSongs(
 
       // Optimistic update for UI
       const newSong: SetlistSong = {
-        id: `setlist-song-${setlist.songs.length}`,
-        songId: '', // Will be populated on next query
+        id: arrangementId, // Stable ID for dnd-kit
+        songId: '', // Populated on next query
         arrangementId,
         order: setlist.songs.length,
       };
@@ -88,7 +88,7 @@ export function useSetlistSongs(
       // Optimistic update with reindexed order
       onUpdate({
         ...setlist,
-        songs: newSongs.map((s, i) => ({ ...s, id: `setlist-song-${i}`, order: i })),
+        songs: newSongs.map((s, i) => ({ ...s, order: i })),
         updatedAt: new Date().toISOString(),
       });
 
@@ -98,43 +98,23 @@ export function useSetlistSongs(
   );
 
   /**
-   * Reorder songs in the setlist (for drag-drop)
+   * Persist reordered songs to Convex (UI state managed by useDragReorder)
    */
   const reorderSongs = useCallback(
-    async (sourceIndex: number, destinationIndex: number): Promise<void> => {
+    async (reorderedSongs: SetlistSong[]): Promise<void> => {
       if (!setlist) return;
-      if (sourceIndex === destinationIndex) return;
 
-      // Reorder the songs array
-      const reordered = [...setlist.songs];
-      const [removed] = reordered.splice(sourceIndex, 1);
-      reordered.splice(destinationIndex, 0, removed);
-
-      // Update order numbers and rebuild arrangementIds
-      const updatedSongs = reordered.map((song, index) => ({
-        ...song,
-        id: `setlist-song-${index}`,
-        order: index,
-      }));
-      const newArrangementIds = updatedSongs.map((s) => s.arrangementId);
-
-      logger.debug('Reordering songs:', { sourceIndex, destinationIndex });
+      const newArrangementIds = reorderedSongs.map((s) => s.arrangementId);
+      logger.debug('Reordering songs:', { count: reorderedSongs.length });
 
       await updateMutation({
         id: setlist.id as Id<'setlists'>,
         arrangementIds: newArrangementIds as Id<'arrangements'>[],
       });
 
-      // Optimistic update
-      onUpdate({
-        ...setlist,
-        songs: updatedSongs,
-        updatedAt: new Date().toISOString(),
-      });
-
       logger.info('Songs reordered');
     },
-    [setlist, updateMutation, onUpdate]
+    [setlist, updateMutation]
   );
 
   /**
