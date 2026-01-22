@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { SongRepository } from '../../pwa/db/repository';
+import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
 import SongList from '../components/SongList';
 import SearchBar from '../components/SearchBar';
-import RecentSongsWidget from '../components/RecentSongsWidget';
 import StatsWidget from '../components/StatsWidget';
 import FeaturedArrangementsWidget from '../components/FeaturedArrangementsWidget';
 import { SongListSkeleton } from '../../shared/components/LoadingStates';
@@ -11,53 +11,53 @@ import type { Song } from '@/types/Song.types';
 
 export function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [allSongs, setAllSongs] = useState<Song[]>([]);
-  const [filteredSongs, setFilteredSongs] = useState<Song[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
-  // Load all songs from IndexedDB on mount
+  // Load all songs from Convex
+  const convexSongs = useQuery(api.songs.list);
+  const isLoading = convexSongs === undefined;
+
+  // Map Convex songs to frontend Song type
+  const allSongs: Song[] = useMemo(() => {
+    if (!convexSongs) return [];
+    return convexSongs.map((song) => ({
+      id: song._id,
+      slug: song.slug,
+      title: song.title,
+      artist: song.artist ?? '',
+      themes: song.themes,
+      copyright: song.copyright,
+      lyrics: song.lyrics ? { en: song.lyrics } : undefined,
+      createdAt: new Date(song._creationTime).toISOString(),
+      updatedAt: new Date(song._creationTime).toISOString(),
+    }));
+  }, [convexSongs]);
+
+  // Debounce search term
   useEffect(() => {
-    const loadSongs = async () => {
-      try {
-        setIsLoading(true);
-        const songRepo = new SongRepository();
-        const songs = await songRepo.getAll();
-        setAllSongs(songs);
-        setFilteredSongs(songs);
-      } catch (error) {
-        console.error('Failed to load songs:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadSongs();
-  }, []);
-
-  // Filter songs when search term changes
-  useEffect(() => {
-    if (!searchTerm) {
-      setFilteredSongs(allSongs);
-      setIsSearching(false);
-      return;
-    }
-
-    setIsSearching(true);
     const timer = setTimeout(() => {
-      const query = searchTerm.toLowerCase();
-      const filtered = allSongs.filter(
-        (song) =>
-          song.title.toLowerCase().includes(query) ||
-          song.artist.toLowerCase().includes(query) ||
-          song.themes?.some((theme) => theme.toLowerCase().includes(query))
-      );
-      setFilteredSongs(filtered);
-      setIsSearching(false);
+      setDebouncedSearchTerm(searchTerm);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, allSongs]);
+  }, [searchTerm]);
+
+  // Filter songs client-side
+  const filteredSongs = useMemo(() => {
+    if (!debouncedSearchTerm) {
+      return allSongs;
+    }
+
+    const query = debouncedSearchTerm.toLowerCase();
+    return allSongs.filter(
+      (song) =>
+        song.title.toLowerCase().includes(query) ||
+        song.artist.toLowerCase().includes(query) ||
+        song.themes?.some((theme) => theme.toLowerCase().includes(query))
+    );
+  }, [debouncedSearchTerm, allSongs]);
+
+  const isSearching = searchTerm !== debouncedSearchTerm;
 
   return (
     <SimplePageTransition>
@@ -80,7 +80,6 @@ export function SearchPage() {
           {!searchTerm && !isSearching && (
             <>
               <StatsWidget />
-              <RecentSongsWidget limit={5} />
               <FeaturedArrangementsWidget limit={6} />
             </>
           )}

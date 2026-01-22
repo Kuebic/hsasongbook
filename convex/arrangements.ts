@@ -44,6 +44,29 @@ export const getBySong = query({
 });
 
 /**
+ * Get all arrangements
+ * Access: Everyone
+ */
+export const list = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("arrangements").collect();
+  },
+});
+
+/**
+ * Get count of all arrangements
+ * Access: Everyone
+ */
+export const count = query({
+  args: {},
+  handler: async (ctx) => {
+    const arrangements = await ctx.db.query("arrangements").collect();
+    return arrangements.length;
+  },
+});
+
+/**
  * Get featured arrangements (top-rated)
  * Algorithm: score = (rating * 0.6) + (favorites * 0.004)
  * Access: Everyone

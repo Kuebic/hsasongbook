@@ -1,14 +1,13 @@
 /**
  * useFeaturedArrangements hook
  *
- * Loads featured arrangements from IndexedDB for the homepage widget.
+ * Loads featured arrangements from Convex for the homepage widget.
  * Uses algorithm: score = (rating × 0.6) + (favorites × 0.004)
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ArrangementRepository } from '@/features/pwa/db/repository';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
 import type { ArrangementWithSong } from '@/types';
-import logger from '@/lib/logger';
 
 export interface UseFeaturedArrangementsReturn {
   featured: ArrangementWithSong[];
@@ -18,53 +17,51 @@ export interface UseFeaturedArrangementsReturn {
 }
 
 /**
- * Hook for loading featured arrangements
+ * Hook for loading featured arrangements from Convex
  *
  * @param limit - Maximum number of featured arrangements to load (default: 6)
  * @returns Featured arrangements data and reload function
  */
 export function useFeaturedArrangements(limit = 6): UseFeaturedArrangementsReturn {
-  const [featured, setFeatured] = useState<ArrangementWithSong[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const data = useQuery(api.arrangements.getFeaturedWithSongs, { limit });
 
-  // Memoize repository to prevent re-instantiation
-  const repo = useMemo(() => new ArrangementRepository(), []);
-
-  /**
-   * Load featured arrangements with song data from IndexedDB
-   */
-  const loadFeatured = useCallback(async (): Promise<void> => {
-    try {
-      setLoading(true);
-      setError(null);
-      const arrangements = await repo.getFeaturedWithSongs(limit);
-      setFeatured(arrangements);
-      logger.debug(`Loaded ${arrangements.length} featured arrangements with song data`);
-    } catch (err) {
-      logger.error('Failed to load featured arrangements:', err);
-      setError('Failed to load featured arrangements');
-    } finally {
-      setLoading(false);
-    }
-  }, [repo, limit]);
-
-  /**
-   * Reload featured arrangements from database
-   */
-  const reload = useCallback((): void => {
-    loadFeatured();
-  }, [loadFeatured]);
-
-  // Load featured arrangements on mount or when limit changes
-  useEffect(() => {
-    loadFeatured();
-  }, [loadFeatured]);
+  // Map Convex response to frontend ArrangementWithSong type
+  const featured: ArrangementWithSong[] = (data ?? []).map((item) => ({
+    id: item._id,
+    slug: item.slug,
+    songId: item.songId,
+    name: item.name,
+    key: item.key ?? '',
+    tempo: item.tempo ?? 0,
+    timeSignature: item.timeSignature ?? '4/4',
+    capo: item.capo ?? 0,
+    tags: item.tags,
+    rating: item.rating,
+    favorites: item.favorites,
+    chordProContent: item.chordProContent,
+    createdAt: new Date(item._creationTime).toISOString(),
+    updatedAt: item.updatedAt
+      ? new Date(item.updatedAt).toISOString()
+      : new Date(item._creationTime).toISOString(),
+    song: item.song
+      ? {
+          id: item.song._id,
+          slug: item.song.slug,
+          title: item.song.title,
+          artist: item.song.artist ?? '',
+        }
+      : {
+          id: '',
+          slug: '',
+          title: 'Unknown Song',
+          artist: '',
+        },
+  }));
 
   return {
     featured,
-    loading,
-    error,
-    reload
+    loading: data === undefined,
+    error: null, // Convex handles errors via ConvexProvider
+    reload: () => {}, // Convex auto-reloads on data changes
   };
 }

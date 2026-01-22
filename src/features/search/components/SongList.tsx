@@ -1,35 +1,28 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Music, User, Hash } from 'lucide-react';
-import { ArrangementRepository } from '../../pwa/db/repository';
 import type { Song } from '@/types';
+import type { Id } from '../../../../convex/_generated/dataModel';
 
 interface SongListProps {
   songs: Song[];
 }
 
 export default function SongList({ songs }: SongListProps) {
-  const [arrangementCounts, setArrangementCounts] = useState<Record<string, number>>({});
+  // Get all arrangements to calculate counts per song
+  const allArrangements = useQuery(api.arrangements.list);
 
-  useEffect(() => {
-    const loadArrangementCounts = async () => {
-      const arrRepo = new ArrangementRepository();
-      const counts: Record<string, number> = {};
-
-      for (const song of songs) {
-        const arrangements = await arrRepo.getBySong(song.id);
-        counts[song.id] = arrangements.length;
-      }
-
-      setArrangementCounts(counts);
-    };
-
-    if (songs.length > 0) {
-      loadArrangementCounts();
+  // Calculate arrangement counts per song
+  const arrangementCounts: Record<string, number> = {};
+  if (allArrangements) {
+    for (const arr of allArrangements) {
+      const songId = arr.songId as string;
+      arrangementCounts[songId] = (arrangementCounts[songId] || 0) + 1;
     }
-  }, [songs]);
+  }
 
   if (!songs || songs.length === 0) {
     return (

@@ -40,6 +40,18 @@ export const getBySlug = query({
   },
 });
 
+/**
+ * Get count of all songs
+ * Access: Everyone
+ */
+export const count = query({
+  args: {},
+  handler: async (ctx) => {
+    const songs = await ctx.db.query("songs").collect();
+    return songs.length;
+  },
+});
+
 // ============ MUTATIONS ============
 
 /**

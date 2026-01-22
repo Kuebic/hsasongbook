@@ -1,13 +1,15 @@
 /**
  * useArrangementData Hook
  *
- * Replace mock dataHelpers with IndexedDB repository access
- * Maintains same interface for compatibility with existing components
+ * Provides access to arrangement and song data from Convex
+ * with update capabilities.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ArrangementRepository, SongRepository } from '../../pwa/db/repository';
-import { persistenceService } from '../../chordpro/services/PersistenceService';
+import { useCallback, useMemo } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { useParams } from 'react-router-dom';
+import { api } from '../../../../convex/_generated/api';
+import type { Id } from '../../../../convex/_generated/dataModel';
 import logger from '@/lib/logger';
 import type { Arrangement } from '@/types/Arrangement.types';
 import type { Song } from '@/types/Song.types';
@@ -47,156 +49,212 @@ export interface UseArrangementDataReturn {
 }
 
 /**
+ * Map Convex arrangement to frontend type
+ */
+function mapConvexArrangement(arr: {
+  _id: Id<'arrangements'>;
+  _creationTime: number;
+  slug: string;
+  songId: Id<'songs'>;
+  name: string;
+  key?: string;
+  tempo?: number;
+  timeSignature?: string;
+  capo?: number;
+  tags: string[];
+  rating: number;
+  favorites: number;
+  chordProContent: string;
+  updatedAt?: number;
+}): Arrangement {
+  return {
+    id: arr._id,
+    slug: arr.slug,
+    songId: arr.songId,
+    name: arr.name,
+    key: arr.key ?? '',
+    tempo: arr.tempo ?? 0,
+    timeSignature: arr.timeSignature ?? '4/4',
+    capo: arr.capo ?? 0,
+    tags: arr.tags,
+    rating: arr.rating,
+    favorites: arr.favorites,
+    chordProContent: arr.chordProContent,
+    createdAt: new Date(arr._creationTime).toISOString(),
+    updatedAt: arr.updatedAt
+      ? new Date(arr.updatedAt).toISOString()
+      : new Date(arr._creationTime).toISOString(),
+  };
+}
+
+/**
+ * Map Convex song to frontend type
+ */
+function mapConvexSong(song: {
+  _id: Id<'songs'>;
+  _creationTime: number;
+  slug: string;
+  title: string;
+  artist?: string;
+  themes: string[];
+  copyright?: string;
+  lyrics?: string;
+}): Song {
+  return {
+    id: song._id,
+    slug: song.slug,
+    title: song.title,
+    artist: song.artist ?? '',
+    themes: song.themes,
+    copyright: song.copyright,
+    lyrics: song.lyrics ? { en: song.lyrics } : undefined,
+    createdAt: new Date(song._creationTime).toISOString(),
+    updatedAt: new Date(song._creationTime).toISOString(),
+  };
+}
+
+/**
  * useArrangementData Hook
- * Provides access to arrangement and song data from IndexedDB
+ * Provides access to arrangement and song data from Convex
  *
- * @param arrangementId - Arrangement ID to load
+ * @param arrangementId - Arrangement ID to load (optional, will use URL slug if not provided)
  * @returns Arrangement data, loading state, and operations
  */
-export function useArrangementData(arrangementId: string | undefined): UseArrangementDataReturn {
-  const [arrangement, setArrangement] = useState<Arrangement | null>(null);
-  const [song, setSong] = useState<Song | null>(null);
-  const [allArrangements, setAllArrangements] = useState<Arrangement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function useArrangementData(arrangementId?: string | null): UseArrangementDataReturn {
+  const { arrangementSlug } = useParams();
 
-  // Repository instances (useMemo to avoid recreation)
-  const arrangementRepo = useMemo(() => new ArrangementRepository(), []);
-  const songRepo = useMemo(() => new SongRepository(), []);
+  // Get arrangement by slug (if no ID provided, use slug from URL)
+  const arrangementBySlug = useQuery(
+    api.arrangements.getBySlug,
+    arrangementSlug && !arrangementId ? { slug: arrangementSlug } : 'skip'
+  );
+
+  // Get arrangement by ID (if ID provided)
+  const arrangementById = useQuery(
+    api.arrangements.get,
+    arrangementId ? { id: arrangementId as Id<'arrangements'> } : 'skip'
+  );
+
+  // Use whichever arrangement we have
+  const convexArrangement = arrangementId ? arrangementById : arrangementBySlug;
+
+  // Get parent song
+  const convexSong = useQuery(
+    api.songs.get,
+    convexArrangement?.songId ? { id: convexArrangement.songId } : 'skip'
+  );
+
+  // Get all arrangements for this song (siblings)
+  const convexSiblings = useQuery(
+    api.arrangements.getBySong,
+    convexArrangement?.songId ? { songId: convexArrangement.songId } : 'skip'
+  );
+
+  // Convex mutation for updating arrangements
+  const updateArrangementMutation = useMutation(api.arrangements.update);
+
+  // Map to frontend types
+  const arrangement: Arrangement | null = useMemo(() => {
+    if (!convexArrangement) return null;
+    return mapConvexArrangement(convexArrangement);
+  }, [convexArrangement]);
+
+  const song: Song | null = useMemo(() => {
+    if (!convexSong) return null;
+    return mapConvexSong(convexSong);
+  }, [convexSong]);
+
+  const allArrangements: Arrangement[] = useMemo(() => {
+    if (!convexSiblings) return [];
+    return convexSiblings.map(mapConvexArrangement);
+  }, [convexSiblings]);
+
+  // Determine loading state
+  const isLoadingArrangement =
+    (arrangementId !== undefined && arrangementById === undefined) ||
+    (arrangementSlug !== undefined && !arrangementId && arrangementBySlug === undefined);
+  const isLoadingSong = convexArrangement?.songId && convexSong === undefined;
+  const isLoadingSiblings = convexArrangement?.songId && convexSiblings === undefined;
+  const loading = isLoadingArrangement || isLoadingSong || isLoadingSiblings;
+
+  // Error state
+  const error = !loading && !convexArrangement ? 'Arrangement not found' : null;
 
   /**
-   * Load arrangement and related data
+   * Update arrangement via Convex mutation
    */
-  const loadArrangement = useCallback(async () => {
-    if (!arrangementId) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      logger.debug('Loading arrangement from IndexedDB:', arrangementId);
-
-      // Load arrangement
-      const arrangementData = await arrangementRepo.getById(arrangementId);
-
-      if (!arrangementData) {
-        setError('Arrangement not found');
-        setArrangement(null);
-        setSong(null);
-        setAllArrangements([]);
-        setLoading(false);
-        return;
+  const updateArrangement = useCallback(
+    async (updatedData: Partial<Arrangement>): Promise<UpdateResult> => {
+      if (!convexArrangement) {
+        return {
+          success: false,
+          error: new Error('No arrangement loaded'),
+          timestamp: new Date(),
+        };
       }
 
-      // Load parent song
-      const songData = await songRepo.getById(arrangementData.songId);
+      try {
+        logger.debug('Updating arrangement via Convex:', convexArrangement._id);
 
-      if (!songData) {
-        setError('Parent song not found');
-        setArrangement(arrangementData);
-        setSong(null);
-        setAllArrangements([]);
-        setLoading(false);
-        return;
+        // Build update payload (only include defined values)
+        const updatePayload: {
+          id: Id<'arrangements'>;
+          name?: string;
+          key?: string;
+          tempo?: number;
+          capo?: number;
+          timeSignature?: string;
+          chordProContent?: string;
+          tags?: string[];
+        } = {
+          id: convexArrangement._id,
+        };
+
+        if (updatedData.name !== undefined) updatePayload.name = updatedData.name;
+        if (updatedData.key !== undefined) updatePayload.key = updatedData.key;
+        if (updatedData.tempo !== undefined) updatePayload.tempo = updatedData.tempo;
+        if (updatedData.capo !== undefined) updatePayload.capo = updatedData.capo;
+        if (updatedData.timeSignature !== undefined)
+          updatePayload.timeSignature = updatedData.timeSignature;
+        if (updatedData.chordProContent !== undefined)
+          updatePayload.chordProContent = updatedData.chordProContent;
+        if (updatedData.tags !== undefined) updatePayload.tags = updatedData.tags;
+
+        await updateArrangementMutation(updatePayload);
+
+        logger.debug('Arrangement updated successfully via Convex');
+
+        // Return the updated arrangement (optimistic - Convex will sync)
+        const updatedArrangement: Arrangement = {
+          ...arrangement!,
+          ...updatedData,
+          updatedAt: new Date().toISOString(),
+        };
+
+        return {
+          success: true,
+          arrangement: updatedArrangement,
+          timestamp: new Date(),
+        };
+      } catch (err) {
+        logger.error('Failed to update arrangement:', err);
+        return {
+          success: false,
+          error: err as Error,
+          timestamp: new Date(),
+        };
       }
-
-      // Load all arrangements for this song
-      const siblingArrangements = await arrangementRepo.getBySong(arrangementData.songId);
-
-      setArrangement(arrangementData);
-      setSong(songData);
-      setAllArrangements(siblingArrangements);
-      setError(null);
-
-      logger.debug('Arrangement data loaded successfully:', {
-        arrangementId: arrangementData.id,
-        songId: songData.id,
-        totalArrangements: siblingArrangements.length
-      });
-    } catch (err) {
-      logger.error('Failed to load arrangement:', err);
-      setError('Failed to load arrangement');
-      setArrangement(null);
-      setSong(null);
-      setAllArrangements([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [arrangementId, arrangementRepo, songRepo]);
+    },
+    [convexArrangement, arrangement, updateArrangementMutation]
+  );
 
   /**
-   * Update arrangement content
-   * Uses PersistenceService for proper save flow
-   */
-  const updateArrangement = useCallback(async (updatedData: Partial<Arrangement>): Promise<UpdateResult> => {
-    if (!arrangement) {
-      return {
-        success: false,
-        error: new Error('No arrangement loaded'),
-        timestamp: new Date()
-      };
-    }
-
-    try {
-      logger.debug('Updating arrangement:', arrangement.id);
-
-      // If updating chordProContent, use PersistenceService
-      if (updatedData.chordProContent !== undefined) {
-        const result = await persistenceService.saveToArrangement(
-          arrangement.id,
-          updatedData.chordProContent,
-          arrangement.version
-        );
-
-        if (result.success && result.arrangement) {
-          // Update local state with saved arrangement
-          setArrangement(result.arrangement);
-          logger.debug('Arrangement updated successfully via PersistenceService');
-        }
-
-        return result as UpdateResult;
-      }
-
-      // For other fields, use repository directly
-      const updatedArrangement: Arrangement = {
-        ...arrangement,
-        ...updatedData
-      };
-
-      const saved = await arrangementRepo.save(updatedArrangement);
-      setArrangement(saved);
-
-      logger.debug('Arrangement metadata updated successfully');
-
-      return {
-        success: true,
-        arrangement: saved,
-        timestamp: new Date()
-      };
-    } catch (error) {
-      logger.error('Failed to update arrangement:', error);
-      return {
-        success: false,
-        error: error as Error,
-        timestamp: new Date()
-      };
-    }
-  }, [arrangement, arrangementRepo]);
-
-  /**
-   * Reload arrangement data (useful after save)
+   * Reload is a no-op for Convex (data updates automatically)
    */
   const reload = useCallback(() => {
-    loadArrangement();
-  }, [loadArrangement]);
-
-  // Load data on mount and when arrangementId changes
-  useEffect(() => {
-    loadArrangement();
-  }, [loadArrangement]);
+    // Convex queries auto-refresh when data changes
+    logger.debug('Reload requested - Convex handles this automatically');
+  }, []);
 
   return {
     // Data
@@ -215,7 +273,7 @@ export function useArrangementData(arrangementId: string | undefined): UseArrang
     // Compatibility with dataHelpers interface
     getArrangementById: useCallback(() => arrangement, [arrangement]),
     getSongById: useCallback(() => song, [song]),
-    getArrangementsBySongId: useCallback(() => allArrangements, [allArrangements])
+    getArrangementsBySongId: useCallback(() => allArrangements, [allArrangements]),
   };
 }
 

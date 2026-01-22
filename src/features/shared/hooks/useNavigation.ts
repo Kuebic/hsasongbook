@@ -1,6 +1,6 @@
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import { SongRepository, ArrangementRepository } from '../../pwa/db/repository'
+import { useQuery } from 'convex/react'
+import { api } from '../../../../convex/_generated/api'
 
 export interface Breadcrumb {
   label: string
@@ -21,46 +21,35 @@ export function useNavigation(): UseNavigationReturn {
   const navigate = useNavigate()
   const location = useLocation()
   const params = useParams()
-  const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([])
 
-  useEffect(() => {
-    const loadBreadcrumbs = async () => {
-      const path = location.pathname
-      const crumbs: Breadcrumb[] = []
+  // Query song by slug if on a song page
+  const song = useQuery(
+    api.songs.getBySlug,
+    params.songSlug ? { slug: params.songSlug } : 'skip'
+  )
 
-      // Parse current location for breadcrumbs
-      if (path.includes('/song/')) {
-        const songSlug = params.songSlug
-        if (songSlug) {
-          const songRepo = new SongRepository()
-          const song = await songRepo.getBySlug(songSlug)
-          if (song) {
-            crumbs.push({
-              label: song.title,
-              path: `/song/${song.slug}`
-            })
+  // Query arrangement by slug if on an arrangement page
+  const arrangement = useQuery(
+    api.arrangements.getBySlug,
+    params.arrangementSlug ? { slug: params.arrangementSlug } : 'skip'
+  )
 
-            // Check if we're also on an arrangement page
-            const arrangementSlug = params.arrangementSlug
-            if (arrangementSlug) {
-              const arrRepo = new ArrangementRepository()
-              const arrangement = await arrRepo.getBySlug(arrangementSlug)
-              if (arrangement) {
-                crumbs.push({
-                  label: arrangement.name,
-                  path: `/song/${song.slug}/${arrangement.slug}`
-                })
-              }
-            }
-          }
-        }
-      }
+  // Build breadcrumbs based on queries
+  const breadcrumbs: Breadcrumb[] = []
 
-      setBreadcrumbs(crumbs)
+  if (song) {
+    breadcrumbs.push({
+      label: song.title,
+      path: `/song/${song.slug}`
+    })
+
+    if (arrangement) {
+      breadcrumbs.push({
+        label: arrangement.name,
+        path: `/song/${song.slug}/${arrangement.slug}`
+      })
     }
-
-    loadBreadcrumbs()
-  }, [location.pathname, params.songSlug, params.arrangementSlug])
+  }
 
   const goToSearch = (): void => navigate('/')
   const goToSong = (songSlug: string): void => navigate(`/song/${songSlug}`)

@@ -1,7 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { useSlugParams } from '../../shared/hooks/useSlugParams';
-import { useViewTracking } from '../../shared/hooks/useViewTracking';
 import { useArrangementData } from '../hooks/useArrangementData';
 import ChordProViewer from '@/features/chordpro';
 import ArrangementSwitcher from '../components/ArrangementSwitcher';
@@ -19,16 +17,12 @@ import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSaniti
 import type { ArrangementMetadata } from '@/types/Arrangement.types';
 
 export function ArrangementPage() {
-  const { arrangementId, isLoading: isResolvingSlug } = useSlugParams();
   const navigate = useNavigate();
   const { breadcrumbs } = useNavigation();
   const [showChords] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // Track page view for recent songs widget
-  useViewTracking('arrangement', arrangementId);
-
-  // Use IndexedDB hook instead of mock data
+  // Use Convex hook to load arrangement data (uses URL slug automatically)
   const {
     arrangement,
     song,
@@ -36,10 +30,10 @@ export function ArrangementPage() {
     loading,
     error,
     updateArrangement
-  } = useArrangementData(arrangementId);
+  } = useArrangementData();
 
-  // Loading state (slug resolution or data loading)
-  if (isResolvingSlug || loading) {
+  // Loading state
+  if (loading) {
     return <PageSpinner message="Loading arrangement..." />;
   }
 
@@ -117,11 +111,11 @@ export function ArrangementPage() {
                 capo: arrangement.capo
               }}
               onChange={async (newMetadata: ArrangementMetadata) => {
-                logger.debug('Metadata changed, saving to IndexedDB:', newMetadata);
+                logger.debug('Metadata changed, saving to Convex:', newMetadata);
                 // Save metadata via useArrangementData hook
                 const result = await updateArrangement(newMetadata);
                 if (result.success) {
-                  logger.debug('Metadata saved to IndexedDB successfully');
+                  logger.debug('Metadata saved to Convex successfully');
                 } else {
                   logger.error('Failed to save metadata:', result.error);
                 }
@@ -139,7 +133,7 @@ export function ArrangementPage() {
             editable={true}
             editMode={isEditMode}
             onEditModeChange={setIsEditMode}
-            arrangementId={arrangementId}
+            arrangementId={arrangement.id}
             arrangementMetadata={{
               key: arrangement.key,
               tempo: arrangement.tempo,
@@ -150,14 +144,14 @@ export function ArrangementPage() {
               // Strip metadata directives before saving (controlled via dropdowns)
               const sanitizedContent = sanitizeChordProContent(newContent);
 
-              logger.debug('ChordPro content changed, saving sanitized content to IndexedDB:', sanitizedContent.length);
+              logger.debug('ChordPro content changed, saving sanitized content to Convex:', sanitizedContent.length);
 
               // Save via useArrangementData hook
               const result = await updateArrangement({
                 chordProContent: sanitizedContent
               });
               if (result.success) {
-                logger.debug('Content saved to IndexedDB successfully');
+                logger.debug('Content saved to Convex successfully');
               } else {
                 logger.error('Failed to save content:', result.error);
               }

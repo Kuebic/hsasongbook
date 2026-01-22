@@ -33,8 +33,6 @@ import { AuthProvider } from '../features/auth/context/AuthProvider'
 // PWA imports
 import { usePWA, UpdateNotification, OfflineIndicator } from '../features/pwa'
 import { initDatabase } from '../features/pwa/db/database'
-import { importMockData } from '../features/pwa/db/dataMigration'
-import { runSlugMigration } from '../features/pwa/db/slugMigration'
 
 import '../App.css'
 
@@ -75,29 +73,14 @@ function AppWithFeatures() {
   // Initialize PWA features
   const { needRefresh, updateServiceWorker } = usePWA()
 
-  // Initialize database and migrate mock data on first load
+  // Initialize IndexedDB for local drafts storage only
+  // (Songs and arrangements are now stored in Convex)
   useEffect(() => {
     const initializePWA = async () => {
       try {
-        // Initialize database
-        const db = await initDatabase()
-
-        // Check if this is first run (no data in DB)
-        const songs = await db.getAll('songs')
-        if (songs.length === 0) {
-          logger.info('First run detected, migrating mock data...')
-          await importMockData()
-        }
-
-        // Run slug migration to populate slugs for all existing data
-        // This is idempotent - safe to run multiple times
-        logger.info('Running slug migration...')
-        const migrationResult = await runSlugMigration()
-        if (migrationResult.success) {
-          logger.info(`Slug migration completed: ${migrationResult.songsMigrated} songs, ${migrationResult.arrangementsMigrated} arrangements`)
-        } else {
-          logger.error('Slug migration failed')
-        }
+        // Initialize database for chordproDrafts only
+        await initDatabase()
+        logger.info('Local storage initialized for drafts')
       } catch (error) {
         logger.error('Failed to initialize PWA features:', error)
       }

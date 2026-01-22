@@ -1,8 +1,7 @@
-import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { useSlugParams } from '../../shared/hooks/useSlugParams';
-import { useViewTracking } from '../../shared/hooks/useViewTracking';
-import { SongRepository, ArrangementRepository } from '../../pwa/db/repository';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
 import SongMetadata from '../components/SongMetadata';
 import ArrangementList from '../../arrangements/components/ArrangementList';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
@@ -16,57 +15,73 @@ import type { Song } from '@/types/Song.types';
 import type { Arrangement } from '@/types/Arrangement.types';
 
 export function SongPage() {
-  const { songId, isLoading: isResolvingSlug } = useSlugParams();
+  const { songSlug } = useParams();
   const navigate = useNavigate();
   const { breadcrumbs } = useNavigation();
-  const [song, setSong] = useState<Song | null>(null);
-  const [arrangements, setArrangements] = useState<Arrangement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Track page view for recent songs widget
-  useViewTracking('song', songId);
+  // Get song by slug from Convex
+  const convexSong = useQuery(
+    api.songs.getBySlug,
+    songSlug ? { slug: songSlug } : 'skip'
+  );
 
-  useEffect(() => {
-    if (!songId) return;
+  // Get arrangements for this song
+  const convexArrangements = useQuery(
+    api.arrangements.getBySong,
+    convexSong?._id ? { songId: convexSong._id } : 'skip'
+  );
 
-    const loadSongData = async () => {
-      try {
-        setLoading(true);
-        const songRepo = new SongRepository();
-        const arrRepo = new ArrangementRepository();
-
-        const songData = await songRepo.getById(songId);
-
-        if (!songData) {
-          setError('Song not found');
-          setLoading(false);
-          return;
-        }
-
-        const arrangementData = await arrRepo.getBySong(songId);
-
-        setSong(songData);
-        setArrangements(arrangementData);
-        setError(null);
-      } catch (err) {
-        setError('Failed to load song');
-        console.error('Error loading song:', err);
-      } finally {
-        setLoading(false);
-      }
+  // Map Convex song to frontend Song type
+  const song: Song | null = useMemo(() => {
+    if (!convexSong) return null;
+    return {
+      id: convexSong._id,
+      slug: convexSong.slug,
+      title: convexSong.title,
+      artist: convexSong.artist ?? '',
+      themes: convexSong.themes,
+      copyright: convexSong.copyright,
+      lyrics: convexSong.lyrics ? { en: convexSong.lyrics } : undefined,
+      createdAt: new Date(convexSong._creationTime).toISOString(),
+      updatedAt: new Date(convexSong._creationTime).toISOString(),
     };
+  }, [convexSong]);
 
-    loadSongData();
-  }, [songId]);
+  // Map Convex arrangements to frontend Arrangement type
+  const arrangements: Arrangement[] = useMemo(() => {
+    if (!convexArrangements) return [];
+    return convexArrangements.map((arr) => ({
+      id: arr._id,
+      slug: arr.slug,
+      songId: arr.songId,
+      name: arr.name,
+      key: arr.key ?? '',
+      tempo: arr.tempo ?? 0,
+      timeSignature: arr.timeSignature ?? '4/4',
+      capo: arr.capo ?? 0,
+      tags: arr.tags,
+      rating: arr.rating,
+      favorites: arr.favorites,
+      chordProContent: arr.chordProContent,
+      createdAt: new Date(arr._creationTime).toISOString(),
+      updatedAt: arr.updatedAt
+        ? new Date(arr.updatedAt).toISOString()
+        : new Date(arr._creationTime).toISOString(),
+    }));
+  }, [convexArrangements]);
 
-  // Loading state (slug resolution or data loading)
-  if (isResolvingSlug || loading) {
+  // Loading states
+  const isLoadingSong = songSlug !== undefined && convexSong === undefined;
+  const isLoadingArrangements = convexSong?._id && convexArrangements === undefined;
+  const isLoading = isLoadingSong || isLoadingArrangements;
+
+  // Loading state
+  if (isLoading) {
     return <PageSpinner message="Loading song details..." />;
   }
 
-  // Error state
-  if (error || !song) {
+  // Error state (song not found)
+  if (!song) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -74,7 +89,7 @@ export function SongPage() {
             <div className="text-center mb-4">
               <Music className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h2 className="text-xl font-semibold mb-2">
-                {error || 'Song not found'}
+                Song not found
               </h2>
               <p className="text-muted-foreground text-sm">
                 The song you're looking for doesn't exist or couldn't be loaded

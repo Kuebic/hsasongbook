@@ -23,21 +23,22 @@ export default defineConfig(({ mode }) => {
         registerType: isDev ? 'prompt' : 'autoUpdate',
         includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
         manifest: pwaManifest,
-        // Add development options
+        // Add development options - disabled to avoid conflicts with Convex WebSocket
         ...(isDev && {
           devOptions: {
-            enabled: true,
-            type: 'module',
-            navigateFallback: 'index.html'
+            enabled: false, // Disable SW in dev - it causes issues with Convex real-time
           }
         }),
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}'],
-          navigateFallback: '/offline.html',
-          // Don't intercept these routes with service worker
-          navigateFallbackDenylist: [
-            /^\/api/,  // API routes
-          ],
+          // Only use navigateFallback in production - in dev it interferes with Convex
+          ...(isDev ? {} : {
+            navigateFallback: '/offline.html',
+            // Don't intercept these routes with service worker
+            navigateFallbackDenylist: [
+              /^\/api/,  // API routes
+            ],
+          }),
           runtimeCaching: [
             // CacheFirst for static assets and fonts
             {

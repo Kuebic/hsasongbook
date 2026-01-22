@@ -1,7 +1,7 @@
 # HSA Songbook - Project Status & MVP Roadmap
 
 **Last Updated**: 2026-01-21
-**Current Phase**: 5 (Cloud Integration with Convex) - In Progress
+**Current Phase**: 5 (Cloud Integration with Convex) - Phase 5.2 Complete
 **Goal**: MVP ASAP - solid skeleton, secure foundation
 
 ---
@@ -16,7 +16,7 @@ HSA Songbook is a Progressive Web App (PWA) for managing worship songs and chord
 - **Styling**: TailwindCSS + shadcn/ui
 - **PWA**: vite-plugin-pwa + Workbox
 - **Editor**: CodeMirror 6 (ChordPro)
-- **Local Storage**: IndexedDB (idb library)
+- **Local Storage**: IndexedDB (for chordproDrafts only)
 
 ---
 
@@ -24,74 +24,58 @@ HSA Songbook is a Progressive Web App (PWA) for managing worship songs and chord
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| **Seed data** | Start fresh (no migration) | Simplifies MVP, can add seed data later |
+| **Seed data** | Convex seed script | Run `npx convex run seed:seedDatabase` to populate |
 | **Anonymous users** | View-only access | Must sign up to create arrangements/setlists |
 | **MVP scope** | Songs + Arrangements | Both are core to the app's value |
 | **Conflict resolution** | Use Convex's built-in OCC | Automatic retries, no custom UI needed |
 | **Offline writes** | Online-only for MVP | Editing requires connection; offline = view only |
 | **Testing** | No extensive testing for MVP | Ship fast, iterate based on real usage |
 | **Timeline** | ASAP | Solid skeleton > feature completeness |
+| **Recently viewed** | Skipped for MVP | Simplifies migration |
 
 ---
 
 ## Current Status Summary
 
-### What's DONE (Phases 1-4.5)
+### What's DONE (Phases 1-5.2)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Offline-first PWA | ✅ Complete | Service workers, caching, IndexedDB |
-| Browse songs/arrangements | ✅ Complete | Mock data with search |
+| Offline-first PWA | ✅ Complete | Service workers, caching |
+| Browse songs/arrangements | ✅ Complete | Now uses Convex real-time data |
 | ChordPro editor | ✅ Complete | CodeMirror, auto-save, split-view |
-| Setlist management | ✅ Complete | Drag-drop, performance mode |
+| Setlist management | ✅ Complete | Drag-drop, performance mode (uses IndexedDB still) |
 | Dark/light theme | ✅ Complete | System detection, persistence |
 | URL slugs | ✅ Complete | SEO-friendly navigation |
 | Navigation UI | ✅ Complete | Desktop header + mobile bottom nav |
 | Keyboard shortcuts | ✅ Complete | Global shortcut system |
-
-### What's IN PROGRESS (Phase 5 - Convex Migration)
-
-| Feature | Status | Notes |
-|---------|--------|-------|
 | Convex backend setup | ✅ Complete | Replaced Supabase |
 | Anonymous auth | ✅ Complete | View-only for anonymous users |
 | Email/password auth | ✅ Complete | No email verification (MVP) |
 | AuthProvider w/ Convex | ✅ Complete | Fetches real user data |
-| **Convex schema (songs, arrangements, setlists)** | ✅ Complete | 3 tables + queries + mutations |
-| **Real-time sync with Convex** | ❌ NOT STARTED | Replace IndexedDB as source of truth |
+| Convex schema | ✅ Complete | songs, arrangements, setlists tables |
+| **Frontend Convex integration** | ✅ Complete | All pages use Convex queries/mutations |
+| **Seed script** | ✅ Complete | `convex/seed.ts` for initial data |
+
+### What's IN PROGRESS (Phase 5.3)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
 | **"Add Song" form** | ❌ NOT STARTED | For authenticated users |
 | **"Add Arrangement" form** | ❌ NOT STARTED | For authenticated users |
 
-### What's PLANNED (Phase 6+)
+### What's PLANNED (Phase 5.4+)
 
+- Auth gating & "Sign in to create" prompts
 - OAuth (Google/Apple Sign-In)
+- Setlist management wired to Convex
 - User profiles & social features
-- Comments & community ratings
-- Magic link authentication
 
 ---
 
 ## Architecture Overview
 
-### Current State (Mixed - needs migration)
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    React Frontend (PWA)                     │
-└─────────────────────────────────────────────────────────────┘
-                              │
-              ┌───────────────┴───────────────┐
-              ▼                               ▼
-┌─────────────────────────┐     ┌─────────────────────────┐
-│      IndexedDB          │     │        Convex           │
-│   (Mock data, drafts)   │     │      (Auth only)        │
-│  ├─ songs (mock)        │     │  └─ users               │
-│  ├─ arrangements (mock) │     │                         │
-│  ├─ setlists            │     │                         │
-│  └─ chordproDrafts      │     │                         │
-└─────────────────────────┘     └─────────────────────────┘
-```
-
-### Target State (MVP)
+### Current State (Phase 5.2 Complete)
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    React Frontend (PWA)                     │
@@ -103,7 +87,7 @@ HSA Songbook is a Progressive Web App (PWA) for managing worship songs and chord
               ▼                               ▼
 ┌─────────────────────────┐     ┌─────────────────────────┐
 │      IndexedDB          │     │     Convex (Primary)    │
-│    (Local cache only)   │     │  ├─ users               │
+│    (Local drafts only)  │     │  ├─ users               │
 │  └─ chordproDrafts      │     │  ├─ songs               │
 │                         │     │  ├─ arrangements        │
 │                         │     │  └─ setlists            │
@@ -201,9 +185,10 @@ setlists: defineTable({
 
 | Module | Queries | Mutations |
 |--------|---------|-----------|
-| `songs` | `list`, `get`, `getBySlug` | `create` |
-| `arrangements` | `get`, `getBySlug`, `getBySong`, `getFeatured`, `getFeaturedWithSongs` | `create`, `update` |
+| `songs` | `list`, `get`, `getBySlug`, `count` | `create` |
+| `arrangements` | `list`, `get`, `getBySlug`, `getBySong`, `count`, `getFeatured`, `getFeaturedWithSongs` | `create`, `update` |
 | `setlists` | `list`, `get`, `getWithArrangements` | `create`, `update`, `remove` |
+| `seed` | - | `seedDatabase`, `clearDatabase` |
 
 ---
 
@@ -215,16 +200,20 @@ setlists: defineTable({
 - [x] Create mutations: `songs.create`, `arrangements.create`, etc.
 - [x] Add proper auth checks (authenticated users only for writes)
 
-### Phase 5.2: Frontend Integration
-- [ ] Replace IndexedDB reads with Convex `useQuery` hooks
-- [ ] Update song/arrangement browse pages to use Convex data
-- [ ] Wire existing components to Convex mutations
-- [ ] Keep IndexedDB only for `chordproDrafts` (editor auto-save)
+### Phase 5.2: Frontend Integration ✅ COMPLETE
+- [x] Replace IndexedDB reads with Convex `useQuery` hooks
+- [x] Update song/arrangement browse pages to use Convex data
+- [x] Wire existing components to Convex mutations
+- [x] Keep IndexedDB only for `chordproDrafts` (editor auto-save)
+- [x] Create Convex seed script for initial data
+- [x] Remove recently viewed feature (skipped for MVP)
 
 ### Phase 5.3: Add Song/Arrangement Forms
 - [ ] Build "Add Song" form (title, artist, themes, lyrics)
 - [ ] Build "Add Arrangement" form (key, tempo, capo, ChordPro content)
-- [ ] Auto-generate URL slugs from title/name
+- [ ] **Implement short random ID slugs for arrangements** (e.g., `xK7nQ3`) - stable URLs that don't break on rename
+- [ ] Migrate existing seed data arrangement slugs to new random ID format
+- [ ] Keep human-readable slugs for songs (generated from title)
 - [ ] Show forms only for authenticated users
 
 ### Phase 5.4: Auth Gating & Polish
@@ -246,19 +235,36 @@ setlists: defineTable({
 | Convex Songs API | `convex/songs.ts` |
 | Convex Arrangements API | `convex/arrangements.ts` |
 | Convex Setlists API | `convex/setlists.ts` |
-| IndexedDB (keep for drafts) | `src/features/pwa/db/database.ts` |
+| **Convex Seed Script** | `convex/seed.ts` |
+| IndexedDB (drafts only) | `src/features/pwa/db/database.ts` |
 | Type Definitions | `src/types/` |
+
+---
+
+## How to Seed the Database
+
+Run the following command to populate the database with initial song and arrangement data:
+
+```bash
+npx convex run seed:seedDatabase
+```
+
+To clear all data (for testing):
+
+```bash
+npx convex run seed:clearDatabase
+```
 
 ---
 
 ## Success Criteria for MVP
 
 ### Must Have
-- [ ] Users can browse songs and arrangements (works for everyone)
+- [x] Users can browse songs and arrangements (works for everyone)
 - [ ] Authenticated users can create songs
 - [ ] Authenticated users can create arrangements for songs
-- [ ] Data persists in Convex (not just local)
-- [ ] Real-time updates across devices
+- [x] Data persists in Convex (not just local)
+- [x] Real-time updates across devices
 - [ ] Anonymous users see "Sign in to create" prompts
 
 ### Nice to Have (Post-MVP)
@@ -267,19 +273,24 @@ setlists: defineTable({
 - [ ] User profile pages
 - [ ] Search improvements
 
+### Technical Debt (Post-MVP)
+- [ ] **N+1 Query in SongList**: Currently fetches all arrangements to count per song. Add `arrangements.countBySong` query for efficiency at scale.
+- [ ] **Type Mapping Duplication**: `mapConvexArrangement`/`mapConvexSong` repeated in multiple files. Extract to shared `convex/mappers.ts`.
+
 ---
 
 ## Open Questions (Resolved)
 
 | Question | Answer |
 |----------|--------|
-| Mock data migration? | ✅ Start fresh |
+| Mock data migration? | ✅ Use Convex seed script |
 | Anonymous user data? | ✅ Anonymous = view only, no data to migrate |
 | Add Song + Arrangement? | ✅ Both needed for MVP |
 | Conflict resolution? | ✅ Convex handles it automatically |
 | Offline writes? | ✅ Online-only for MVP; offline = view cached data |
 | Testing? | ✅ Minimal for MVP |
 | Timeline? | ✅ ASAP, don't sacrifice security |
+| Recently viewed? | ✅ Skipped for MVP |
 
 ---
 
@@ -287,6 +298,9 @@ setlists: defineTable({
 
 | Date | Change |
 |------|--------|
+| 2026-01-21 | **Phase 5.2 complete**: Frontend now uses Convex for all data |
+| 2026-01-21 | Added Convex seed script, removed mock data migration |
+| 2026-01-21 | Removed recently viewed feature (skip for MVP) |
 | 2026-01-21 | Phase 5.1 complete: Convex schema + queries + mutations |
 | 2026-01-21 | Updated with confirmed decisions, simplified architecture |
 | 2026-01-21 | Initial project status document created |

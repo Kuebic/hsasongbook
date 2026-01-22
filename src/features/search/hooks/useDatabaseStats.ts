@@ -1,13 +1,18 @@
 /**
  * useDatabaseStats hook
  *
- * Loads database statistics (song count, arrangement count, setlist count)
- * for the homepage stats widget.
+ * Loads database statistics (song count, arrangement count)
+ * for the homepage stats widget using Convex.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { getDatabaseStats, type DatabaseStats } from '@/features/pwa/db/database';
-import logger from '@/lib/logger';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
+
+export interface DatabaseStats {
+  songs: number;
+  arrangements: number;
+  setlists: number;
+}
 
 export interface UseDatabaseStatsReturn {
   stats: DatabaseStats | null;
@@ -17,49 +22,29 @@ export interface UseDatabaseStatsReturn {
 }
 
 /**
- * Hook for loading database statistics
+ * Hook for loading database statistics from Convex
  *
  * @returns Database stats and reload function
  */
 export function useDatabaseStats(): UseDatabaseStatsReturn {
-  const [stats, setStats] = useState<DatabaseStats | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const songCount = useQuery(api.songs.count);
+  const arrangementCount = useQuery(api.arrangements.count);
 
-  /**
-   * Load database statistics
-   */
-  const loadStats = useCallback(async (): Promise<void> => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getDatabaseStats();
-      setStats(data);
-      logger.debug('Loaded database stats:', data);
-    } catch (err) {
-      logger.error('Failed to load database stats:', err);
-      setError('Failed to load database stats');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Loading state: any query still loading
+  const loading = songCount === undefined || arrangementCount === undefined;
 
-  /**
-   * Reload stats from database
-   */
-  const reload = useCallback((): void => {
-    loadStats();
-  }, [loadStats]);
-
-  // Load stats on mount
-  useEffect(() => {
-    loadStats();
-  }, [loadStats]);
+  const stats: DatabaseStats | null = loading
+    ? null
+    : {
+        songs: songCount ?? 0,
+        arrangements: arrangementCount ?? 0,
+        setlists: 0, // Setlists are private to users, skip count for MVP
+      };
 
   return {
     stats,
     loading,
-    error,
-    reload
+    error: null, // Convex handles errors via ConvexProvider
+    reload: () => {}, // Convex auto-reloads on data changes
   };
 }

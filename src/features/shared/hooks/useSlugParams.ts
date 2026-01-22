@@ -1,25 +1,25 @@
 /**
- * React hook for resolving URL slug parameters to database IDs
+ * React hook for resolving URL slug parameters using Convex
  *
- * Provides automatic slug → ID resolution for song and arrangement routes.
+ * Provides automatic slug → document resolution for song and arrangement routes.
  */
 
-import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { SongRepository, ArrangementRepository } from '@/features/pwa/db/repository';
-import logger from '@/lib/logger';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
+import type { Id } from '../../../../convex/_generated/dataModel';
 
 /**
  * Hook result interface
  */
 interface UseSlugParamsResult {
-  songId: string | null;
-  arrangementId: string | null;
+  songId: Id<'songs'> | null;
+  arrangementId: Id<'arrangements'> | null;
   isLoading: boolean;
 }
 
 /**
- * Hook to resolve song and arrangement slugs from URL params
+ * Hook to resolve song and arrangement slugs from URL params using Convex
  * Works for both /song/:songSlug and /song/:songSlug/:arrangementSlug routes
  *
  * @returns Resolved song ID, arrangement ID, and loading state
@@ -50,51 +50,28 @@ export function useSlugParams(): UseSlugParamsResult {
   const songSlug = params.songSlug;
   const arrangementSlug = params.arrangementSlug;
 
-  const [songId, setSongId] = useState<string | null>(null);
-  const [arrangementId, setArrangementId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Query Convex for song by slug (skip if no slug)
+  const song = useQuery(
+    api.songs.getBySlug,
+    songSlug ? { slug: songSlug } : 'skip'
+  );
 
-  useEffect(() => {
-    const resolveParams = async () => {
-      try {
-        setIsLoading(true);
+  // Query Convex for arrangement by slug (skip if no slug)
+  const arrangement = useQuery(
+    api.arrangements.getBySlug,
+    arrangementSlug ? { slug: arrangementSlug } : 'skip'
+  );
 
-        // Resolve song slug (if present)
-        if (songSlug) {
-          const songRepo = new SongRepository();
-          const song = await songRepo.getBySlug(songSlug);
-          if (song) {
-            setSongId(song.id);
-            logger.debug(`Resolved song slug: ${songSlug} → ${song.id}`);
-          } else {
-            logger.warn(`Song not found: ${songSlug}`);
-            setSongId(null);
-          }
-        }
+  // Determine loading state:
+  // - If songSlug exists, we're loading until song query returns (not undefined)
+  // - If arrangementSlug exists, we're also loading until arrangement query returns
+  const songLoading = songSlug !== undefined && song === undefined;
+  const arrangementLoading = arrangementSlug !== undefined && arrangement === undefined;
+  const isLoading = songLoading || arrangementLoading;
 
-        // Resolve arrangement slug (if present)
-        if (arrangementSlug) {
-          const arrRepo = new ArrangementRepository();
-          const arrangement = await arrRepo.getBySlug(arrangementSlug);
-          if (arrangement) {
-            setArrangementId(arrangement.id);
-            logger.debug(`Resolved arrangement slug: ${arrangementSlug} → ${arrangement.id}`);
-          } else {
-            logger.warn(`Arrangement not found: ${arrangementSlug}`);
-            setArrangementId(null);
-          }
-        }
-      } catch (error) {
-        logger.error('Error resolving slugs:', error);
-        setSongId(null);
-        setArrangementId(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    resolveParams();
-  }, [songSlug, arrangementSlug]);
-
-  return { songId, arrangementId, isLoading };
+  return {
+    songId: song?._id ?? null,
+    arrangementId: arrangement?._id ?? null,
+    isLoading,
+  };
 }
