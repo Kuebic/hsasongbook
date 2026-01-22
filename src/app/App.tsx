@@ -6,7 +6,7 @@ import { SongPage } from '../features/songs'
 import { ArrangementPage } from '../features/arrangements'
 import { SetlistsIndexPage, SetlistPage, SetlistPerformancePage } from '../features/setlists'
 import { SettingsPage } from '../features/settings'
-import { ProfilePage } from '../features/profile'
+import { ProfilePage, UserProfilePage } from '../features/profile'
 import SignInPage from '../features/auth/pages/SignInPage'
 import SignUpPage from '../features/auth/pages/SignUpPage'
 import { NotFound } from '../features/shared/pages/NotFound'
@@ -110,6 +110,7 @@ function AppWithFeatures() {
           <Route path="/setlist/:setlistId" element={<SetlistPage />} />
           <Route path="/setlist/:setlistId/performance/:arrangementIndex?" element={<SetlistPerformancePage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/user/:username" element={<UserProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           {/* Auth routes (Phase 5) */}
           <Route path="/auth/signin" element={<SignInPage />} />

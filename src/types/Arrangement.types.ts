@@ -47,6 +47,26 @@ export interface ArrangementMetadata {
 export type SortOption = 'popular' | 'rating' | 'newest' | 'oldest';
 
 /**
+ * Creator info subset for display purposes
+ * Respects privacy settings via showRealName field
+ */
+export interface CreatorInfo {
+  _id: string;
+  username?: string;
+  displayName?: string;
+  showRealName?: boolean;
+  avatarKey?: string;
+}
+
+/**
+ * Arrangement with embedded creator data
+ * Used when displaying who created an arrangement
+ */
+export interface ArrangementWithCreator extends Arrangement {
+  creator: CreatorInfo | null;
+}
+
+/**
  * Arrangement with embedded song data for display purposes
  *
  * Used in widgets and cards where song context is needed without separate queries.
@@ -64,4 +84,12 @@ export interface ArrangementWithSong extends Arrangement {
     title: string;
     artist: string;
   };
+}
+
+/**
+ * Arrangement with both song and creator data
+ * Used for featured arrangements widget and comprehensive displays
+ */
+export interface ArrangementWithSongAndCreator extends ArrangementWithSong {
+  creator: CreatorInfo | null;
 }

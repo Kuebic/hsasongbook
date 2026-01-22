@@ -11,6 +11,9 @@ export type {
   Arrangement,
   ArrangementMetadata,
   ArrangementWithSong,
+  ArrangementWithCreator,
+  ArrangementWithSongAndCreator,
+  CreatorInfo,
   SortOption,
 } from './Arrangement.types';
 export type { Setlist, SetlistSong } from './Setlist.types';

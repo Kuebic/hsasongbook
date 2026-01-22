@@ -60,6 +60,21 @@ export const getById = query({
 });
 
 /**
+ * Get a user by username
+ * Access: Everyone (for public profile pages)
+ */
+export const getByUsername = query({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    const normalized = args.username.toLowerCase();
+    return await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", normalized))
+      .first();
+  },
+});
+
+/**
  * Get stats for the current user (songs, arrangements, setlists created)
  * Access: Authenticated users only
  */

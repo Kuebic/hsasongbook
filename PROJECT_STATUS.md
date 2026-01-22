@@ -80,20 +80,22 @@ HSA Songbook is a Progressive Web App (PWA) for managing worship songs and chord
   - Created `UserAvatar` component with initials fallback
   - **Note**: Requires R2 bucket setup and env vars (see setup instructions below)
 
-- [ ] **Show creator on arrangements**
-  - Add creator info to arrangement cards on song page
-  - Add creator info to arrangement detail view
-  - Query pattern: join arrangements with users
-  - make sure if in their settings they want their displayname instead, that that is used instead of their username
+- [x] **Show creator on arrangements**
+  - Added `getBySongWithCreators` query to join arrangements with creator data
+  - Updated `ArrangementCard` to display creator name with link to profile
+  - Updated `ArrangementHeader` to display "Arranged by [name]" with link to profile
+  - Respects user's `showRealName` preference (shows displayName or @username)
 
-- [ ] **Basic user profile page**
-  - Route: `/user/:userId` or `/user/:username`
-  - Display: username, join date, arrangement count
-  - List: user's public arrangements
+- [x] **Basic user profile page**
+  - Route: `/user/:username`
+  - Displays: avatar, username/display name, member since date, arrangement count
+  - Lists: user's public arrangements in a grid
+  - Added `getByUsername` query in `convex/users.ts`
+  - Added `getByCreator` query in `convex/arrangements.ts`
 
-- [ ] **Update AuthProvider**
-  - Include displayName in User type
-  - Handle OAuth profile data (name, picture)
+- [x] **Update AuthProvider**
+  - AuthProvider already correctly maps displayName from Convex user data
+  - User type in `User.types.ts` already includes displayName, showRealName, username
 
 #### R2 Setup Instructions
 
@@ -133,12 +135,12 @@ users: defineTable({
 ## Success Criteria for Phase 5.5
 
 ### Must Have (MVP)
-- [ ] Arrangements show creator name
-- [ ] Basic profile page exists
+- [x] Arrangements show creator name
+- [x] Basic profile page exists
 
 ### Nice to Have
 - [x] Profile picture upload
-- [ ] Edit display name
+- [x] Edit display name (available in Settings > Account)
 
 ---
 
@@ -200,6 +202,7 @@ users: defineTable({
 | User Types | `src/types/User.types.ts` |
 | Profile Picture Upload | `src/features/auth/components/ProfilePictureUpload.tsx` |
 | User Avatar Component | `src/components/UserAvatar.tsx` |
+| User Profile Page | `src/features/profile/pages/UserProfilePage.tsx` |
 
 ---
 
@@ -230,6 +233,7 @@ See [POST_MVP_ROADMAP.md](POST_MVP_ROADMAP.md) for:
 
 | Date | Change |
 |------|--------|
+| 2026-01-22 | **Phase 5.5 complete**: Creator display on arrangements, user profile page at `/user/:username` |
 | 2026-01-22 | **R2 file storage integration**: Added Cloudflare R2 for profile pictures via @convex-dev/r2 |
 | 2026-01-22 | **Deferred OAuth to post-MVP**: Moved Google/Apple OAuth details to POST_MVP_ROADMAP.md |
 | 2026-01-22 | **Phase 5.5 planning**: Detailed OAuth + user profile roadmap |

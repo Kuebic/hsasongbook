@@ -1,14 +1,17 @@
+import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Clock, Music, Guitar, Hash } from 'lucide-react'
-import type { Arrangement } from '@/types'
+import { getCreatorDisplayName } from '../../shared/utils/userDisplay'
+import type { Arrangement, CreatorInfo } from '@/types'
 
 interface ArrangementHeaderProps {
   arrangement: Arrangement;
   songTitle: string;
   artist: string;
+  creator?: CreatorInfo | null;
 }
 
-export default function ArrangementHeader({ arrangement, songTitle, artist }: ArrangementHeaderProps) {
+export default function ArrangementHeader({ arrangement, songTitle, artist, creator }: ArrangementHeaderProps) {
   return (
     <div className="space-y-4">
       {/* Title and Artist */}
@@ -19,7 +22,20 @@ export default function ArrangementHeader({ arrangement, songTitle, artist }: Ar
             {' '}– {arrangement.name}
           </span>
         </h1>
-        <p className="text-muted-foreground text-lg mt-1">{artist}</p>
+        <p className="text-muted-foreground text-lg mt-1">
+          {artist}
+          {creator?.username && (
+            <>
+              {' · Arranged by '}
+              <Link
+                to={`/user/${creator.username}`}
+                className="hover:text-foreground hover:underline transition-colors"
+              >
+                {getCreatorDisplayName(creator)}
+              </Link>
+            </>
+          )}
+        </p>
       </div>
 
       {/* Musical Properties */}

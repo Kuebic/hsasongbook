@@ -1,15 +1,16 @@
 import { memo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Music, Clock, Guitar, Hash, PlayCircle } from 'lucide-react'
 import RatingDisplay from '../../shared/components/RatingDisplay'
 import PopularityDisplay from '../../shared/components/PopularityDisplay'
-import type { Arrangement, ArrangementWithSong } from '@/types'
+import { getCreatorDisplayName } from '../../shared/utils/userDisplay'
+import type { ArrangementWithCreator, ArrangementWithSongAndCreator } from '@/types'
 
 interface ArrangementCardProps {
-  arrangement: Arrangement | ArrangementWithSong;
+  arrangement: ArrangementWithCreator | ArrangementWithSongAndCreator;
   songSlug?: string; // Optional - can be inferred from arrangement.song if available
 }
 
@@ -45,6 +46,15 @@ function ArrangementCard({ arrangement, songSlug }: ArrangementCardProps) {
             <span>{arrangement.name}</span>
           )}
         </CardTitle>
+        {arrangement.creator?.username && (
+          <Link
+            to={`/user/${arrangement.creator.username}`}
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors mt-1 inline-block"
+            onClick={(e) => e.stopPropagation()}
+          >
+            by {getCreatorDisplayName(arrangement.creator)}
+          </Link>
+        )}
         <CardDescription className="space-y-1 mt-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Music className="h-3 w-3 opacity-70" />

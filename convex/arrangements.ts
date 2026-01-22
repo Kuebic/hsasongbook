@@ -30,6 +30,39 @@ export const getBySlug = query({
 });
 
 /**
+ * Get arrangement by URL slug WITH creator info
+ * Access: Everyone
+ */
+export const getBySlugWithCreator = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const arrangement = await ctx.db
+      .query("arrangements")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .unique();
+
+    if (!arrangement) return null;
+
+    const creator = arrangement.createdBy
+      ? await ctx.db.get(arrangement.createdBy)
+      : null;
+
+    return {
+      ...arrangement,
+      creator: creator
+        ? {
+            _id: creator._id,
+            username: creator.username,
+            displayName: creator.displayName,
+            showRealName: creator.showRealName,
+            avatarKey: creator.avatarKey,
+          }
+        : null,
+    };
+  },
+});
+
+/**
  * Get all arrangements for a song
  * Access: Everyone
  */
@@ -40,6 +73,71 @@ export const getBySong = query({
       .query("arrangements")
       .withIndex("by_song", (q) => q.eq("songId", args.songId))
       .collect();
+  },
+});
+
+/**
+ * Get all arrangements for a song WITH creator info
+ * Access: Everyone
+ */
+export const getBySongWithCreators = query({
+  args: { songId: v.id("songs") },
+  handler: async (ctx, args) => {
+    const arrangements = await ctx.db
+      .query("arrangements")
+      .withIndex("by_song", (q) => q.eq("songId", args.songId))
+      .collect();
+
+    // Join with user data
+    return Promise.all(
+      arrangements.map(async (arr) => {
+        const creator = arr.createdBy ? await ctx.db.get(arr.createdBy) : null;
+        return {
+          ...arr,
+          creator: creator
+            ? {
+                _id: creator._id,
+                username: creator.username,
+                displayName: creator.displayName,
+                showRealName: creator.showRealName,
+                avatarKey: creator.avatarKey,
+              }
+            : null,
+        };
+      })
+    );
+  },
+});
+
+/**
+ * Get all arrangements by a specific creator
+ * Access: Everyone (for public profile pages)
+ */
+export const getByCreator = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const arrangements = await ctx.db
+      .query("arrangements")
+      .withIndex("by_createdBy", (q) => q.eq("createdBy", args.userId))
+      .collect();
+
+    // Join with song data for display
+    return Promise.all(
+      arrangements.map(async (arr) => {
+        const song = await ctx.db.get(arr.songId);
+        return {
+          ...arr,
+          song: song
+            ? {
+                _id: song._id,
+                slug: song.slug,
+                title: song.title,
+                artist: song.artist,
+              }
+            : null,
+        };
+      })
+    );
   },
 });
 
@@ -92,7 +190,7 @@ export const getFeatured = query({
 });
 
 /**
- * Get featured arrangements WITH song data (joined)
+ * Get featured arrangements WITH song data and creator info (joined)
  * This is what the frontend FeaturedArrangements widget needs
  * Access: Everyone
  */
@@ -113,10 +211,11 @@ export const getFeaturedWithSongs = query({
     scored.sort((a, b) => b.score - a.score);
     const topArrangements = scored.slice(0, limit).map((s) => s.arrangement);
 
-    // Join with songs
+    // Join with songs and creators
     const results = await Promise.all(
       topArrangements.map(async (arr) => {
         const song = await ctx.db.get(arr.songId);
+        const creator = arr.createdBy ? await ctx.db.get(arr.createdBy) : null;
         return {
           ...arr,
           song: song
@@ -125,6 +224,15 @@ export const getFeaturedWithSongs = query({
                 slug: song.slug,
                 title: song.title,
                 artist: song.artist,
+              }
+            : null,
+          creator: creator
+            ? {
+                _id: creator._id,
+                username: creator.username,
+                displayName: creator.displayName,
+                showRealName: creator.showRealName,
+                avatarKey: creator.avatarKey,
               }
             : null,
         };

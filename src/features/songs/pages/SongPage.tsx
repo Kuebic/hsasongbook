@@ -14,7 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Music, Plus } from 'lucide-react';
 import type { Song } from '@/types/Song.types';
-import type { Arrangement } from '@/types/Arrangement.types';
+import type { ArrangementWithCreator } from '@/types/Arrangement.types';
 
 export function SongPage() {
   const { songSlug } = useParams();
@@ -30,9 +30,9 @@ export function SongPage() {
     songSlug ? { slug: songSlug } : 'skip'
   );
 
-  // Get arrangements for this song
+  // Get arrangements for this song (with creator info)
   const convexArrangements = useQuery(
-    api.arrangements.getBySong,
+    api.arrangements.getBySongWithCreators,
     convexSong?._id ? { songId: convexSong._id } : 'skip'
   );
 
@@ -52,8 +52,8 @@ export function SongPage() {
     };
   }, [convexSong]);
 
-  // Map Convex arrangements to frontend Arrangement type
-  const arrangements: Arrangement[] = useMemo(() => {
+  // Map Convex arrangements to frontend Arrangement type (with creator info)
+  const arrangements: ArrangementWithCreator[] = useMemo(() => {
     if (!convexArrangements) return [];
     return convexArrangements.map((arr) => ({
       id: arr._id,
@@ -72,6 +72,7 @@ export function SongPage() {
       updatedAt: arr.updatedAt
         ? new Date(arr.updatedAt).toISOString()
         : new Date(arr._creationTime).toISOString(),
+      creator: arr.creator ?? null,
     }));
   }, [convexArrangements]);
 

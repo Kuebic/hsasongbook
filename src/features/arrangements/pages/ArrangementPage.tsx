@@ -1,5 +1,7 @@
-import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
 import { useArrangementData } from '../hooks/useArrangementData';
 import ChordProViewer from '@/features/chordpro';
 import ArrangementSwitcher from '../components/ArrangementSwitcher';
@@ -18,6 +20,7 @@ import type { ArrangementMetadata } from '@/types/Arrangement.types';
 
 export function ArrangementPage() {
   const navigate = useNavigate();
+  const { arrangementSlug } = useParams();
   const { breadcrumbs } = useNavigation();
   const [showChords] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -31,6 +34,17 @@ export function ArrangementPage() {
     error,
     updateArrangement
   } = useArrangementData();
+
+  // Fetch arrangement with creator info in a single query
+  const arrangementWithCreator = useQuery(
+    api.arrangements.getBySlugWithCreator,
+    arrangementSlug ? { slug: arrangementSlug } : 'skip'
+  );
+
+  // Extract creator from the combined query result
+  const creator = useMemo(() => {
+    return arrangementWithCreator?.creator ?? null;
+  }, [arrangementWithCreator]);
 
   // Auto-enable edit mode when arrangement has no content
   useEffect(() => {
@@ -104,6 +118,7 @@ export function ArrangementPage() {
             arrangement={arrangement}
             songTitle={song.title}
             artist={song.artist}
+            creator={creator}
           />
         </div>
 

@@ -5,10 +5,10 @@ import { sortArrangements, SORT_OPTIONS } from '../utils/arrangementSorter'
 import { Card, CardContent } from '@/components/ui/card'
 import { Music2 } from 'lucide-react'
 import logger from '@/lib/logger'
-import type { Arrangement, SortOption } from '@/types'
+import type { Arrangement, ArrangementWithCreator, SortOption } from '@/types'
 
 interface ArrangementListProps {
-  arrangements: Arrangement[];
+  arrangements: (Arrangement | ArrangementWithCreator)[];
   songSlug: string;
   isLoading?: boolean;
 }
