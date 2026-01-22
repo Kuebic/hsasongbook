@@ -1,5 +1,6 @@
 import { mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { nanoid } from "nanoid";
 
 /**
  * Generate a URL-friendly slug from a string
@@ -598,7 +599,7 @@ export const seedDatabase = mutation({
       }
 
       for (const arr of arrangements) {
-        const slug = generateSlug(`${songTitle}-${arr.name}`);
+        const slug = nanoid(6);
         await ctx.db.insert("arrangements", {
           songId,
           name: arr.name,

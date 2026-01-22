@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import SongList from '../components/SongList';
@@ -7,11 +8,18 @@ import StatsWidget from '../components/StatsWidget';
 import FeaturedArrangementsWidget from '../components/FeaturedArrangementsWidget';
 import { SongListSkeleton } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import AddSongDialog from '@/features/songs/components/AddSongDialog';
+import { Plus } from 'lucide-react';
 import type { Song } from '@/types/Song.types';
 
 export function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [addSongDialogOpen, setAddSongDialogOpen] = useState(false);
+  const { user } = useAuth();
+  const isAuthenticated = user && !user.isAnonymous;
 
   // Load all songs from Convex
   const convexSongs = useQuery(api.songs.list);
@@ -70,7 +78,26 @@ export function SearchPage() {
             <p className="text-muted-foreground">
               Search and discover worship songs
             </p>
+            {/* Add Song button or Sign in prompt */}
+            <div className="mt-4">
+              {isAuthenticated ? (
+                <Button onClick={() => setAddSongDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Song
+                </Button>
+              ) : (
+                <Link
+                  to="/auth/signin"
+                  className="text-sm text-primary hover:underline"
+                >
+                  Sign in to add songs
+                </Link>
+              )}
+            </div>
           </header>
+
+          {/* Add Song Dialog */}
+          <AddSongDialog open={addSongDialogOpen} onOpenChange={setAddSongDialogOpen} />
 
           <div className="mb-8">
             <SearchBar value={searchTerm} onChange={setSearchTerm} />

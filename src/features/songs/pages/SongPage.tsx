@@ -1,5 +1,5 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { useMemo } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import SongMetadata from '../components/SongMetadata';
@@ -8,9 +8,11 @@ import Breadcrumbs from '../../shared/components/Breadcrumbs';
 import { PageSpinner } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
 import { useNavigation } from '../../shared/hooks/useNavigation';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import AddArrangementDialog from '@/features/arrangements/components/AddArrangementDialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Music } from 'lucide-react';
+import { ArrowLeft, Music, Plus } from 'lucide-react';
 import type { Song } from '@/types/Song.types';
 import type { Arrangement } from '@/types/Arrangement.types';
 
@@ -18,6 +20,9 @@ export function SongPage() {
   const { songSlug } = useParams();
   const navigate = useNavigate();
   const { breadcrumbs } = useNavigation();
+  const [addArrangementDialogOpen, setAddArrangementDialogOpen] = useState(false);
+  const { user } = useAuth();
+  const isAuthenticated = user && !user.isAnonymous;
 
   // Get song by slug from Convex
   const convexSong = useQuery(
@@ -121,9 +126,34 @@ export function SongPage() {
 
           {/* Arrangements Section */}
           <div>
-            <h2 className="text-2xl font-semibold mb-4">
-              Available Arrangements ({arrangements.length})
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold">
+                Available Arrangements ({arrangements.length})
+              </h2>
+              {/* Add Arrangement button or Sign in prompt */}
+              {isAuthenticated ? (
+                <Button onClick={() => setAddArrangementDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Arrangement
+                </Button>
+              ) : (
+                <Link
+                  to="/auth/signin"
+                  className="text-sm text-primary hover:underline"
+                >
+                  Sign in to add arrangements
+                </Link>
+              )}
+            </div>
+
+            {/* Add Arrangement Dialog */}
+            <AddArrangementDialog
+              open={addArrangementDialogOpen}
+              onOpenChange={setAddArrangementDialogOpen}
+              songId={song.id}
+              songSlug={song.slug}
+              songTitle={song.title}
+            />
 
             {arrangements.length > 0 ? (
               <ArrangementList
@@ -137,6 +167,16 @@ export function SongPage() {
                   <p className="text-muted-foreground">
                     No arrangements available for this song yet
                   </p>
+                  {isAuthenticated && (
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => setAddArrangementDialogOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create the first arrangement
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             )}

@@ -1,7 +1,7 @@
 # HSA Songbook - Project Status & MVP Roadmap
 
-**Last Updated**: 2026-01-21
-**Current Phase**: 5 (Cloud Integration with Convex) - Phase 5.2 Complete
+**Last Updated**: 2026-01-22
+**Current Phase**: 5 (Cloud Integration with Convex) - Phase 5.3 Complete
 **Goal**: MVP ASAP - solid skeleton, secure foundation
 
 ---
@@ -57,16 +57,17 @@ HSA Songbook is a Progressive Web App (PWA) for managing worship songs and chord
 | **Frontend Convex integration** | ✅ Complete | All pages use Convex queries/mutations |
 | **Seed script** | ✅ Complete | `convex/seed.ts` for initial data |
 
-### What's IN PROGRESS (Phase 5.3)
+### What's DONE (Phase 5.3)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **"Add Song" form** | ❌ NOT STARTED | For authenticated users |
-| **"Add Arrangement" form** | ❌ NOT STARTED | For authenticated users |
+| **"Add Song" form** | ✅ Complete | Modal dialog with title, artist, themes, lyrics |
+| **"Add Arrangement" form** | ✅ Complete | Modal dialog with name, key, capo, tags |
+| **Auth gating** | ✅ Complete | "Sign in to create" prompts for anonymous users |
+| **Random arrangement slugs** | ✅ Complete | 6-char nanoid for stable URLs |
 
 ### What's PLANNED (Phase 5.4+)
 
-- Auth gating & "Sign in to create" prompts
 - OAuth (Google/Apple Sign-In)
 - Setlist management wired to Convex
 - User profiles & social features
@@ -95,10 +96,10 @@ HSA Songbook is a Progressive Web App (PWA) for managing worship songs and chord
 ```
 
 ### Offline Strategy
-- **Viewing**: Service worker caches UI + previously loaded data
-- **Setlists**: Loading a setlist pre-caches all its songs/arrangements for offline use
+- **Viewing**: Service worker caches UI shell; Convex data requires connection
+- **Setlists**: No offline support yet (see Architecture Notes for post-MVP plan)
 - **Creating/Editing**: Requires internet connection (MVP)
-- **Future**: Offline queue for writes (post-MVP if needed)
+- **Future**: "Download for Offline" feature for setlists (post-MVP)
 
 ---
 
@@ -208,18 +209,17 @@ setlists: defineTable({
 - [x] Create Convex seed script for initial data
 - [x] Remove recently viewed feature (skipped for MVP)
 
-### Phase 5.3: Add Song/Arrangement Forms
-- [ ] Build "Add Song" form (title, artist, themes, lyrics)
-- [ ] Build "Add Arrangement" form (key, tempo, capo, ChordPro content)
-- [ ] **Implement short random ID slugs for arrangements** (e.g., `xK7nQ3`) - stable URLs that don't break on rename
-- [ ] Migrate existing seed data arrangement slugs to new random ID format
-- [ ] Keep human-readable slugs for songs (generated from title)
-- [ ] Show forms only for authenticated users
+### Phase 5.3: Add Song/Arrangement Forms ✅ COMPLETE
+- [x] Build "Add Song" form (title, artist, themes, lyrics)
+- [x] Build "Add Arrangement" form (key, tempo, capo, ChordPro content)
+- [x] Implement short random ID slugs for arrangements (6-char nanoid)
+- [x] Human-readable slugs for songs (generated from title)
+- [x] Gate create/edit actions behind auth check
+- [x] Show "Sign in to create" prompts for anonymous users
 
-### Phase 5.4: Auth Gating & Polish
-- [ ] Gate create/edit actions behind auth check
-- [ ] Show "Sign in to create" prompts for anonymous users
-- [ ] Add loading states and error handling
+### Phase 5.4: Polish & Setlists (Next)
+- [ ] Wire setlist management to Convex (currently uses IndexedDB)
+- [ ] Add loading states and error handling improvements
 - [ ] Verify real-time sync works across tabs/devices
 
 ---
@@ -261,17 +261,19 @@ npx convex run seed:clearDatabase
 
 ### Must Have
 - [x] Users can browse songs and arrangements (works for everyone)
-- [ ] Authenticated users can create songs
-- [ ] Authenticated users can create arrangements for songs
+- [x] Authenticated users can create songs
+- [x] Authenticated users can create arrangements for songs
 - [x] Data persists in Convex (not just local)
 - [x] Real-time updates across devices
-- [ ] Anonymous users see "Sign in to create" prompts
+- [x] Anonymous users see "Sign in to create" prompts
 
 ### Nice to Have (Post-MVP)
+- [ ] **Offline setlist caching** - "Download for Offline" feature for performance mode (see Architecture Notes below)
 - [ ] Setlist management wired to Convex
 - [ ] Ratings/favorites on arrangements
 - [ ] User profile pages
 - [ ] Search improvements
+- [ ] Tag chips with autocomplete for themes/tags input (currently comma-separated text)
 
 ### Technical Debt (Post-MVP)
 - [ ] **N+1 Query in SongList**: Currently fetches all arrangements to count per song. Add `arrangements.countBySong` query for efficiency at scale.
@@ -294,10 +296,50 @@ npx convex run seed:clearDatabase
 
 ---
 
+## Architecture Notes (Post-MVP)
+
+### Offline Performance Mode
+
+**Problem**: Convex uses WebSockets for real-time data. Service workers cache the UI shell, but Convex queries return nothing when offline. This is fine for general browsing (annoying but acceptable), but **unacceptable for mid-performance** when going through a setlist.
+
+**Current state**:
+- ✅ `useOnlineStatus` hook with connectivity detection
+- ✅ `OfflineIndicator` component for UI feedback
+- ✅ Service worker caches UI shell
+- ❌ No explicit "save setlist for offline" mechanism
+
+**Proposed solution**: Explicit "Download for Offline" feature
+1. Add "Save for Offline" button on setlist detail page
+2. Fetch full setlist data via `getWithArrangements` query
+3. Store snapshot in IndexedDB (new table: `offlineSetlists`)
+4. Performance mode reads from IndexedDB when offline, Convex when online
+5. Show "Available Offline" badge on downloaded setlists
+6. Optional: background refresh when online to keep cache fresh
+
+**Key rules**:
+- Convex remains source of truth (IndexedDB is read-only cache)
+- No offline editing (avoids sync conflicts)
+- Clear staleness indicator if cached data is old
+
+**Why not automatic caching?**
+- Explicit download is simpler to implement and reason about
+- User knows what's available offline
+- Avoids filling device storage unexpectedly
+
+**Existing infrastructure to reuse**:
+- `src/features/pwa/db/database.ts` - IndexedDB setup (currently for drafts)
+- `src/features/pwa/hooks/useOnlineStatus.ts` - Connection detection
+- `convex/setlists.ts:getWithArrangements` - Fetches full setlist data
+
+---
+
 ## Document History
 
 | Date | Change |
 |------|--------|
+| 2026-01-22 | Added Architecture Notes section for offline performance mode design |
+| 2026-01-22 | Added CLAUDE.md for AI assistant context |
+| 2026-01-21 | **Phase 5.3 complete**: Add Song/Arrangement forms with auth gating |
 | 2026-01-21 | **Phase 5.2 complete**: Frontend now uses Convex for all data |
 | 2026-01-21 | Added Convex seed script, removed mock data migration |
 | 2026-01-21 | Removed recently viewed feature (skip for MVP) |
