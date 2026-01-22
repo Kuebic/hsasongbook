@@ -11,6 +11,22 @@ This document contains future features and improvements planned after MVP comple
 | Issue | Description |
 |-------|-------------|
 | **Fullscreen exit broken** | ESC exits browser fullscreen but not editor fullscreen mode; must click unfullscreen icon |
+| **Sign-in UI stuck on "Authenticating..."** | Fixed with `location.reload()` workaround. See [Known Issue](#convex-auth-sign-in-state-race-condition) below. |
+
+### Convex Auth Sign-in State Race Condition
+
+**Problem**: After successful sign-in, the sign-in form stays on "Authenticating..." and requires manual page refresh.
+
+**Root Cause**: Known timing issue with Convex Auth where there's a delay between `signIn()` resolving and `useConvexAuth()` updating `isAuthenticated`. The client-side auth state machine sometimes fails to transition properly after the token handshake.
+
+**References**:
+- [Convex Auth React API](https://labs.convex.dev/auth/api_reference/react) - Documents the delay between signIn and auth state update
+- [GitHub Issue #259](https://github.com/get-convex/convex-backend/issues/259) - Stuck in permanent unauthenticated state
+- [GitHub Issue #92](https://github.com/get-convex/convex-auth/issues/92) - Not auto redirect after auth actions
+
+**Workaround Applied**: Call `location.reload()` after successful sign-in/sign-up. This is the community-recommended solution until Convex fixes the underlying state machine issue.
+
+**Ideal Fix** (when Convex resolves): Remove `location.reload()` and rely on reactive state updates from `useConvexAuth()` and `useQuery(api.users.currentUser)`.
 
 ---
 
