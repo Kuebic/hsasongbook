@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ListMusic, Calendar, Music2 } from 'lucide-react';
+import { formatSetlistDate } from '../../shared/utils/dateFormatter';
 import type { Setlist } from '@/types';
 
 interface SetlistCardProps {
@@ -21,19 +22,6 @@ function SetlistCard({ setlist }: SetlistCardProps) {
 
   const handleViewSetlist = (): void => {
     navigate(`/setlist/${setlist.id}`);
-  };
-
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return 'No date set';
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-    } catch {
-      return 'Invalid date';
-    }
   };
 
   const songCount = setlist.songs?.length || 0;
@@ -57,7 +45,7 @@ function SetlistCard({ setlist }: SetlistCardProps) {
           {setlist.performanceDate && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="h-4 w-4 opacity-70" />
-              <span className="text-sm">{formatDate(setlist.performanceDate)}</span>
+              <span className="text-sm">{formatSetlistDate(setlist.performanceDate)}</span>
             </div>
           )}
 
@@ -71,7 +59,7 @@ function SetlistCard({ setlist }: SetlistCardProps) {
 
           {/* Last updated */}
           <div className="text-xs text-muted-foreground">
-            Updated {formatDate(setlist.updatedAt)}
+            Updated {formatSetlistDate(setlist.updatedAt)}
           </div>
         </div>
 

@@ -27,6 +27,7 @@ import { PageSpinner } from '../../shared/components/LoadingStates';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
 import ArrangementCard from '@/features/arrangements/components/ArrangementCard';
 import UserAvatar from '@/components/UserAvatar';
+import { formatTimestamp } from '../../shared/utils/dateFormatter';
 import { ArrowLeft, User, Music } from 'lucide-react';
 import type { ArrangementWithSongAndCreator } from '@/types/Arrangement.types';
 
@@ -99,15 +100,6 @@ export function UserProfilePage() {
     return 'Unknown User';
   };
 
-  const formatDate = (timestamp?: number) => {
-    if (!timestamp) return 'Unknown';
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
   // Loading state
   const isLoading = username !== undefined && userData === undefined;
   if (isLoading) {
@@ -170,7 +162,7 @@ export function UserProfilePage() {
               )}
 
               <CardDescription className="text-base mb-4">
-                Member since {formatDate(userData._creationTime)}
+                Member since {formatTimestamp(userData._creationTime)}
               </CardDescription>
 
               {/* Stats */}

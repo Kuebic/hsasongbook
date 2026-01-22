@@ -28,6 +28,7 @@ import ProfilePictureUpload from '@/features/auth/components/ProfilePictureUploa
 import { api } from '../../../../convex/_generated/api';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import { useDebounce } from '@/hooks/useDebounce';
+import { formatDateString } from '../../shared/utils/dateFormatter';
 
 export default function AccountSection() {
   const { user } = useAuthState();
@@ -79,15 +80,6 @@ export default function AccountSection() {
     } finally {
       setIsSigningOut(false);
     }
-  };
-
-  const formatDate = (dateString?: string | null) => {
-    if (!dateString) return 'Unknown';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
   };
 
   // Display name editing
@@ -402,7 +394,7 @@ export default function AccountSection() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Member since:</span>
                   <span className="font-medium">
-                    {formatDate(user?.createdAt)}
+                    {formatDateString(user?.createdAt)}
                   </span>
                 </div>
               </div>

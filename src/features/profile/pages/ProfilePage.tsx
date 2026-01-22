@@ -28,6 +28,7 @@ import { Settings } from 'lucide-react';
 import { useAuthState } from '@/features/auth/hooks/useAuth';
 import SignInModal from '@/features/auth/components/SignInModal';
 import UserAvatar from '@/components/UserAvatar';
+import { formatDateString } from '../../shared/utils/dateFormatter';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import { useState } from 'react';
 
@@ -41,15 +42,6 @@ export function ProfilePage() {
   ];
 
   const isAnonymous = user?.isAnonymous ?? true;
-
-  const formatDate = (dateString?: string | null) => {
-    if (!dateString) return 'Unknown';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
 
   // Get display name based on user preferences
   const getDisplayedName = () => {
@@ -163,7 +155,7 @@ export function ProfilePage() {
                   )}
 
                   <CardDescription className="text-base mb-6">
-                    Member since {formatDate(user?.createdAt)}
+                    Member since {formatDateString(user?.createdAt)}
                   </CardDescription>
 
                   {/* Edit Profile link */}
