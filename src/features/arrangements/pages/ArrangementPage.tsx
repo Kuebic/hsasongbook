@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useArrangementData } from '../hooks/useArrangementData';
 import ChordProViewer from '@/features/chordpro';
 import ArrangementSwitcher from '../components/ArrangementSwitcher';
@@ -31,6 +31,13 @@ export function ArrangementPage() {
     error,
     updateArrangement
   } = useArrangementData();
+
+  // Auto-enable edit mode when arrangement has no content
+  useEffect(() => {
+    if (arrangement && !arrangement.chordProContent) {
+      setIsEditMode(true);
+    }
+  }, [arrangement]);
 
   // Loading state
   if (loading) {

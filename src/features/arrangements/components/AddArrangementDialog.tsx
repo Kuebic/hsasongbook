@@ -20,6 +20,7 @@ interface AddArrangementDialogProps {
   songId: string;
   songSlug: string;
   songTitle: string;
+  songLyrics?: string;
 }
 
 /**
@@ -43,6 +44,7 @@ export default function AddArrangementDialog({
   songId,
   songSlug,
   songTitle,
+  songLyrics,
 }: AddArrangementDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -57,6 +59,7 @@ export default function AddArrangementDialog({
         <AddArrangementForm
           songId={songId}
           songSlug={songSlug}
+          songLyrics={songLyrics}
           onSuccess={() => onOpenChange(false)}
           onCancel={() => onOpenChange(false)}
         />

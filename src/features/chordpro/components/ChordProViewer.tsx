@@ -187,14 +187,25 @@ export default function ChordProViewer({
     className
   )
 
-  // Empty content state
-  if (!content) {
+  // Empty content state - show option to add chord chart if editable
+  // But don't return early if we're in edit mode - we need to show the editor
+  if (!content && !isEditMode) {
     return (
       <Card className={containerClasses}>
         <CardContent className="py-8 text-center">
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             No chord chart available for this arrangement
           </p>
+          {editable && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleEditModeToggle}
+            >
+              <Edit3 className="h-4 w-4 mr-2" />
+              Add Chord Chart
+            </Button>
+          )}
         </CardContent>
       </Card>
     )

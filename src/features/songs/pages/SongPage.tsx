@@ -153,6 +153,7 @@ export function SongPage() {
               songId={song.id}
               songSlug={song.slug}
               songTitle={song.title}
+              songLyrics={convexSong?.lyrics}
             />
 
             {arrangements.length > 0 ? (

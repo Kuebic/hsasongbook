@@ -29,6 +29,7 @@ import type { Id } from '../../../../convex/_generated/dataModel';
 interface AddArrangementFormProps {
   songId: string;
   songSlug: string;
+  songLyrics?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -49,6 +50,7 @@ interface AddArrangementFormProps {
 export default function AddArrangementForm({
   songId,
   songSlug,
+  songLyrics,
   onSuccess,
   onCancel,
 }: AddArrangementFormProps) {
@@ -89,6 +91,9 @@ export default function AddArrangementForm({
       // Generate random 6-char slug for arrangements
       const slug = nanoid(6);
 
+      // Generate initial ChordPro content from song lyrics if available
+      const initialChordProContent = songLyrics ? songLyrics.trim() : '';
+
       // Create arrangement via Convex mutation
       await createArrangement({
         songId: songId as Id<'songs'>,
@@ -96,7 +101,7 @@ export default function AddArrangementForm({
         key: data.key || undefined,
         capo: data.capo,
         timeSignature: '4/4', // Default
-        chordProContent: '', // Empty - user will edit in arrangement page
+        chordProContent: initialChordProContent,
         slug,
         tags,
       });
