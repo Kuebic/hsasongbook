@@ -5,8 +5,7 @@
  * Provides transposition controls and key detection
  */
 
-import { useState, useMemo, useCallback } from 'react'
-import ChordSheetJS from 'chordsheetjs'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import type { Song as ChordSheetSong } from 'chordsheetjs'
 import logger from '@/lib/logger'
 import type { UseTranspositionReturn } from '../types'
@@ -51,7 +50,13 @@ export function useTransposition(
 ): UseTranspositionReturn {
   // State management
   const [transpositionOffset, setTranspositionOffset] = useState<number>(0)
-  const [preferFlats, setPreferFlats] = useState<boolean>(false)
+  // Initialize preferFlats based on whether the original key contains a flat
+  const [preferFlats, setPreferFlats] = useState<boolean>(originalKey.includes('b'))
+
+  // Sync preferFlats when originalKey changes (e.g., navigating to different arrangement)
+  useEffect(() => {
+    setPreferFlats(originalKey.includes('b'))
+  }, [originalKey])
 
   // Calculate current key based on offset
   const currentKey = useMemo(() => {
@@ -64,85 +69,26 @@ export function useTransposition(
       return parsedSong
     }
 
-    // If no transposition and using sharps (default), return original
-    if (transpositionOffset === 0 && !preferFlats) {
-      return parsedSong
-    }
-
     try {
-      // Apply transposition first if needed
+      // Start with the original song
       let processedSong = parsedSong
+
+      // Apply transposition if needed
       if (transpositionOffset !== 0) {
-        processedSong = parsedSong.transpose(transpositionOffset)
+        processedSong = processedSong.transpose(transpositionOffset)
       }
 
-      // If we're using sharps and no enharmonic change needed, return
-      if (!preferFlats) {
-        return processedSong
-      }
+      // Apply enharmonic preference (flats vs sharps) using ChordSheetJS built-in method
+      // This converts all chords to use the preferred modifier (e.g., Bb vs A#)
+      const modifier = preferFlats ? 'b' : '#'
+      processedSong = processedSong.useModifier(modifier)
 
-      // Apply enharmonic preference by rebuilding with modified chords
-      // This is necessary because Song objects are immutable
-      const chordProLines = []
-
-      // Preserve metadata
-      if (processedSong.title) chordProLines.push(`{title: ${processedSong.title}}`)
-      if (processedSong.artist) chordProLines.push(`{artist: ${processedSong.artist}}`)
-      if (currentKey || processedSong.key) chordProLines.push(`{key: ${currentKey || processedSong.key}}`)
-      if (processedSong.tempo) chordProLines.push(`{tempo: ${processedSong.tempo}}`)
-
-      // Process lines with enharmonic conversion, preserving all content types
-      processedSong.lines.forEach(line => {
-        let lineText = ''
-        let lineHasDirective = false
-
-        line.items.forEach(item => {
-          if (item instanceof ChordSheetJS.ChordLyricsPair) {
-            // Handle chord/lyrics pairs
-            if (item.chords) {
-              try {
-                const chord = ChordSheetJS.Chord.parse(item.chords)
-                const modifiedChord = chord.useModifier(preferFlats ? 'b' : '#')
-                lineText += `[${modifiedChord}]`
-              } catch {
-                lineText += `[${item.chords}]`
-              }
-            }
-            if (item.lyrics) lineText += item.lyrics
-          } else if (item instanceof ChordSheetJS.Comment) {
-            // Preserve comments
-            chordProLines.push(`{comment: ${item.content}}`)
-            lineHasDirective = true
-          } else if (item instanceof ChordSheetJS.Tag) {
-            // Preserve tags (section markers, etc.)
-            if (item.value) {
-              chordProLines.push(`{${item.name}: ${item.value}}`)
-            } else {
-              chordProLines.push(`{${item.name}}`)
-            }
-            lineHasDirective = true
-          } else if (item.content) {
-            // Handle any other content types
-            lineText += item.content
-          }
-        })
-
-        // Only push lineText if it has content OR if no directive was pushed
-        // This prevents duplicate empty lines after tags/comments
-        if (!lineHasDirective || lineText) {
-          chordProLines.push(lineText)
-        }
-      })
-
-      // Re-parse to get proper Song object
-      const parser = new ChordSheetJS.ChordProParser()
-      return parser.parse(chordProLines.join('\n'))
-
+      return processedSong
     } catch (error) {
       logger.error('Chord processing failed:', error)
       return parsedSong
     }
-  }, [parsedSong, transpositionOffset, preferFlats, currentKey])
+  }, [parsedSong, transpositionOffset, preferFlats])
 
   // Control functions
   const transposeBy = useCallback((semitones) => {
