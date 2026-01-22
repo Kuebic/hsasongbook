@@ -84,6 +84,7 @@ HSA Songbook is a Progressive Web App (PWA) for managing worship songs and chord
   - Add creator info to arrangement cards on song page
   - Add creator info to arrangement detail view
   - Query pattern: join arrangements with users
+  - make sure if in their settings they want their displayname instead, that that is used instead of their username
 
 - [ ] **Basic user profile page**
   - Route: `/user/:userId` or `/user/:username`
