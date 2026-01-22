@@ -76,6 +76,7 @@ interface KeySelectorProps {
   size?: 'default' | 'sm' | 'lg' | 'icon';
   originalKey?: string | null;
   includeMinorKeys?: boolean;
+  id?: string;
 }
 
 export default function KeySelector({

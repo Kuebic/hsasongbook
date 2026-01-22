@@ -18,7 +18,8 @@ export const addArrangementSchema = z.object({
     .max(200, 'Name must be less than 200 characters'),
   key: z.string().optional().or(z.literal('')),
   capo: z.number().min(0).max(12).optional(),
-  tags: z.array(z.string()).default([]),
+  tags: z.array(z.string()).optional(),
 });
 
-export type AddArrangementFormData = z.infer<typeof addArrangementSchema>;
+// Use z.input for form data type (what the form handles before validation)
+export type AddArrangementFormData = z.input<typeof addArrangementSchema>;

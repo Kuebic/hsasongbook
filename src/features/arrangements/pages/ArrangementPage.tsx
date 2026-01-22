@@ -155,7 +155,6 @@ export function ArrangementPage() {
             editable={true}
             editMode={isEditMode}
             onEditModeChange={setIsEditMode}
-            arrangementId={arrangement.id}
             arrangementMetadata={{
               key: arrangement.key,
               tempo: arrangement.tempo,
