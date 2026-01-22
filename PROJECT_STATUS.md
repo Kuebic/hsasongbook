@@ -277,9 +277,7 @@ npx convex run seed:clearDatabase
 
 | Issue | Description |
 |-------|-------------|
-| **Bb/A# key mismatch** | Selecting Bb as arrangement key displays as A# instead |
 | **Fullscreen exit broken** | ESC exits browser fullscreen but not editor fullscreen mode; must click unfullscreen icon |
-| **Dark mode in editor** | Chord typing area doesn't respect dark mode theme |
 
 #### 🔐 Permissions & Ownership
 
