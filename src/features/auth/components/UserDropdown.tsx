@@ -28,6 +28,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuthState, useAuthActions } from '../hooks/useAuth';
 import SignInModal from './SignInModal';
+import UserAvatar from '@/components/UserAvatar';
+import type { Id } from '../../../../convex/_generated/dataModel';
 
 /**
  * UserDropdown - User profile dropdown menu
@@ -65,8 +67,13 @@ export default function UserDropdown() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <User className="h-5 w-5" />
+          <Button variant="ghost" size="icon" className="rounded-full p-0">
+            <UserAvatar
+              userId={user?.id ? (user.id as Id<"users">) : undefined}
+              displayName={user?.displayName}
+              email={user?.email}
+              size="md"
+            />
             <span className="sr-only">User menu</span>
           </Button>
         </DropdownMenuTrigger>

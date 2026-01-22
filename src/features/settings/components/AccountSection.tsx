@@ -6,11 +6,15 @@
  */
 
 import { useState } from 'react';
+import { useQuery } from 'convex/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { useAuthState, useAuthActions } from '@/features/auth/hooks/useAuth';
 import SignInModal from '@/features/auth/components/SignInModal';
+import ProfilePictureUpload from '@/features/auth/components/ProfilePictureUpload';
+import { api } from '../../../../convex/_generated/api';
+import type { Id } from '../../../../convex/_generated/dataModel';
 
 /**
  * Account Settings Section
@@ -34,6 +38,12 @@ export default function AccountSection() {
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const isAnonymous = user?.isAnonymous ?? true;
+
+  // Fetch avatar URL for authenticated users
+  const avatarUrl = useQuery(
+    api.files.getAvatarUrl,
+    !isAnonymous && user?.id ? { userId: user.id as Id<"users"> } : "skip"
+  );
 
   const handleSignOut = async () => {
     try {
@@ -73,7 +83,13 @@ export default function AccountSection() {
           ) : (
             // Authenticated user view
             <>
-              <div className="space-y-2 text-sm">
+              {/* Profile Picture */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Profile Picture</h4>
+                <ProfilePictureUpload currentAvatarUrl={avatarUrl} />
+              </div>
+
+              <div className="border-t pt-4 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Email:</span>
                   <span className="font-medium">{user?.email}</span>

@@ -31,7 +31,6 @@ import { Switch } from '@/components/ui/switch';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
 import {
-  User,
   Settings,
   LogOut,
   Pencil,
@@ -42,7 +41,9 @@ import {
 } from 'lucide-react';
 import { useAuthState, useAuthActions } from '@/features/auth/hooks/useAuth';
 import SignInModal from '@/features/auth/components/SignInModal';
+import UserAvatar from '@/components/UserAvatar';
 import { api } from '../../../../convex/_generated/api';
+import type { Id } from '../../../../convex/_generated/dataModel';
 import { useDebounce } from '@/hooks/useDebounce';
 
 export function ProfilePage() {
@@ -251,8 +252,13 @@ export function ProfilePage() {
           {/* Profile Card */}
           <Card className="mb-6">
             <CardContent className="flex flex-col items-center py-12 text-center">
-              <div className="rounded-full bg-muted p-6 mb-6">
-                <User className="h-16 w-16 text-muted-foreground" />
+              <div className="mb-6">
+                <UserAvatar
+                  userId={user?.id ? (user.id as Id<"users">) : undefined}
+                  displayName={user?.displayName}
+                  email={user?.email}
+                  size="xl"
+                />
               </div>
 
               {isAnonymous ? (
