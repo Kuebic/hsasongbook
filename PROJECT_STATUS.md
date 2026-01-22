@@ -1,7 +1,7 @@
 # HSA Songbook - Project Status & MVP Roadmap
 
 **Last Updated**: 2026-01-22
-**Current Phase**: 5 (Cloud Integration with Convex) - Phase 5.3 Complete
+**Current Phase**: 5 (Cloud Integration with Convex) - Phase 5.4 Complete
 **Goal**: MVP ASAP - solid skeleton, secure foundation
 
 ---
@@ -217,10 +217,14 @@ setlists: defineTable({
 - [x] Gate create/edit actions behind auth check
 - [x] Show "Sign in to create" prompts for anonymous users
 
-### Phase 5.4: Polish & Setlists (Next)
-- [ ] Wire setlist management to Convex (currently uses IndexedDB)
-- [ ] Add loading states and error handling improvements
-- [ ] Verify real-time sync works across tabs/devices
+### Phase 5.4: Setlists & Polish ✅ COMPLETE
+- [x] Wire setlist management to Convex (replaced IndexedDB)
+- [x] Add auth gating for setlist pages
+- [x] Real-time sync works across tabs/devices (Convex built-in)
+
+### Phase 5.5: OAuth & Additional Features (Next)
+- [ ] OAuth (Google/Apple Sign-In)
+- [ ] User profiles & social features
 
 ---
 
@@ -269,7 +273,8 @@ npx convex run seed:clearDatabase
 
 ### Nice to Have (Post-MVP)
 - [ ] **Offline setlist caching** - "Download for Offline" feature for performance mode (see Architecture Notes below)
-- [ ] Setlist management wired to Convex
+- [ ] **Custom key overrides per song in setlist** - Allow overriding arrangement key for specific setlist entries
+- [ ] **Notes per song in setlist** - Add notes field to setlist song entries
 - [ ] Ratings/favorites on arrangements
 - [ ] User profile pages
 - [ ] Search improvements
@@ -292,6 +297,10 @@ npx convex run seed:clearDatabase
 ### Technical Debt (Post-MVP)
 - [ ] **N+1 Query in SongList**: Currently fetches all arrangements to count per song. Add `arrangements.countBySong` query for efficiency at scale.
 - [ ] **Type Mapping Duplication**: `mapConvexArrangement`/`mapConvexSong` repeated in multiple files. Extract to shared `convex/mappers.ts`.
+- [ ] **Type casting for Convex IDs**: Code uses `as Id<'setlists'>` casts in many places. Consider typing IDs upstream to avoid casting.
+- [ ] **Remove no-op `reload()` function**: `useSetlistData` and `useSetlists` expose `reload()` that does nothing (Convex auto-syncs). Remove or document as deprecated.
+- [ ] **`updateSongKey` is stubbed**: Function exists in `useSetlistSongs` but logs warning. Either remove from interface or throw error for clarity.
+- [ ] **`useSongSearch` loads all songs**: Filters client-side. At scale, add server-side search query.
 - [ ] selecting keys in arrangement - I get why there's common keys and all keys. Currently all keys gets cut off. Also, maybe it should be the uncommon keys, like instead of Db, there's C#, A# instead of Bb, etc.
 Or have a custom way of arranging the keys so all sharps and flats of each note is accessible like in Planning Center Services app
 
@@ -353,6 +362,7 @@ Or have a custom way of arranging the keys so all sharps and flats of each note 
 
 | Date | Change |
 |------|--------|
+| 2026-01-22 | **Phase 5.4 complete**: Setlist management migrated to Convex with auth gating |
 | 2026-01-22 | Added Architecture Notes section for offline performance mode design |
 | 2026-01-22 | Added CLAUDE.md for AI assistant context |
 | 2026-01-21 | **Phase 5.3 complete**: Add Song/Arrangement forms with auth gating |

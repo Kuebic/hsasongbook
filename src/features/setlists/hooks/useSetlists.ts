@@ -1,22 +1,62 @@
 /**
  * useSetlists hook
  *
- * Manages all setlists with CRUD operations.
+ * Manages all setlists with CRUD operations using Convex.
  * Pattern: src/features/arrangements/hooks/useArrangementData.ts
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { SetlistRepository } from '@/features/pwa/db/repository';
-import type { Setlist } from '@/types';
+import { useMemo, useCallback } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
+import type { Id } from '../../../../convex/_generated/dataModel';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import type { Setlist, SetlistSong } from '@/types';
+import type { SetlistFormData } from '../types';
 import logger from '@/lib/logger';
 
 export interface UseSetlistsReturn {
   setlists: Setlist[];
   loading: boolean;
   error: string | null;
-  createSetlist: (data: Partial<Setlist>) => Promise<Setlist>;
+  createSetlist: (data: SetlistFormData) => Promise<Setlist>;
   deleteSetlist: (id: string) => Promise<void>;
   reload: () => void;
+  isAuthenticated: boolean;
+}
+
+/**
+ * Map Convex setlist to frontend Setlist type
+ */
+function mapConvexSetlist(convexSetlist: {
+  _id: Id<'setlists'>;
+  _creationTime: number;
+  name: string;
+  description?: string;
+  performanceDate?: string;
+  arrangementIds: Id<'arrangements'>[];
+  userId: Id<'users'>;
+  updatedAt?: number;
+}): Setlist {
+  // Map arrangementIds to SetlistSong array
+  const songs: SetlistSong[] = convexSetlist.arrangementIds.map((arrId, index) => ({
+    id: `setlist-song-${index}`,
+    songId: '', // Will be populated when loading full setlist data
+    arrangementId: arrId,
+    order: index,
+  }));
+
+  return {
+    id: convexSetlist._id,
+    name: convexSetlist.name,
+    description: convexSetlist.description,
+    performanceDate: convexSetlist.performanceDate,
+    songs,
+    createdAt: new Date(convexSetlist._creationTime).toISOString(),
+    updatedAt: convexSetlist.updatedAt
+      ? new Date(convexSetlist.updatedAt).toISOString()
+      : new Date(convexSetlist._creationTime).toISOString(),
+    userId: convexSetlist.userId,
+  };
 }
 
 /**
@@ -25,75 +65,86 @@ export interface UseSetlistsReturn {
  * @returns Setlists data and CRUD operations
  */
 export function useSetlists(): UseSetlistsReturn {
-  const [setlists, setSetlists] = useState<Setlist[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const isAuthenticated = !!(user && !user.isAnonymous);
 
-  // Memoize repository to prevent re-instantiation
-  const repo = useMemo(() => new SetlistRepository(), []);
+  // Skip query for anonymous users (setlists are private)
+  const convexSetlists = useQuery(
+    api.setlists.list,
+    isAuthenticated ? {} : 'skip'
+  );
 
-  /**
-   * Load all setlists from IndexedDB
-   */
-  const loadSetlists = useCallback(async (): Promise<void> => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await repo.getAll();
-      setSetlists(data);
-      logger.debug('Loaded setlists:', data.length);
-    } catch (err) {
-      logger.error('Failed to load setlists:', err);
-      setError('Failed to load setlists');
-    } finally {
-      setLoading(false);
-    }
-  }, [repo]);
+  const createMutation = useMutation(api.setlists.create);
+  const deleteMutation = useMutation(api.setlists.remove);
+
+  // Loading state: authenticated but query hasn't resolved yet
+  const loading = isAuthenticated && convexSetlists === undefined;
+
+  // Map Convex setlists to frontend type
+  const setlists: Setlist[] = useMemo(() => {
+    if (!convexSetlists) return [];
+    return convexSetlists.map(mapConvexSetlist);
+  }, [convexSetlists]);
 
   /**
    * Create a new setlist
    */
-  const createSetlist = useCallback(async (data: Partial<Setlist>): Promise<Setlist> => {
-    const now = new Date().toISOString();
-    const newSetlist = await repo.save({
-      ...data,
-      songs: data.songs || [],
-      createdAt: now,
-      updatedAt: now
-    } as Setlist);
+  const createSetlist = useCallback(async (data: SetlistFormData): Promise<Setlist> => {
+    if (!isAuthenticated) {
+      throw new Error('Must be signed in to create setlists');
+    }
 
-    setSetlists(prev => [...prev, newSetlist]);
-    logger.info('Created setlist:', newSetlist.name);
-    return newSetlist;
-  }, [repo]);
+    logger.debug('Creating setlist:', data.name);
+
+    const setlistId = await createMutation({
+      name: data.name,
+      description: data.description || undefined,
+      performanceDate: data.performanceDate || undefined,
+      arrangementIds: [],
+    });
+
+    logger.info('Created setlist:', data.name);
+
+    // Return optimistic setlist object
+    const now = new Date().toISOString();
+    return {
+      id: setlistId,
+      name: data.name,
+      description: data.description,
+      performanceDate: data.performanceDate,
+      songs: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+  }, [createMutation, isAuthenticated]);
 
   /**
    * Delete a setlist by ID
    */
   const deleteSetlist = useCallback(async (id: string): Promise<void> => {
-    await repo.delete(id);
-    setSetlists(prev => prev.filter(s => s.id !== id));
+    if (!isAuthenticated) {
+      throw new Error('Must be signed in to delete setlists');
+    }
+
+    logger.debug('Deleting setlist:', id);
+    await deleteMutation({ id: id as Id<'setlists'> });
     logger.info('Deleted setlist:', id);
-  }, [repo]);
+  }, [deleteMutation, isAuthenticated]);
 
   /**
-   * Reload setlists from database
+   * Reload is a no-op for Convex (data updates automatically)
    */
   const reload = useCallback((): void => {
-    loadSetlists();
-  }, [loadSetlists]);
-
-  // Load setlists on mount
-  useEffect(() => {
-    loadSetlists();
-  }, [loadSetlists]);
+    logger.debug('Reload requested - Convex handles this automatically');
+  }, []);
 
   return {
     setlists,
     loading,
-    error,
+    error: null, // Convex handles errors via ConvexProvider
     createSetlist,
     deleteSetlist,
-    reload
+    reload,
+    isAuthenticated,
   };
 }

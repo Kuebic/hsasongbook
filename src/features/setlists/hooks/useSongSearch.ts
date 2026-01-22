@@ -1,13 +1,14 @@
 /**
  * useSongSearch Hook
  *
- * Provides search functionality for songs with IndexedDB integration.
- * Loads songs once, then filters in-memory based on search query.
+ * Provides search functionality for songs using Convex.
+ * Loads songs from Convex, then filters in-memory based on search query.
  *
  * Features:
  * - Debounced search (300ms delay)
  * - Filters by song title and artist
  * - Memoized filtering for performance
+ * - Real-time updates from Convex
  *
  * @example
  * ```tsx
@@ -20,10 +21,10 @@
  * ```
  */
 
-import { useState, useEffect, useMemo } from 'react';
-import { SongRepository } from '@/features/pwa/db/repository';
+import { useState, useMemo } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
 import { useDebouncedValue } from '@/features/shared/hooks/useDebounce';
-import logger from '@/lib/logger';
 import type { Song } from '@/types';
 
 /**
@@ -38,43 +39,34 @@ export interface UseSongSearchReturn {
 }
 
 /**
- * Hook for searching songs with debouncing and IndexedDB integration
+ * Hook for searching songs with debouncing and Convex integration
  *
  * @param initialQuery - Initial search query (default: '')
  * @returns Search state and filtered results
  */
 export function useSongSearch(initialQuery = ''): UseSongSearchReturn {
   const [query, setQuery] = useState<string>(initialQuery);
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
   const debouncedQuery = useDebouncedValue(query, { delay: 300 });
 
-  /**
-   * Load all songs from IndexedDB on mount
-   */
-  useEffect(() => {
-    async function loadData(): Promise<void> {
-      try {
-        setIsLoading(true);
-        logger.debug('Loading songs from IndexedDB...');
+  // Load all songs from Convex
+  const convexSongs = useQuery(api.songs.list);
+  const isLoading = convexSongs === undefined;
 
-        const songRepo = new SongRepository();
-        const allSongs = await songRepo.getAll();
-
-        setSongs(allSongs);
-
-        logger.debug('Songs loaded:', allSongs.length);
-      } catch (error) {
-        logger.error('Failed to load songs:', error);
-        setSongs([]);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadData();
-  }, []);
+  // Map Convex songs to frontend Song type
+  const songs: Song[] = useMemo(() => {
+    if (!convexSongs) return [];
+    return convexSongs.map((song) => ({
+      id: song._id,
+      slug: song.slug,
+      title: song.title,
+      artist: song.artist ?? '',
+      themes: song.themes,
+      copyright: song.copyright,
+      lyrics: song.lyrics ? { en: song.lyrics } : undefined,
+      createdAt: new Date(song._creationTime).toISOString(),
+      updatedAt: new Date(song._creationTime).toISOString(),
+    }));
+  }, [convexSongs]);
 
   /**
    * Filter songs based on debounced query
@@ -89,7 +81,7 @@ export function useSongSearch(initialQuery = ''): UseSongSearchReturn {
     }
 
     // Filter by title or artist
-    return songs.filter(song => {
+    return songs.filter((song) => {
       const matchesTitle = song.title.toLowerCase().includes(q);
       const matchesArtist = song.artist.toLowerCase().includes(q);
 
@@ -104,7 +96,7 @@ export function useSongSearch(initialQuery = ''): UseSongSearchReturn {
     setQuery,
     results: filteredResults,
     isLoading,
-    isEmpty
+    isEmpty,
   };
 }
 

@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useSetlists } from '../hooks/useSetlists';
 import SetlistList from '../components/SetlistList';
 import SetlistForm from '../components/SetlistForm';
@@ -13,18 +14,47 @@ import Breadcrumbs from '@/features/shared/components/Breadcrumbs';
 import { PageSpinner } from '@/features/shared/components/LoadingStates';
 import { SimplePageTransition } from '@/features/shared/components/PageTransition';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus } from 'lucide-react';
+import { Plus, ListMusic } from 'lucide-react';
 import type { SetlistFormData } from '../types';
 
 export function SetlistsIndexPage() {
-  const { setlists, loading, error, createSetlist } = useSetlists();
+  const { setlists, loading, error, createSetlist, isAuthenticated } = useSetlists();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const handleCreateSetlist = async (data: SetlistFormData): Promise<void> => {
     await createSetlist(data);
     setShowCreateDialog(false);
   };
+
+  // Auth gating: Show sign-in prompt for anonymous users
+  if (!isAuthenticated) {
+    return (
+      <SimplePageTransition>
+        <div className="min-h-screen bg-background">
+          <div className="container mx-auto px-4 py-8 max-w-6xl">
+            <div className="mb-6">
+              <Breadcrumbs items={[{ label: 'Setlists', path: '/setlists' }]} />
+            </div>
+
+            <Card className="max-w-md mx-auto mt-12">
+              <CardContent className="pt-6 text-center">
+                <ListMusic className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Sign in to manage setlists</h2>
+                <p className="text-muted-foreground text-sm mb-6">
+                  Create and organize setlists for your worship services and performances.
+                </p>
+                <Link to="/auth/signin">
+                  <Button className="w-full">Sign In</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </SimplePageTransition>
+    );
+  }
 
   if (loading) return <PageSpinner message="Loading setlists..." />;
 

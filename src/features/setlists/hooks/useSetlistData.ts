@@ -1,13 +1,16 @@
 /**
  * useSetlistData hook
  *
- * Manages a single setlist with update operations.
+ * Manages a single setlist with update operations using Convex.
  * Pattern: src/features/arrangements/hooks/useArrangementData.ts
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { SetlistRepository, ArrangementRepository, SongRepository } from '@/features/pwa/db/repository';
-import type { Setlist, Arrangement, Song } from '@/types';
+import { useMemo, useCallback } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
+import type { Id } from '../../../../convex/_generated/dataModel';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import type { Setlist, Arrangement, Song, SetlistSong } from '@/types';
 import logger from '@/lib/logger';
 
 export interface UseSetlistDataReturn {
@@ -18,6 +21,7 @@ export interface UseSetlistDataReturn {
   error: string | null;
   updateSetlist: (updates: Partial<Setlist>) => Promise<Setlist>;
   reload: () => void;
+  isAuthenticated: boolean;
 }
 
 /**
@@ -27,160 +31,138 @@ export interface UseSetlistDataReturn {
  * @returns Setlist data and update operations
  */
 export function useSetlistData(setlistId: string | undefined): UseSetlistDataReturn {
-  const [setlist, setSetlist] = useState<Setlist | null>(null);
-  const [arrangements, setArrangements] = useState<Map<string, Arrangement>>(new Map());
-  const [songs, setSongs] = useState<Map<string, Song>>(new Map());
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const isAuthenticated = !!(user && !user.isAnonymous);
 
-  // Memoize repositories to prevent re-instantiation
-  const setlistRepo = useMemo(() => new SetlistRepository(), []);
-  const arrangementRepo = useMemo(() => new ArrangementRepository(), []);
-  const songRepo = useMemo(() => new SongRepository(), []);
+  // Use the joined query that returns setlist + arrangements + songs
+  const convexData = useQuery(
+    api.setlists.getWithArrangements,
+    setlistId && isAuthenticated ? { id: setlistId as Id<'setlists'> } : 'skip'
+  );
 
-  /**
-   * Load setlist and associated arrangements from IndexedDB
-   */
-  const loadSetlist = useCallback(async (): Promise<void> => {
-    if (!setlistId) {
-      setLoading(false);
-      return;
+  const updateMutation = useMutation(api.setlists.update);
+
+  // Loading state
+  const loading = setlistId !== undefined && isAuthenticated && convexData === undefined;
+
+  // Map Convex data to frontend types
+  const { setlist, arrangements, songs } = useMemo(() => {
+    if (!convexData) {
+      return {
+        setlist: null,
+        arrangements: new Map<string, Arrangement>(),
+        songs: new Map<string, Song>(),
+      };
     }
 
-    try {
-      setLoading(true);
-      setError(null);
+    // Build arrangements map
+    const arrangementsMap = new Map<string, Arrangement>();
+    const songsMap = new Map<string, Song>();
 
-      // Load setlist
-      const data = await setlistRepo.getById(setlistId);
-      if (!data) {
-        setError('Setlist not found');
-        setSetlist(null);
-        return;
-      }
-      setSetlist(data);
-
-      // Load arrangements for songs in setlist
-      const arrangementIds = data.songs.map(s => s.arrangementId);
-      const arrangementsMap = new Map<string, Arrangement>();
-      const songsMap = new Map<string, Song>();
-
-      // Load all arrangements
-      await Promise.all(
-        arrangementIds.map(async (id) => {
-          const arrangement = await arrangementRepo.getById(id);
-          if (arrangement) {
-            arrangementsMap.set(id, arrangement);
-          }
-        })
-      );
-
-      // Load all parent songs for the arrangements
-      const songIds = Array.from(arrangementsMap.values()).map(arr => arr.songId);
-      await Promise.all(
-        songIds.map(async (id) => {
-          const song = await songRepo.getById(id);
-          if (song) {
-            songsMap.set(id, song);
-          }
-        })
-      );
-
-      setArrangements(arrangementsMap);
-      setSongs(songsMap);
-      logger.debug('Loaded setlist with arrangements and songs:', {
-        setlist: data.name,
-        arrangements: arrangementsMap.size,
-        songs: songsMap.size
+    // Process arrangements and their songs
+    for (const arr of convexData.arrangements) {
+      arrangementsMap.set(arr._id, {
+        id: arr._id,
+        slug: arr.slug,
+        songId: arr.songId,
+        name: arr.name,
+        key: arr.key ?? '',
+        tempo: arr.tempo ?? 0,
+        timeSignature: arr.timeSignature ?? '4/4',
+        capo: arr.capo ?? 0,
+        tags: arr.tags,
+        rating: arr.rating,
+        favorites: arr.favorites,
+        chordProContent: arr.chordProContent,
+        createdAt: new Date(arr._creationTime).toISOString(),
+        updatedAt: new Date(arr._creationTime).toISOString(),
       });
-    } catch (err) {
-      logger.error('Failed to load setlist:', err);
-      setError('Failed to load setlist');
-    } finally {
-      setLoading(false);
+
+      // Add parent song to map
+      if (arr.song) {
+        songsMap.set(arr.songId, {
+          id: arr.song._id,
+          slug: arr.song.slug,
+          title: arr.song.title,
+          artist: arr.song.artist ?? '',
+          themes: [],
+          createdAt: '',
+          updatedAt: '',
+        });
+      }
     }
-  }, [setlistId, setlistRepo, arrangementRepo, songRepo]);
+
+    // Build songs array for setlist from arrangementIds
+    const setlistSongs: SetlistSong[] = convexData.arrangementIds.map((arrId, index) => {
+      const arrangement = arrangementsMap.get(arrId);
+      return {
+        id: `setlist-song-${index}`,
+        songId: arrangement?.songId ?? '',
+        arrangementId: arrId,
+        order: index,
+      };
+    });
+
+    // Build setlist object
+    const setlistObj: Setlist = {
+      id: convexData._id,
+      name: convexData.name,
+      description: convexData.description,
+      performanceDate: convexData.performanceDate,
+      songs: setlistSongs,
+      createdAt: new Date(convexData._creationTime).toISOString(),
+      updatedAt: convexData.updatedAt
+        ? new Date(convexData.updatedAt).toISOString()
+        : new Date(convexData._creationTime).toISOString(),
+      userId: convexData.userId,
+    };
+
+    return { setlist: setlistObj, arrangements: arrangementsMap, songs: songsMap };
+  }, [convexData]);
 
   /**
-   * Update setlist data
+   * Update setlist data via Convex mutation
    */
   const updateSetlist = useCallback(async (updates: Partial<Setlist>): Promise<Setlist> => {
-    if (!setlist) {
+    if (!setlist || !setlistId) {
       throw new Error('No setlist loaded');
     }
 
-    const updated = await setlistRepo.save({
-      ...setlist,
-      ...updates,
-      updatedAt: new Date().toISOString()
+    logger.debug('Updating setlist:', setlistId, updates);
+
+    // Build update payload
+    await updateMutation({
+      id: setlistId as Id<'setlists'>,
+      name: updates.name,
+      description: updates.description,
+      performanceDate: updates.performanceDate,
+      // If songs array changed, extract arrangementIds
+      arrangementIds: updates.songs?.map((s) => s.arrangementId as Id<'arrangements'>),
     });
 
-    setSetlist(updated);
-    logger.info('Updated setlist:', updated.name);
-    return updated;
-  }, [setlist, setlistRepo]);
+    logger.info('Updated setlist:', setlist.name);
+
+    // Return optimistic update (Convex will sync)
+    return {
+      ...setlist,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+  }, [setlist, setlistId, updateMutation]);
 
   /**
-   * Reload setlist from database
+   * Reload is a no-op for Convex (data updates automatically)
    */
   const reload = useCallback((): void => {
-    loadSetlist();
-  }, [loadSetlist]);
+    logger.debug('Reload requested - Convex handles this automatically');
+  }, []);
 
-  // Load setlist on mount or when ID changes
-  useEffect(() => {
-    loadSetlist();
-  }, [loadSetlist]);
-
-  // Reload arrangements and songs when setlist songs change
-  useEffect(() => {
-    if (!setlist) return;
-
-    const loadMissingData = async (): Promise<void> => {
-      const arrangementIds = setlist.songs.map(s => s.arrangementId);
-      const arrangementsMap = new Map(arrangements);
-      const songsMap = new Map(songs);
-
-      // Find missing arrangements
-      const missingArrangementIds = arrangementIds.filter(id => !arrangementsMap.has(id));
-
-      if (missingArrangementIds.length > 0) {
-        // Load missing arrangements
-        await Promise.all(
-          missingArrangementIds.map(async (id) => {
-            const arrangement = await arrangementRepo.getById(id);
-            if (arrangement) {
-              arrangementsMap.set(id, arrangement);
-            }
-          })
-        );
-
-        // Load parent songs for newly loaded arrangements
-        const newSongIds = Array.from(arrangementsMap.values())
-          .filter(arr => missingArrangementIds.includes(arr.id))
-          .map(arr => arr.songId)
-          .filter(id => !songsMap.has(id));
-
-        await Promise.all(
-          newSongIds.map(async (id) => {
-            const song = await songRepo.getById(id);
-            if (song) {
-              songsMap.set(id, song);
-            }
-          })
-        );
-
-        setArrangements(arrangementsMap);
-        setSongs(songsMap);
-        logger.debug('Loaded missing arrangements and songs:', {
-          arrangements: missingArrangementIds.length,
-          songs: newSongIds.length
-        });
-      }
-    };
-
-    loadMissingData();
-  }, [setlist, arrangements, songs, arrangementRepo, songRepo]);
+  // Determine error state
+  const error = !loading && !isAuthenticated && setlistId
+    ? 'Sign in to view setlists'
+    : !loading && isAuthenticated && !convexData && setlistId
+      ? 'Setlist not found'
+      : null;
 
   return {
     setlist,
@@ -189,6 +171,7 @@ export function useSetlistData(setlistId: string | undefined): UseSetlistDataRet
     loading,
     error,
     updateSetlist,
-    reload
+    reload,
+    isAuthenticated,
   };
 }

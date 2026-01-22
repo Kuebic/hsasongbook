@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSensor, useSensors, PointerSensor, KeyboardSensor } from '@dnd-kit/core';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
@@ -19,7 +19,8 @@ import Breadcrumbs from '@/features/shared/components/Breadcrumbs';
 import { PageSpinner } from '@/features/shared/components/LoadingStates';
 import { SimplePageTransition } from '@/features/shared/components/PageTransition';
 import { Button } from '@/components/ui/button';
-import { Plus, Play } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Plus, Play, ListMusic } from 'lucide-react';
 
 export function SetlistPage() {
   const { setlistId } = useParams<{ setlistId: string }>();
@@ -32,7 +33,8 @@ export function SetlistPage() {
     songs,
     loading,
     error,
-    updateSetlist
+    updateSetlist,
+    isAuthenticated
   } = useSetlistData(setlistId);
 
   const { addSong, removeSong, reorderSongs, updateSongKey } = useSetlistSongs(
@@ -57,6 +59,37 @@ export function SetlistPage() {
       reorderSongs(oldIndex, newIndex);
     }
   };
+
+  // Auth gating: Show sign-in prompt for anonymous users
+  if (!isAuthenticated) {
+    return (
+      <SimplePageTransition>
+        <div className="min-h-screen bg-background">
+          <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <div className="mb-6">
+              <Breadcrumbs items={[
+                { label: 'Setlists', path: '/setlists' },
+                { label: 'Setlist', path: '#' }
+              ]} />
+            </div>
+
+            <Card className="max-w-md mx-auto mt-12">
+              <CardContent className="pt-6 text-center">
+                <ListMusic className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Sign in to view setlists</h2>
+                <p className="text-muted-foreground text-sm mb-6">
+                  Setlists are private and require authentication.
+                </p>
+                <Link to="/auth/signin">
+                  <Button className="w-full">Sign In</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </SimplePageTransition>
+    );
+  }
 
   if (loading) return <PageSpinner message="Loading setlist..." />;
   if (error || !setlist) {

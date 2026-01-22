@@ -26,7 +26,10 @@
  * ```
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
+import type { Id } from '../../../../convex/_generated/dataModel';
 import {
   Dialog,
   DialogContent,
@@ -38,9 +41,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useSongSearch } from '../hooks/useSongSearch';
 import { useKeyboardNavigation } from '@/features/shared/hooks/useKeyboardNavigation';
-import { ArrangementRepository } from '@/features/pwa/db/repository';
 import { Search, Loader2, Music, ArrowLeft } from 'lucide-react';
-import logger from '@/lib/logger';
 import type { Song, Arrangement } from '@/types';
 
 interface AddArrangementModalProps {
@@ -58,33 +59,34 @@ export function AddArrangementModal({
 
   // Two-step state
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
-  const [arrangements, setArrangements] = useState<Arrangement[]>([]);
-  const [isLoadingArrangements, setIsLoadingArrangements] = useState(false);
 
-  // Load arrangements when a song is selected
-  useEffect(() => {
-    if (!selectedSong) {
-      setArrangements([]);
-      return;
-    }
+  // Load arrangements from Convex when a song is selected
+  const convexArrangements = useQuery(
+    api.arrangements.getBySong,
+    selectedSong ? { songId: selectedSong.id as Id<'songs'> } : 'skip'
+  );
+  const isLoadingArrangements = selectedSong !== null && convexArrangements === undefined;
 
-    async function loadArrangements(): Promise<void> {
-      try {
-        setIsLoadingArrangements(true);
-        const repo = new ArrangementRepository();
-        const songArrangements = await repo.getBySong(selectedSong.id);
-        setArrangements(songArrangements);
-        logger.debug('Loaded arrangements for song:', selectedSong.title, songArrangements.length);
-      } catch (error) {
-        logger.error('Failed to load arrangements:', error);
-        setArrangements([]);
-      } finally {
-        setIsLoadingArrangements(false);
-      }
-    }
-
-    loadArrangements();
-  }, [selectedSong]);
+  // Map Convex arrangements to frontend Arrangement type
+  const arrangements: Arrangement[] = useMemo(() => {
+    if (!convexArrangements) return [];
+    return convexArrangements.map((arr) => ({
+      id: arr._id,
+      slug: arr.slug,
+      songId: arr.songId,
+      name: arr.name,
+      key: arr.key ?? '',
+      tempo: arr.tempo ?? 0,
+      timeSignature: arr.timeSignature ?? '4/4',
+      capo: arr.capo ?? 0,
+      tags: arr.tags,
+      rating: arr.rating,
+      favorites: arr.favorites,
+      chordProContent: arr.chordProContent,
+      createdAt: new Date(arr._creationTime).toISOString(),
+      updatedAt: arr.updatedAt ? new Date(arr.updatedAt).toISOString() : new Date(arr._creationTime).toISOString(),
+    }));
+  }, [convexArrangements]);
 
   // Handle song selection (step 1 → step 2)
   const handleSongSelect = (index: number): void => {
