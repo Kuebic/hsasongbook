@@ -49,17 +49,6 @@ export const currentUser = query({
 });
 
 /**
- * Get a user by ID
- * Access: Everyone
- */
-export const getById = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.userId);
-  },
-});
-
-/**
  * Get a user by username
  * Access: Everyone (for public profile pages)
  */

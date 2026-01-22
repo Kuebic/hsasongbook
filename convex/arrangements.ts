@@ -165,31 +165,6 @@ export const count = query({
 });
 
 /**
- * Get featured arrangements (top-rated)
- * Algorithm: score = (rating * 0.6) + (favorites * 0.004)
- * Access: Everyone
- */
-export const getFeatured = query({
-  args: { limit: v.optional(v.number()) },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 6;
-
-    // Get all arrangements and calculate scores
-    const arrangements = await ctx.db.query("arrangements").collect();
-
-    const scored = arrangements.map((arr) => ({
-      arrangement: arr,
-      score: (arr.rating || 0) * 0.6 + (arr.favorites || 0) * 0.004,
-    }));
-
-    // Sort by score descending and take top N
-    scored.sort((a, b) => b.score - a.score);
-
-    return scored.slice(0, limit).map((s) => s.arrangement);
-  },
-});
-
-/**
  * Get featured arrangements WITH song data and creator info (joined)
  * This is what the frontend FeaturedArrangements widget needs
  * Access: Everyone
