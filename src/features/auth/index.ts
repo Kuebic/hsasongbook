@@ -23,6 +23,7 @@ export { default as SignInForm } from './components/SignInForm';
 export { default as SignUpForm } from './components/SignUpForm';
 export { default as SignInModal } from './components/SignInModal';
 export { default as UserDropdown } from './components/UserDropdown';
+export { default as ProfilePictureUpload } from './components/ProfilePictureUpload';
 
 // Pages
 export { default as SignInPage } from './pages/SignInPage';

@@ -43,7 +43,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Map Convex user to existing User type
   const user: User | null = useMemo(() => {
-    if (!isAuthenticated || !convexUser) return null;
+    // Wait for both auth state and user data to load
+    if (!isAuthenticated) return null;
+    if (convexUser === undefined) return null; // Still loading
+    if (convexUser === null) return null; // No user found
 
     // Check if user has email (authenticated) or is anonymous
     const hasEmail = convexUser.email !== undefined && convexUser.email !== null;
@@ -121,11 +124,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const stateValue: AuthState = useMemo(() => ({
     user,
     session: null, // MVP: Not exposing session tokens
-    loading: isLoading,
+    loading: isLoading || (isAuthenticated && convexUser === undefined),
     error,
     isOnline,
     offlineDays: 0, // MVP: Skip offline tracking
-  }), [user, isLoading, error, isOnline]);
+  }), [user, isLoading, isAuthenticated, convexUser, error, isOnline]);
 
   const actionsValue: AuthActions = useMemo(() => ({
     signInAnonymously,
