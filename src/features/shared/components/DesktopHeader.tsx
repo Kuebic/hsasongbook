@@ -16,7 +16,7 @@
  */
 
 import { Link, NavLink } from 'react-router-dom';
-import { Home, List, Search, User } from 'lucide-react';
+import { Home, List, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getZIndexClass } from '@/lib/config/zIndex';
 import { ThemeToggle } from '@/lib/theme/ThemeToggle';
@@ -122,28 +122,6 @@ export default function DesktopHeader({ className }: DesktopHeaderProps) {
               >
                 <List className="h-4 w-4" aria-hidden="true" />
                 <span>Setlists</span>
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/profile"
-                className={({ isActive }) =>
-                  cn(
-                    // Base styles
-                    'inline-flex items-center space-x-2 px-3 py-2 rounded-md',
-                    'text-sm font-medium transition-colors',
-                    // Hover state
-                    'hover:bg-accent hover:text-accent-foreground',
-                    // Focus state (keyboard navigation)
-                    'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                    // Active state (current page)
-                    isActive && 'bg-accent text-accent-foreground'
-                  )
-                }
-                aria-current={({ isActive }) => (isActive ? 'page' : undefined)}
-              >
-                <User className="h-4 w-4" aria-hidden="true" />
-                <span>Profile</span>
               </NavLink>
             </li>
           </ul>

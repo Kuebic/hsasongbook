@@ -28,6 +28,7 @@ import { AlertCircle } from 'lucide-react';
 type SignInFormData = z.infer<typeof signInSchema>;
 
 interface SignInFormProps {
+  /** @deprecated No longer used - page reloads after sign-in due to Convex Auth state race condition */
   onSuccess?: () => void;
   onSwitchToSignUp?: () => void;
 }
@@ -38,12 +39,11 @@ interface SignInFormProps {
  * Usage:
  * ```tsx
  * <SignInForm
- *   onSuccess={() => navigate('/')}
  *   onSwitchToSignUp={() => setShowSignUp(true)}
  * />
  * ```
  */
-export default function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
+export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
   const { signIn } = useAuthActions();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -66,8 +66,10 @@ export default function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormPr
       // Call auth action
       await signIn(data.email, data.password);
 
-      // Success - callback to parent (close modal, navigate, etc.)
-      onSuccess?.();
+      // Workaround for Convex Auth state race condition:
+      // useConvexAuth() doesn't update reliably after signIn resolves.
+      // See POST_MVP_ROADMAP.md "Convex Auth Sign-in State Race Condition"
+      location.reload();
     } catch (error) {
       // Display error message
       const errorMessage =
@@ -75,7 +77,6 @@ export default function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormPr
           ? error.message
           : 'An unexpected error occurred. Please try again.';
       setSubmitError(errorMessage);
-    } finally {
       setIsSubmitting(false);
     }
   };

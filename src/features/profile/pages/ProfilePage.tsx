@@ -160,16 +160,6 @@ export function ProfilePage() {
                         <dt className="text-muted-foreground">Email:</dt>
                         <dd className="font-medium">{user?.email}</dd>
                       </div>
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Account Type:</dt>
-                        <dd className="font-medium">
-                          <Badge>Authenticated</Badge>
-                        </dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-muted-foreground">User ID:</dt>
-                        <dd className="font-mono text-xs">{user?.id.substring(0, 8)}...</dd>
-                      </div>
                     </dl>
                   </div>
 

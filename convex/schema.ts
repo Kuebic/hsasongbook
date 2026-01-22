@@ -15,10 +15,13 @@ export default defineSchema({
     phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
     // Custom fields
-    displayName: v.optional(v.string()),
+    username: v.optional(v.string()), // Unique public username (required for non-anonymous)
+    displayName: v.optional(v.string()), // Optional "real name" shown on contributions
     avatarKey: v.optional(v.string()), // R2 object key for profile picture
+    showRealName: v.optional(v.boolean()), // Toggle to show displayName instead of username
   })
     .index("email", ["email"])
+    .index("by_username", ["username"])
     .index("by_displayName", ["displayName"]),
 
   // Songs - Global community library

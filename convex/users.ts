@@ -31,6 +31,40 @@ export const getById = query({
   },
 });
 
+/**
+ * Get stats for the current user (songs, arrangements, setlists created)
+ * Access: Authenticated users only
+ */
+export const getUserStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return null;
+    }
+
+    // Use indexes for efficient lookups
+    const songs = await ctx.db
+      .query("songs")
+      .withIndex("by_createdBy", (q) => q.eq("createdBy", userId))
+      .collect();
+    const arrangements = await ctx.db
+      .query("arrangements")
+      .withIndex("by_createdBy", (q) => q.eq("createdBy", userId))
+      .collect();
+    const setlists = await ctx.db
+      .query("setlists")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    return {
+      songs: songs.length,
+      arrangements: arrangements.length,
+      setlists: setlists.length,
+    };
+  },
+});
+
 // ============ MUTATIONS ============
 
 /**
