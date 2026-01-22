@@ -3,8 +3,8 @@
  * MVP: Minimal auth with anonymous + email/password
  */
 
-import { ReactNode, useEffect, useState, useMemo, useCallback } from 'react';
-import { useConvexAuth, useQuery } from "convex/react";
+import { ReactNode, useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { useAuthActions as useConvexAuthActions } from "@convex-dev/auth/react";
 import { AuthStateContext, AuthActionsContext } from './AuthContext';
 import type { User, AuthState, AuthActions } from '@/types/User.types';
@@ -24,6 +24,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Fetch actual user data from Convex
   const convexUser = useQuery(api.users.currentUser);
+  const setUsernameMutation = useMutation(api.users.setUsername);
+  const pendingUsernameProcessed = useRef(false);
 
   // Auto sign-in anonymously on first load if not authenticated
   useEffect(() => {
@@ -40,6 +42,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
     initAnonymous();
   }, [isLoading, isAuthenticated, signIn]);
+
+  // Handle pending username from signup (set after page reload)
+  useEffect(() => {
+    const setPendingUsername = async () => {
+      // Only run once per mount, when user is loaded and authenticated
+      if (pendingUsernameProcessed.current) return;
+      if (!convexUser) return;
+      if (!convexUser.email) return; // Only for authenticated users
+      if (convexUser.username) return; // Already has username
+
+      const pendingUsername = localStorage.getItem('pendingUsername');
+      if (!pendingUsername) return;
+
+      pendingUsernameProcessed.current = true;
+      localStorage.removeItem('pendingUsername');
+
+      try {
+        await setUsernameMutation({ username: pendingUsername });
+        logger.info('Set pending username after signup:', pendingUsername);
+      } catch (err) {
+        logger.error('Failed to set pending username:', err);
+        // User can set it manually from profile page
+      }
+    };
+
+    setPendingUsername();
+  }, [convexUser, setUsernameMutation]);
 
   // Map Convex user to existing User type
   const user: User | null = useMemo(() => {

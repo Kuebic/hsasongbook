@@ -114,23 +114,22 @@ export default function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
       setIsSubmitting(true);
       setSubmitError(null);
 
-      // 1. Create auth account
-      await signUp(data.email, data.password);
+      // Store username in localStorage to be set after page reload
+      // This avoids the race condition where setUsername runs while still
+      // authenticated as the anonymous user instead of the new user
+      localStorage.setItem('pendingUsername', data.username);
 
-      // 2. Set username (user is now authenticated)
-      try {
-        await setUsername({ username: data.username });
-      } catch (usernameError) {
-        // Auth succeeded but username failed - still reload but show warning
-        console.error('Failed to set username:', usernameError);
-        // Username can be set later via profile - don't block signup
-      }
+      // Create auth account
+      await signUp(data.email, data.password);
 
       // Workaround for Convex Auth state race condition:
       // useConvexAuth() doesn't update reliably after signUp resolves.
       // See POST_MVP_ROADMAP.md "Convex Auth Sign-in State Race Condition"
+      // The username will be set by AuthProvider after reload
       location.reload();
     } catch (error) {
+      // Clear pending username on error
+      localStorage.removeItem('pendingUsername');
       // Display error message
       const errorMessage =
         error instanceof Error

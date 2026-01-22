@@ -169,3 +169,26 @@ export const updateDisplayName = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Update current user's showRealName preference
+ * Access: Authenticated users only
+ */
+export const updateShowRealName = mutation({
+  args: { showRealName: v.boolean() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Must be authenticated");
+    }
+
+    const user = await ctx.db.get(userId);
+    if (!user?.email) {
+      throw new Error("Anonymous users cannot update preferences. Please sign in.");
+    }
+
+    await ctx.db.patch(userId, { showRealName: args.showRealName });
+
+    return { success: true };
+  },
+});
