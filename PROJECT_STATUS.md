@@ -271,38 +271,75 @@ npx convex run seed:clearDatabase
 - [x] Real-time updates across devices
 - [x] Anonymous users see "Sign in to create" prompts
 
-### Nice to Have (Post-MVP)
-- [ ] **Offline setlist caching** - "Download for Offline" feature for performance mode (see Architecture Notes below)
-- [ ] **Custom key overrides per song in setlist** - Allow overriding arrangement key for specific setlist entries
-- [ ] **Notes per song in setlist** - Add notes field to setlist song entries
-- [ ] Ratings/favorites on arrangements
-- [ ] User profile pages
-- [ ] Search improvements
-- [ ] Tag chips with autocomplete for themes/tags input (currently comma-separated text) (make sure tags follow rules, like all lowercase, no spaces (- instead), etc)
-- [ ] When adding new song, detect if the title already exists and offer autocomplete suggestions in dropdown while typing. Suggestion should be title, with subtitle of artist
-- [ ] Chord editor typing space doesn't adhere to dark mode
-- [ ] Way to quick to alert of errors. In the middle of typing out a chord it's yelling errors at me just because I didn't close the [] yet.
-- [ ] Chordpro editor - when full-screen, it says "ESC to go back", but even after ESC, it's still "full-screen", but using full window. Have to press the unfullscreen icon (arrows pointing to each other) to actually get back.
-- [ ] [BUG] Choosing Bb as the key of arrangement when creating it, but it starts off in key of A# - BUG
-- [ ] nice to be able to delete own arrangements and/or duplicate another as your own. So if you like someone's arrangement but want to tweak it you can easily duplicate and make your own
-- [ ] UI for liking and rating arrangements, especially while in the arrangement
-- [ ] Why am I able to "edit" chordpro of arrangements that were seedgenerated? I understand in production that won't be the case, but I should not be able to edit arrangements I didn't create. to do that, the arrangement should be duplicated.
-- [ ] Also, arrangements should list the username of the person who made the arrangement, and in the future, people should be able to view the arrangements said person created
-- [ ] option to edit song details like adding lyrics at later date, edit tags, etc, especially by person who created it. Need to wrestle with anyone being able to edit song data, which is ideal for crowdsourcing, but could be abused
-- [ ] chord pro editing: save button do anything? (auto-saves?), and undo-redo buttons do anything?
-- [ ] when editing chords, need way to go back to arrangement instead of back to song, find your arrangement, then view it
-- [ ] why is there a way to go to other arrangements in the bottom corner of an arrangement/editing mode? If I want to check out another arrangment, I'd go back to the song to see a full list and pick from there.
-- [ ] Be able to filter arrangments by arrangements I've created while viewing a song
+### Post-MVP Roadmap
 
-### Technical Debt (Post-MVP)
-- [ ] **N+1 Query in SongList**: Currently fetches all arrangements to count per song. Add `arrangements.countBySong` query for efficiency at scale.
-- [ ] **Type Mapping Duplication**: `mapConvexArrangement`/`mapConvexSong` repeated in multiple files. Extract to shared `convex/mappers.ts`.
-- [ ] **Type casting for Convex IDs**: Code uses `as Id<'setlists'>` casts in many places. Consider typing IDs upstream to avoid casting.
-- [ ] **Remove no-op `reload()` function**: `useSetlistData` and `useSetlists` expose `reload()` that does nothing (Convex auto-syncs). Remove or document as deprecated.
-- [ ] **`updateSongKey` is stubbed**: Function exists in `useSetlistSongs` but logs warning. Either remove from interface or throw error for clarity.
-- [ ] **`useSongSearch` loads all songs**: Filters client-side. At scale, add server-side search query.
-- [ ] selecting keys in arrangement - I get why there's common keys and all keys. Currently all keys gets cut off. Also, maybe it should be the uncommon keys, like instead of Db, there's C#, A# instead of Bb, etc.
-Or have a custom way of arranging the keys so all sharps and flats of each note is accessible like in Planning Center Services app
+#### 🐛 Bugs
+
+| Issue | Description |
+|-------|-------------|
+| **Bb/A# key mismatch** | Selecting Bb as arrangement key displays as A# instead |
+| **Fullscreen exit broken** | ESC exits browser fullscreen but not editor fullscreen mode; must click unfullscreen icon |
+| **Dark mode in editor** | Chord typing area doesn't respect dark mode theme |
+
+#### 🔐 Permissions & Ownership
+
+| Feature | Description |
+|---------|-------------|
+| **Restrict editing to owners** | Users should only edit their own arrangements; viewing others' should prompt "duplicate to edit" |
+| **Edit song details** | Allow editing title, artist, themes, lyrics (at minimum by creator; consider crowdsourcing with moderation) |
+| **Delete own arrangements** | Allow users to delete arrangements they created |
+| **Duplicate arrangements** | Copy another user's arrangement as your own to customize |
+
+#### 👤 User & Social Features
+
+| Feature | Description |
+|---------|-------------|
+| **Show arrangement creator** | Display username on arrangements |
+| **User profile pages** | View user's created arrangements |
+| **Filter by "my arrangements"** | On song page, filter to show only your arrangements |
+| **Ratings & favorites UI** | Like/rate arrangements, especially from within arrangement view |
+
+#### 🎹 Setlist Enhancements
+
+| Feature | Description |
+|---------|-------------|
+| **Offline setlist caching** | "Download for Offline" for performance mode (see Architecture Notes) |
+| **Custom key per setlist entry** | Override arrangement key for specific setlist songs |
+| **Notes per setlist entry** | Add performance notes to individual setlist songs |
+
+#### ✏️ Editor UX Improvements
+
+| Feature | Description |
+|---------|-------------|
+| **Debounce error alerts** | Don't show syntax errors mid-typing (e.g., unclosed `[]`) |
+| **Clarify save/undo buttons** | Document or fix save button behavior (auto-save?); verify undo/redo works |
+| **Better navigation from editor** | Add direct "back to arrangement" link instead of going through song page |
+| **Remove arrangement switcher** | Remove bottom-corner arrangement nav in editor; use song page instead |
+
+#### 🔍 Search & Input Improvements
+
+| Feature | Description |
+|---------|-------------|
+| **Song title autocomplete** | When adding song, suggest existing titles to prevent duplicates |
+| **Tag chips with autocomplete** | Replace comma-separated text with chip UI; enforce lowercase, hyphens instead of spaces |
+| **Server-side search** | Move search filtering to Convex query for scale |
+
+#### 🎵 Key Selection UX
+
+| Feature | Description |
+|---------|-------------|
+| **Fix key dropdown overflow** | "All keys" section gets cut off |
+| **Better enharmonic handling** | Show both sharp/flat variants (C#/Db) or use Planning Center-style picker |
+
+### Technical Debt
+
+| Issue | Fix |
+|-------|-----|
+| **N+1 query in SongList** | Add `arrangements.countBySong` query instead of fetching all arrangements |
+| **Duplicated type mappers** | Extract `mapConvexArrangement`/`mapConvexSong` to shared `convex/mappers.ts` |
+| **Convex ID type casting** | Reduce `as Id<'setlists'>` casts by typing IDs upstream |
+| **No-op `reload()` functions** | Remove from `useSetlistData`/`useSetlists` (Convex auto-syncs) |
+| **Stubbed `updateSongKey`** | Remove from interface or throw error instead of logging warning |
 
 ---
 
