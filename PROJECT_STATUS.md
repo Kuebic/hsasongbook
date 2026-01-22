@@ -273,11 +273,14 @@ npx convex run seed:clearDatabase
 - [ ] Ratings/favorites on arrangements
 - [ ] User profile pages
 - [ ] Search improvements
-- [ ] Tag chips with autocomplete for themes/tags input (currently comma-separated text)
+- [ ] Tag chips with autocomplete for themes/tags input (currently comma-separated text) (make sure tags follow rules, like all lowercase, no spaces (- instead), etc)
+- [ ] When adding new song, detect if the title already exists and offer autocomplete suggestions in dropdown while typing. Suggestion should be title, with subtitle of artist
 
 ### Technical Debt (Post-MVP)
 - [ ] **N+1 Query in SongList**: Currently fetches all arrangements to count per song. Add `arrangements.countBySong` query for efficiency at scale.
 - [ ] **Type Mapping Duplication**: `mapConvexArrangement`/`mapConvexSong` repeated in multiple files. Extract to shared `convex/mappers.ts`.
+- [ ] selecting keys in arrangement - I get why there's common keys and all keys. Currently all keys gets cut off. Also, maybe it should be the uncommon keys, like instead of Db, there's C#, A# instead of Bb, etc.
+Or have a custom way of arranging the keys so all sharps and flats of each note is accessible like in Planning Center Services app
 
 ---
 
