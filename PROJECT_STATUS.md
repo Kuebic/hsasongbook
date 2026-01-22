@@ -275,6 +275,19 @@ npx convex run seed:clearDatabase
 - [ ] Search improvements
 - [ ] Tag chips with autocomplete for themes/tags input (currently comma-separated text) (make sure tags follow rules, like all lowercase, no spaces (- instead), etc)
 - [ ] When adding new song, detect if the title already exists and offer autocomplete suggestions in dropdown while typing. Suggestion should be title, with subtitle of artist
+- [ ] Chord editor typing space doesn't adhere to dark mode
+- [ ] Way to quick to alert of errors. In the middle of typing out a chord it's yelling errors at me just because I didn't close the [] yet.
+- [ ] Chordpro editor - when full-screen, it says "ESC to go back", but even after ESC, it's still "full-screen", but using full window. Have to press the unfullscreen icon (arrows pointing to each other) to actually get back.
+- [ ] [BUG] Choosing Bb as the key of arrangement when creating it, but it starts off in key of A# - BUG
+- [ ] nice to be able to delete own arrangements and/or duplicate another as your own. So if you like someone's arrangement but want to tweak it you can easily duplicate and make your own
+- [ ] UI for liking and rating arrangements, especially while in the arrangement
+- [ ] Why am I able to "edit" chordpro of arrangements that were seedgenerated? I understand in production that won't be the case, but I should not be able to edit arrangements I didn't create. to do that, the arrangement should be duplicated.
+- [ ] Also, arrangements should list the username of the person who made the arrangement, and in the future, people should be able to view the arrangements said person created
+- [ ] option to edit song details like adding lyrics at later date, edit tags, etc, especially by person who created it. Need to wrestle with anyone being able to edit song data, which is ideal for crowdsourcing, but could be abused
+- [ ] chord pro editing: save button do anything? (auto-saves?), and undo-redo buttons do anything?
+- [ ] when editing chords, need way to go back to arrangement instead of back to song, find your arrangement, then view it
+- [ ] why is there a way to go to other arrangements in the bottom corner of an arrangement/editing mode? If I want to check out another arrangment, I'd go back to the song to see a full list and pick from there.
+- [ ] Be able to filter arrangments by arrangements I've created while viewing a song
 
 ### Technical Debt (Post-MVP)
 - [ ] **N+1 Query in SongList**: Currently fetches all arrangements to count per song. Add `arrangements.countBySong` query for efficiency at scale.
