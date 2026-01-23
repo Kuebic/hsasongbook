@@ -3,10 +3,12 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { useArrangementData } from '../hooks/useArrangementData';
+import { useArrangementPermissions } from '../hooks/useArrangementPermissions';
 import ChordProViewer from '@/features/chordpro';
 import ArrangementSwitcher from '../components/ArrangementSwitcher';
 import ArrangementHeader from '../components/ArrangementHeader';
 import ArrangementMetadataForm from '../components/ArrangementMetadataForm';
+import CollaboratorsDialog from '../components/CollaboratorsDialog';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
 import { PageSpinner } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
@@ -14,7 +16,7 @@ import { useNavigation } from '../../shared/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
 import logger from '@/lib/logger';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Music, Printer } from 'lucide-react';
+import { ArrowLeft, Music, Printer, Users } from 'lucide-react';
 import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSanitizer';
 import type { ArrangementMetadata } from '@/types/Arrangement.types';
 
@@ -24,6 +26,7 @@ export function ArrangementPage() {
   const { breadcrumbs } = useNavigation();
   const [showChords] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showCollaboratorsDialog, setShowCollaboratorsDialog] = useState(false);
 
   // Use Convex hook to load arrangement data (uses URL slug automatically)
   const {
@@ -34,6 +37,11 @@ export function ArrangementPage() {
     error,
     updateArrangement
   } = useArrangementData();
+
+  // Check permissions for the current arrangement
+  const { canEdit, isOwner, loading: permissionsLoading } = useArrangementPermissions(
+    arrangement?.id ?? null
+  );
 
   // Fetch arrangement with creator info in a single query
   const arrangementWithCreator = useQuery(
@@ -46,15 +54,15 @@ export function ArrangementPage() {
     return arrangementWithCreator?.creator ?? null;
   }, [arrangementWithCreator]);
 
-  // Auto-enable edit mode when arrangement has no content
+  // Auto-enable edit mode when arrangement has no content AND user can edit
   useEffect(() => {
-    if (arrangement && !arrangement.chordProContent) {
+    if (arrangement && !arrangement.chordProContent && canEdit) {
       setIsEditMode(true);
     }
-  }, [arrangement]);
+  }, [arrangement, canEdit]);
 
-  // Loading state
-  if (loading) {
+  // Loading state (include permissions loading)
+  if (loading || permissionsLoading) {
     return <PageSpinner message="Loading arrangement..." />;
   }
 
@@ -92,6 +100,18 @@ export function ArrangementPage() {
             <Breadcrumbs items={breadcrumbs} />
 
             <div className="flex gap-2 items-center">
+              {/* Collaborators Button (owner only) */}
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCollaboratorsDialog(true)}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Collaborators
+                </Button>
+              )}
+
               {/* Print Button */}
               <Button
                 variant="outline"
@@ -122,8 +142,8 @@ export function ArrangementPage() {
           />
         </div>
 
-        {/* Metadata Form - Only show in edit mode */}
-        {isEditMode && (
+        {/* Metadata Form - Only show in edit mode when user can edit */}
+        {isEditMode && canEdit && (
           <div className="mb-6 no-print">
             <ArrangementMetadataForm
               metadata={{
@@ -152,8 +172,8 @@ export function ArrangementPage() {
             content={arrangement.chordProContent || ''}
             showChords={showChords}
             showToggle={true}
-            editable={true}
-            editMode={isEditMode}
+            editable={canEdit}
+            editMode={isEditMode && canEdit}
             onEditModeChange={setIsEditMode}
             arrangementMetadata={{
               key: arrangement.key,
@@ -215,6 +235,16 @@ export function ArrangementPage() {
         </div>
       </div>
     </div>
+
+    {/* Collaborators Dialog (owner only) */}
+    {isOwner && arrangement && (
+      <CollaboratorsDialog
+        open={showCollaboratorsDialog}
+        onOpenChange={setShowCollaboratorsDialog}
+        arrangementId={arrangement.id}
+        arrangementName={arrangement.name}
+      />
+    )}
     </SimplePageTransition>
   );
 }

@@ -73,4 +73,15 @@ export default defineSchema({
     // Track edits
     updatedAt: v.optional(v.number()),
   }).index("by_user", ["userId"]),
+
+  // Arrangement Collaborators - Users who can edit arrangements they don't own
+  arrangementCollaborators: defineTable({
+    arrangementId: v.id("arrangements"),
+    userId: v.id("users"),
+    addedBy: v.id("users"),
+    addedAt: v.number(),
+  })
+    .index("by_arrangement", ["arrangementId"])
+    .index("by_user", ["userId"])
+    .index("by_arrangement_and_user", ["arrangementId", "userId"]),
 });

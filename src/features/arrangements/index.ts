@@ -3,3 +3,6 @@ export { default as ArrangementSwitcher } from './components/ArrangementSwitcher
 export { default as ArrangementHeader } from './components/ArrangementHeader'
 export { default as ArrangementList } from './components/ArrangementList'
 export { default as ArrangementCard } from './components/ArrangementCard'
+export { default as CollaboratorsDialog } from './components/CollaboratorsDialog'
+export { default as CollaboratorsList } from './components/CollaboratorsList'
+export { useArrangementPermissions } from './hooks/useArrangementPermissions'

@@ -1,6 +1,11 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import {
+  canEditArrangement,
+  isArrangementOwner,
+  isArrangementCollaborator,
+} from "./permissions";
 
 // ============ QUERIES ============
 
@@ -286,7 +291,7 @@ export const create = mutation({
 
 /**
  * Update an arrangement
- * Access: Creator only
+ * Access: Owner or collaborator
  */
 export const update = mutation({
   args: {
@@ -310,9 +315,10 @@ export const update = mutation({
       throw new Error("Arrangement not found");
     }
 
-    // Check ownership
-    if (arrangement.createdBy !== userId) {
-      throw new Error("You can only edit your own arrangements");
+    // Check edit permission (owner or collaborator)
+    const canEdit = await canEditArrangement(ctx, args.id, userId);
+    if (!canEdit) {
+      throw new Error("You don't have permission to edit this arrangement");
     }
 
     const { id, ...updates } = args;
@@ -331,5 +337,201 @@ export const update = mutation({
     await ctx.db.patch(args.id, cleanUpdates);
 
     return args.id;
+  },
+});
+
+// ============ PERMISSION QUERIES ============
+
+/**
+ * Check if current user can edit an arrangement
+ * Returns { canEdit, isOwner, isCollaborator }
+ */
+export const canEdit = query({
+  args: { arrangementId: v.id("arrangements") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return { canEdit: false, isOwner: false, isCollaborator: false };
+    }
+
+    const arrangement = await ctx.db.get(args.arrangementId);
+    if (!arrangement) {
+      return { canEdit: false, isOwner: false, isCollaborator: false };
+    }
+
+    const isOwner = await isArrangementOwner(ctx, args.arrangementId, userId);
+    const isCollaborator = await isArrangementCollaborator(
+      ctx,
+      args.arrangementId,
+      userId
+    );
+
+    return {
+      canEdit: isOwner || isCollaborator,
+      isOwner,
+      isCollaborator,
+    };
+  },
+});
+
+/**
+ * Get collaborators for an arrangement (owner only)
+ * Returns list of collaborators with user info
+ */
+export const getCollaborators = query({
+  args: { arrangementId: v.id("arrangements") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return [];
+    }
+
+    // Only owner can view collaborators
+    const isOwner = await isArrangementOwner(ctx, args.arrangementId, userId);
+    if (!isOwner) {
+      return [];
+    }
+
+    const collaborators = await ctx.db
+      .query("arrangementCollaborators")
+      .withIndex("by_arrangement", (q) =>
+        q.eq("arrangementId", args.arrangementId)
+      )
+      .collect();
+
+    // Join with user data
+    return Promise.all(
+      collaborators.map(async (collab) => {
+        const user = await ctx.db.get(collab.userId);
+        const addedByUser = await ctx.db.get(collab.addedBy);
+        return {
+          _id: collab._id,
+          userId: collab.userId,
+          addedAt: collab.addedAt,
+          user: user
+            ? {
+                _id: user._id,
+                username: user.username,
+                displayName: user.displayName,
+                showRealName: user.showRealName,
+                avatarKey: user.avatarKey,
+              }
+            : null,
+          addedBy: addedByUser
+            ? {
+                _id: addedByUser._id,
+                username: addedByUser.username,
+              }
+            : null,
+        };
+      })
+    );
+  },
+});
+
+// ============ COLLABORATOR MUTATIONS ============
+
+/**
+ * Add a collaborator to an arrangement
+ * Access: Owner only
+ */
+export const addCollaborator = mutation({
+  args: {
+    arrangementId: v.id("arrangements"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) {
+      throw new Error("Must be authenticated");
+    }
+
+    // Check ownership
+    const isOwner = await isArrangementOwner(
+      ctx,
+      args.arrangementId,
+      currentUserId
+    );
+    if (!isOwner) {
+      throw new Error("Only the owner can add collaborators");
+    }
+
+    // Check that user exists and is not anonymous
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    if (!user.email) {
+      throw new Error("Cannot add anonymous users as collaborators");
+    }
+
+    // Cannot add yourself as a collaborator (you're already the owner)
+    if (args.userId === currentUserId) {
+      throw new Error("You cannot add yourself as a collaborator");
+    }
+
+    // Check if already a collaborator
+    const existing = await ctx.db
+      .query("arrangementCollaborators")
+      .withIndex("by_arrangement_and_user", (q) =>
+        q.eq("arrangementId", args.arrangementId).eq("userId", args.userId)
+      )
+      .unique();
+
+    if (existing) {
+      throw new Error("User is already a collaborator");
+    }
+
+    await ctx.db.insert("arrangementCollaborators", {
+      arrangementId: args.arrangementId,
+      userId: args.userId,
+      addedBy: currentUserId,
+      addedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Remove a collaborator from an arrangement
+ * Access: Owner only
+ */
+export const removeCollaborator = mutation({
+  args: {
+    arrangementId: v.id("arrangements"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) {
+      throw new Error("Must be authenticated");
+    }
+
+    // Check ownership
+    const isOwner = await isArrangementOwner(
+      ctx,
+      args.arrangementId,
+      currentUserId
+    );
+    if (!isOwner) {
+      throw new Error("Only the owner can remove collaborators");
+    }
+
+    // Find the collaborator record
+    const collaborator = await ctx.db
+      .query("arrangementCollaborators")
+      .withIndex("by_arrangement_and_user", (q) =>
+        q.eq("arrangementId", args.arrangementId).eq("userId", args.userId)
+      )
+      .unique();
+
+    if (!collaborator) {
+      throw new Error("User is not a collaborator");
+    }
+
+    await ctx.db.delete(collaborator._id);
+
+    return { success: true };
   },
 });

@@ -12,6 +12,7 @@ import type * as arrangements from "../arrangements.js";
 import type * as auth from "../auth.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
+import type * as permissions from "../permissions.js";
 import type * as seed from "../seed.js";
 import type * as setlists from "../setlists.js";
 import type * as songs from "../songs.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   files: typeof files;
   http: typeof http;
+  permissions: typeof permissions;
   seed: typeof seed;
   setlists: typeof setlists;
   songs: typeof songs;
