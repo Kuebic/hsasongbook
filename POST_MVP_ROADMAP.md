@@ -1,283 +1,203 @@
 # HSA Songbook - Post-MVP Roadmap
 
-**Extracted from PROJECT_STATUS.md on 2026-01-22**
+**Last Updated**: 2026-01-23
 
-This document contains future features and improvements planned after MVP completion. These are not blocking release but represent valuable enhancements for future iterations.
-
----
-
-## 🐛 Bugs
-
-| Issue | Description |
-|-------|-------------|
-| **Fullscreen exit broken** | ESC exits browser fullscreen but not editor fullscreen mode; must click unfullscreen icon |
-| **Sign-in UI stuck on "Authenticating..."** | Fixed with `location.reload()` workaround. See [Known Issue](#convex-auth-sign-in-state-race-condition) below. |
-
-### Convex Auth Sign-in State Race Condition
-
-**Problem**: After successful sign-in, the sign-in form stays on "Authenticating..." and requires manual page refresh.
-
-**Root Cause**: Known timing issue with Convex Auth where there's a delay between `signIn()` resolving and `useConvexAuth()` updating `isAuthenticated`. The client-side auth state machine sometimes fails to transition properly after the token handshake.
-
-**References**:
-- [Convex Auth React API](https://labs.convex.dev/auth/api_reference/react) - Documents the delay between signIn and auth state update
-- [GitHub Issue #259](https://github.com/get-convex/convex-backend/issues/259) - Stuck in permanent unauthenticated state
-- [GitHub Issue #92](https://github.com/get-convex/convex-auth/issues/92) - Not auto redirect after auth actions
-
-**Workaround Applied**: Call `location.reload()` after successful sign-in/sign-up. This is the community-recommended solution until Convex fixes the underlying state machine issue.
-
-**Ideal Fix** (when Convex resolves): Remove `location.reload()` and rely on reactive state updates from `useConvexAuth()` and `useQuery(api.users.currentUser)`.
+Features and improvements planned after MVP, organized by priority and effort.
 
 ---
 
-## 🔐 Permissions & Ownership
+## Priority 1: Critical Bugs
 
-| Feature | Description |
-|---------|-------------|
-| **Restrict editing to owners** | Users should only edit their own arrangements; viewing others' should prompt "duplicate to edit" |
-| **Edit song details** | Allow editing title, artist, themes, lyrics (at minimum by creator; consider crowdsourcing with moderation) |
-| **Delete own arrangements** | Allow users to delete arrangements they created |
-| **Duplicate arrangements** | Copy another user's arrangement as your own to customize |
+Issues significantly impacting user experience.
+
+| Issue | Description | Effort |
+|-------|-------------|--------|
+| **Mobile preview pane broken** | Preview pane doesn't work when editing chords on mobile | Medium |
+| **Fullscreen exit broken** | ESC exits browser fullscreen but not editor fullscreen mode | Low |
+| **Avatar not loading** | "Added by (username)" shows default avatar, not user's actual avatar | Low |
+| **Duplicate UI elements** | "Available Arrangements" shows twice; song title appears twice on arrangement view | Low |
+| **Printing broken** | Print functionality needs fixing | Medium |
+
+### Auth State Issue (Workaround Applied)
+
+**Problem**: Sign-in form stays on "Authenticating..." requiring page refresh.
+
+**Workaround**: `location.reload()` after sign-in (community-recommended).
+
+**References**: [GitHub #259](https://github.com/get-convex/convex-backend/issues/259), [GitHub #92](https://github.com/get-convex/convex-auth/issues/92)
 
 ---
 
-## 🔑 OAuth Authentication
+## Priority 2: Core Missing Features
 
-### Overview
+Features users will expect that aren't blocking MVP.
 
-Add social sign-in options for frictionless authentication. Google is simpler; Apple has significant constraints.
+### Content Management
 
-### Google OAuth
+| Feature | Description | Effort |
+|---------|-------------|--------|
+| **Edit arrangement name** | Owner should be able to rename (URL uses ID, won't break) | Low |
+| **Delete own arrangements** | Allow users to delete their arrangements | Low |
+| **Edit song details** | Edit title, artist, themes, lyrics (by creator or community) | Medium |
+| **Duplicate arrangements** | Copy another user's arrangement to customize | Medium |
 
-**Complexity**: Low-Medium
+### Navigation & Discovery
 
-**Setup Steps**:
+| Feature | Description | Effort |
+|---------|-------------|--------|
+| **Browse songs on homepage** | Currently only arrangements; need song browsing with filters | Medium |
+| **Back to arrangement from editor** | Direct link instead of going through song page | Low |
+| **Remove arrangement switcher** | Bottom-right corner switcher is useless | Low |
+| **Filter by "my arrangements"** | On song page, filter to show only your arrangements | Low |
+
+### Collaborator Awareness
+
+| Feature | Description | Effort |
+|---------|-------------|--------|
+| **Collaborator notifications** | Users have no way of knowing when added as collaborator | Medium |
+| **"My collaborations" view** | Show all arrangements user can edit (not just created) | Medium |
+
+---
+
+## Priority 3: User Onboarding
+
+### First-Time User Welcome
+
+New users don't understand the community nature of the app.
+
+**Solution**: Welcome modal explaining:
+- This is a community songbook, not private
+- All songs/arrangements are public
+- Options to allow community editing
+- How to join "Community" group for collaborative editing
+
+**Effort**: Medium
+
+---
+
+## Priority 4: Editor Improvements
+
+| Feature | Description | Effort |
+|---------|-------------|--------|
+| **Debounce error alerts** | Don't show syntax errors mid-typing (e.g., unclosed `[]`) | Low |
+| **Clarify save/undo buttons** | Improve save button behavior; verify undo/redo works | Low |
+| **Chord progression parsing** | Recognize `[D / / / | A/C# / / / |]` as transposable chords | High |
+| **Formatting customization** | Add formatting customization abilities | Medium |
+
+---
+
+## Priority 5: Key Selection UX
+
+| Issue | Fix | Effort |
+|-------|-----|--------|
+| **Key dropdown overflow** | "All keys" section gets cut off | Low |
+| **Enharmonic handling** | Show both sharp/flat variants (C#/Db) or Planning Center-style picker | Medium |
+
+---
+
+## Priority 6: Search & Input
+
+| Feature | Description | Effort |
+|---------|-------------|--------|
+| **Song title autocomplete** | Suggest existing titles when adding songs | Medium |
+| **Tag chips with autocomplete** | Replace comma text with chip UI; enforce lowercase, hyphens | Medium |
+| **Server-side search** | Move filtering to Convex for scale | Medium |
+
+---
+
+## Priority 7: User & Social Features
+
+| Feature | Description | Effort |
+|---------|-------------|--------|
+| **Ratings & favorites** | Like/rate arrangements from arrangement view | Medium |
+
+---
+
+## Priority 8: OAuth Authentication
+
+### Google OAuth (Recommended First)
+
+**Effort**: Low-Medium
+
+**Setup**:
 1. Create project in [Google Cloud Console](https://console.cloud.google.com/)
-2. Navigate to Google Auth Platform overview → GET STARTED
-3. Configure OAuth consent screen (app name, support email, External audience)
-4. Create OAuth credentials:
-   - Go to Credentials → Create Credentials → OAuth Client ID
-   - Select "Web Application"
-   - Add Authorized JavaScript Origins: `http://localhost:5173` (dev)
-   - Add Authorized Redirect URI: `https://<your-deployment>.convex.site/api/auth/callback/google`
-   - Find your HTTP Actions URL in Convex dashboard: Settings → URL & Deploy Key (ends in `.site`)
+2. Configure OAuth consent screen
+3. Create credentials with redirect: `https://<deployment>.convex.site/api/auth/callback/google`
 
-**Environment Variables** (set in Convex dashboard or CLI):
 ```bash
-npx convex env set AUTH_GOOGLE_ID <your-client-id>
-npx convex env set AUTH_GOOGLE_SECRET <your-client-secret>
+npx convex env set AUTH_GOOGLE_ID <client-id>
+npx convex env set AUTH_GOOGLE_SECRET <client-secret>
 ```
 
-**Code Changes** - Update `convex/auth.ts`:
+**Code** (`convex/auth.ts`):
 ```typescript
-import Google from "@auth/core/providers/google";  // Note: default export
-import { convexAuth } from "@convex-dev/auth/server";
-import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
-import { Password } from "@convex-dev/auth/providers/Password";
-
-export const { auth, signIn, signOut, store } = convexAuth({
-  providers: [
-    Anonymous,
-    Password({ verify: undefined }),
-    Google,  // Reads AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET automatically
-  ],
-});
+import Google from "@auth/core/providers/google";
+// Add Google to providers array
 ```
 
-**Frontend Usage**:
-```typescript
-import { useAuthActions } from "@convex-dev/auth/react";
+**Frontend**: `await signIn("google")`
 
-const { signIn } = useAuthActions();
-await signIn("google");  // Redirects to Google OAuth
-```
+### Apple OAuth (Optional)
 
-**Notes**:
-- Need separate Google OAuth apps for dev vs production (different redirect URIs)
-- Google will show your Convex site URL in consent screen (custom domain requires Convex Pro)
+**Effort**: High | **Cost**: $99/year | **Constraints**: No localhost testing, secret expires every 6 months
 
-### Apple OAuth
+Only implement if planning App Store release or significant iOS user base.
 
-**Complexity**: High
-
-**Critical Constraints**:
-- ⚠️ **Cannot test on localhost** - Requires deployment to public site with valid SSL
-- ⚠️ **$99/year** Apple Developer Program membership required
-- ⚠️ **Secret expires every 6 months** - AUTH_APPLE_SECRET is a JWT that must be regenerated
-
-**Setup Steps**:
-1. Join [Apple Developer Program](https://developer.apple.com/programs/) ($99/year)
-2. Go to Certificates, Identifiers & Profiles
-3. Create an **App ID**:
-   - Select "App IDs" → click `+`
-   - Fill in Description and Explicit Bundle ID
-   - Enable "Sign in with Apple" checkbox
-   - Complete registration
-4. Create a **Services ID**:
-   - Select "Services IDs" → click `+`
-   - Fill in Description and Identifier
-   - Register, then configure "Sign in with Apple"
-   - Set Return URL: `https://<your-deployment>.convex.site/api/auth/callback/apple`
-5. Generate a **Key**:
-   - Go to Keys section → create new key
-   - Enable "Sign in with Apple", select your App ID
-   - Download the `.p8` file (store securely!)
-
-**Environment Variables**:
-```bash
-npx convex env set AUTH_APPLE_ID <service-identifier>
-npx convex env set AUTH_APPLE_SECRET <generated-jwt>
-```
-
-The secret JWT must be generated using:
-- Team ID
-- Key ID (from the `.p8` file)
-- The private key content
-- Service ID
-
-Use the [Convex Auth JWT generator form](https://labs.convex.dev/auth/config/oauth/apple) to create this.
-
-**Code Changes** - Update `convex/auth.ts`:
-```typescript
-import Apple from "@auth/core/providers/apple";
-
-// Apple only shares user's name on FIRST authentication
-// This profile handler preserves it for future logins
-Apple({
-  profile: (appleInfo) => ({
-    id: appleInfo.sub,
-    name: appleInfo.user?.name
-      ? `${appleInfo.user.name.firstName} ${appleInfo.user.name.lastName}`
-      : undefined,
-    email: appleInfo.email,
-  }),
-}),
-```
-
-**Frontend Usage**:
-```typescript
-await signIn("apple");
-```
-
-**Recommendation**: Only implement if planning App Store release (required if offering other social sign-ins) or significant iOS user base.
-
-### Account Linking Consideration
-
-If a user signs up with email then later uses Google/Apple with the same email:
-- **Recommended approach**: Same email = same account (auto-link)
-- Convex Auth handles this via the `email` field in the users table
-
-### References
-- [Convex Auth - Google OAuth](https://labs.convex.dev/auth/config/oauth/google)
-- [Convex Auth - Apple OAuth](https://labs.convex.dev/auth/config/oauth/apple)
-- [Convex Auth - OAuth Overview](https://labs.convex.dev/auth/config/oauth)
+**References**: [Convex Auth - OAuth](https://labs.convex.dev/auth/config/oauth)
 
 ---
 
-## 👤 User & Social Features
+## Priority 9: Setlist Enhancements
 
-| Feature | Description |
-|---------|-------------|
-| **Show arrangement creator** | Display username on arrangements |
-| **User profile pages** | View user's created arrangements |
-| **Filter by "my arrangements"** | On song page, filter to show only your arrangements |
-| **Ratings & favorites UI** | Like/rate arrangements, especially from within arrangement view |
+| Feature | Description | Effort |
+|---------|-------------|--------|
+| **Custom key per entry** | Override arrangement key for specific songs | Medium |
+| **Notes per entry** | Add performance notes to individual songs | Low |
+| **Offline caching** | "Download for Offline" for performance mode | High |
 
----
+### Offline Performance Mode Architecture
 
-## 🎹 Setlist Enhancements
+**Problem**: Convex queries fail offline. Unacceptable mid-performance.
 
-| Feature | Description |
-|---------|-------------|
-| **Offline setlist caching** | "Download for Offline" for performance mode (see Architecture Notes below) |
-| **Custom key per setlist entry** | Override arrangement key for specific setlist songs |
-| **Notes per setlist entry** | Add performance notes to individual setlist songs |
+**Solution**:
+1. "Save for Offline" button on setlist page
+2. Store in IndexedDB (`offlineSetlists`)
+3. Read from IndexedDB when offline
+4. Show "Available Offline" badge
 
----
+**Rules**: Convex = source of truth, no offline editing, staleness indicator.
 
-## ✏️ Editor UX Improvements
-
-| Feature | Description |
-|---------|-------------|
-| **Debounce error alerts** | Don't show syntax errors mid-typing (e.g., unclosed `[]`) |
-| **Clarify save/undo buttons** | Document or fix save button behavior (auto-save?); verify undo/redo works |
-| **Better navigation from editor** | Add direct "back to arrangement" link instead of going through song page |
-| **Remove arrangement switcher** | Remove bottom-corner arrangement nav in editor; use song page instead |
+**Existing code**: `src/features/pwa/db/database.ts`, `useOnlineStatus.ts`, `setlists.ts:getWithArrangements`
 
 ---
 
-## 🔍 Search & Input Improvements
+## Priority 10: Technical Debt
 
-| Feature | Description |
-|---------|-------------|
-| **Song title autocomplete** | When adding song, suggest existing titles to prevent duplicates |
-| **Tag chips with autocomplete** | Replace comma-separated text with chip UI; enforce lowercase, hyphens instead of spaces |
-| **Server-side search** | Move search filtering to Convex query for scale |
-
----
-
-## 🎵 Key Selection UX
-
-| Feature | Description |
-|---------|-------------|
-| **Fix key dropdown overflow** | "All keys" section gets cut off |
-| **Better enharmonic handling** | Show both sharp/flat variants (C#/Db) or use Planning Center-style picker |
+| Issue | Fix | Effort |
+|-------|-----|--------|
+| **N+1 query in SongList** | Add `arrangements.countBySong` query | Low |
+| **Duplicated type mappers** | Extract to `convex/mappers.ts` | Low |
+| **Convex ID type casting** | Type IDs upstream to reduce casts | Medium |
+| **No-op `reload()` functions** | Remove from hooks (Convex auto-syncs) | Low |
+| **Stubbed `updateSongKey`** | Remove or throw error | Low |
+| **Fragile "Community" check** | Use ID comparison or `isSystemGroup` flag | Low |
+| **Repeated creator joins** | Extract `attachCreatorInfo()` helper | Medium |
 
 ---
 
-## 🔧 Technical Debt
+## Effort Guide
 
-| Issue | Fix |
-|-------|-----|
-| **N+1 query in SongList** | Add `arrangements.countBySong` query instead of fetching all arrangements |
-| **Duplicated type mappers** | Extract `mapConvexArrangement`/`mapConvexSong` to shared `convex/mappers.ts` |
-| **Convex ID type casting** | Reduce `as Id<'setlists'>` casts by typing IDs upstream |
-| **No-op `reload()` functions** | Remove from `useSetlistData`/`useSetlists` (Convex auto-syncs) |
-| **Stubbed `updateSongKey`** | Remove from interface or throw error instead of logging warning |
-| **Fragile "Public" group check** | `SongMetadata.tsx` checks `owner.name === 'Public'` string; should use ID-based comparison or add `isSystemGroup` flag to owner info from backend |
-| **Repeated creator data fetching** | Multiple arrangement queries repeat the same creator-join pattern; extract `attachCreatorInfo(ctx, doc)` helper to `permissions.ts` |
+| Effort | Estimate | Examples |
+|--------|----------|----------|
+| **Low** | < 2 hours | Bug fixes, UI tweaks, dead code removal |
+| **Medium** | 2-8 hours | New components, simple features |
+| **High** | 1-3 days | Complex features, architecture changes |
 
 ---
 
-## Architecture Notes: Offline Performance Mode
+## Changelog
 
-**Problem**: Convex uses WebSockets for real-time data. Service workers cache the UI shell, but Convex queries return nothing when offline. This is fine for general browsing (annoying but acceptable), but **unacceptable for mid-performance** when going through a setlist.
-
-**Current state**:
-- ✅ `useOnlineStatus` hook with connectivity detection
-- ✅ `OfflineIndicator` component for UI feedback
-- ✅ Service worker caches UI shell
-- ❌ No explicit "save setlist for offline" mechanism
-
-**Proposed solution**: Explicit "Download for Offline" feature
-1. Add "Save for Offline" button on setlist detail page
-2. Fetch full setlist data via `getWithArrangements` query
-3. Store snapshot in IndexedDB (new table: `offlineSetlists`)
-4. Performance mode reads from IndexedDB when offline, Convex when online
-5. Show "Available Offline" badge on downloaded setlists
-6. Optional: background refresh when online to keep cache fresh
-
-**Key rules**:
-- Convex remains source of truth (IndexedDB is read-only cache)
-- No offline editing (avoids sync conflicts)
-- Clear staleness indicator if cached data is old
-
-**Why not automatic caching?**
-- Explicit download is simpler to implement and reason about
-- User knows what's available offline
-- Avoids filling device storage unexpectedly
-
-**Existing infrastructure to reuse**:
-- `src/features/pwa/db/database.ts` - IndexedDB setup (currently for drafts)
-- `src/features/pwa/hooks/useOnlineStatus.ts` - Connection detection
-- `convex/setlists.ts:getWithArrangements` - Fetches full setlist data
-
----
-
-# Additional notes in no particular order
-- when user is added as a collaborator, they have no way of knowing. They aren't listed as a song artist, no private profile feed showing them all the arrangements they can edit, and no notification that they were added. work through how this should work
-- when editing chords, there should be an easy way to go back to the public view of the arrangement. Current workaround is go back to the song, then find your arrangement again
-- remove the bottom-right arrangement switcher. Useless.
-- need a way to browse songs on homepage, not just arrangements. Just being able to browser in general with custom filters would be ideal
-- on mobile, when editing chords, preview pane does not work
-- when editing a chord progression, it's nice to be able to input a string like [D / / / | A/C# / / / |] and have the chords within be recognized as chords so they will transpose along with the rest of the chords when transposing/preferring flats/sharps.
+| Date | Change |
+|------|--------|
+| 2026-01-23 | Reorganized by priority; consolidated scattered notes; added effort estimates |
+| 2026-01-22 | Initial extraction from PROJECT_STATUS.md |

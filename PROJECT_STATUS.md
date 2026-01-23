@@ -1,7 +1,7 @@
 # HSA Songbook - Project Status & MVP Roadmap
 
 **Last Updated**: 2026-01-23
-**Current Phase**: 6.2 (Groups with Ownership)
+**Current Phase**: 6.2b Complete (Version History)
 **Goal**: MVP ASAP - solid skeleton, secure foundation
 
 ---
@@ -177,9 +177,16 @@ users: defineTable({
 ### Ownership & Access Rules
 | Entity | Read Access | Write Access |
 |--------|-------------|--------------|
-| **Songs** | Everyone (including anonymous) | Authenticated users only |
-| **Arrangements** | Everyone | Creator only |
+| **Songs** | Everyone (including anonymous) | Owner (user or group admins) |
+| **Arrangements** | Everyone | Owner or collaborators |
 | **Setlists** | Creator only | Creator only |
+| **Groups** | Everyone (public groups) | Admins and owners |
+
+### Content Ownership Model
+- Songs and arrangements have an `ownerType` (`user` or `group`) and `ownerId`
+- User-owned content: Only the creator can edit
+- Group-owned content: Group admins/owners can edit; moderators can rollback Community content
+- Community group: Special system group for shared/public content with version history
 
 ---
 
@@ -196,6 +203,9 @@ users: defineTable({
 | Convex Songs API | `convex/songs.ts` |
 | Convex Arrangements API | `convex/arrangements.ts` |
 | Convex Setlists API | `convex/setlists.ts` |
+| Convex Groups API | `convex/groups.ts` |
+| Convex Versions API | `convex/versions.ts` |
+| Convex Permissions | `convex/permissions.ts` |
 | Convex Files API (R2) | `convex/files.ts` |
 | Convex R2 Config | `convex/convex.config.ts` |
 | Convex Seed Script | `convex/seed.ts` |
@@ -203,6 +213,10 @@ users: defineTable({
 | Profile Picture Upload | `src/features/auth/components/ProfilePictureUpload.tsx` |
 | User Avatar Component | `src/components/UserAvatar.tsx` |
 | User Profile Page | `src/features/profile/pages/UserProfilePage.tsx` |
+| Groups Feature | `src/features/groups/` |
+| Version History Feature | `src/features/versions/` |
+| Owner Selector | `src/features/shared/components/OwnerSelector.tsx` |
+| Co-Author Picker | `src/features/shared/components/CoAuthorPicker.tsx` |
 
 ---
 
@@ -243,17 +257,34 @@ npx convex run seed:clearDatabase  # Clear all data (for testing)
 - [x] Update `ArrangementCard.tsx` for group ownership display
 - [x] Add routes for groups pages (`/groups`, `/groups/:slug`, `/groups/:slug/settings`)
 
-### Phase 6.2b: Version History (Pending)
-- [ ] Create version history UI components (`src/features/versions/`)
-- [ ] Hook version creation into save flow for Public content
-- [ ] Add version history panel to ArrangementPage for Public-owned content
+### Phase 6.2b: Version History ✅ COMPLETE
+- [x] Create version history UI components (`src/features/versions/`)
+  - `VersionHistoryPanel.tsx` - Collapsible panel showing version list
+  - `VersionHistoryList.tsx`, `VersionItem.tsx` - List and item components
+  - `RollbackConfirmDialog.tsx` - Confirmation dialog for rollbacks
+  - `useVersionHistory.ts` hook - Query and manage versions
+  - `useIsCommunityGroupModerator.ts` hook - Access control for moderators
+- [x] Hook version creation into save flow for Community content
+  - `maybeCreateVersionSnapshot()` helper in `convex/versions.ts`
+  - Automatic snapshots on song/arrangement updates
+- [x] Add version history panel to ArrangementPage for Community-owned content
+- [x] Add version history panel to SongPage for Community-owned content
+- [x] Add owner selector to song/arrangement create forms ("Post as myself" or "Post as [group]")
+  - `src/features/shared/components/OwnerSelector.tsx`
+  - Integrated into `AddSongForm.tsx` and `AddArrangementForm.tsx`
+- [x] Add co-author picker for group posts
+  - `src/features/shared/components/CoAuthorPicker.tsx`
+  - Shows when group ownership is selected in arrangement forms
+- [x] Update SongPage for group ownership display
+  - `SongMetadata.tsx` - Shows owner info (Community vs other groups)
+  - `SongOwnershipActions.tsx` - UI to transfer songs to/from Community
 
-### Still To Do
-- [ ] Add owner selector to song/arrangement create forms ("Post as myself" or "Post as [group]")
-- [ ] Add co-author picker for group posts
-- [ ] Update SongPage for group ownership display and version history
-- [ ] Run migration: `npx convex run seed:migrateOwnership`
-- [ ] Seed Public group: `npx convex run seed:seedPublicGroup`
+### Deployment Tasks (Run when ready)
+```bash
+npx convex run seed:migrateOwnership       # Add ownership fields to existing data
+npx convex run seed:seedCommunityGroup     # Create Community system group
+npx convex run seed:makeCommunityGroupOpen # Make Community open to join
+```
 
 ---
 
@@ -275,6 +306,7 @@ See [POST_MVP_ROADMAP.md](POST_MVP_ROADMAP.md) for:
 
 | Date | Change |
 |------|--------|
+| 2026-01-23 | **Phase 6.2b complete**: Version history UI, owner selector in forms, co-author picker, song ownership display. Full groups & permissions system complete. |
 | 2026-01-23 | **Phase 6.2 complete**: Groups feature with ownership, membership, permissions. Routes: `/groups`, `/groups/:slug`, `/groups/:slug/settings` |
 | 2026-01-23 | **Phase 6.1 complete**: Collaborators system for arrangements with permissions checking |
 | 2026-01-22 | **Phase 5.5 complete**: Creator display on arrangements, user profile page at `/user/:username` |
