@@ -1,4 +1,5 @@
 import { mutation } from "./_generated/server";
+import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { nanoid } from "nanoid";
 import { slugify } from "./permissions";
@@ -751,5 +752,117 @@ export const seedPublicGroup = mutation({
       message: "Public group created successfully",
       groupId,
     };
+  },
+});
+
+/**
+ * Make the Public group open (no approval required)
+ * Run with: npx convex run seed:makePublicGroupOpen
+ */
+export const makePublicGroupOpen = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const groups = await ctx.db.query("groups").collect();
+    const publicGroup = groups.find((g) => g.isSystemGroup);
+
+    if (!publicGroup) {
+      return { success: false, message: "Public group not found" };
+    }
+
+    await ctx.db.patch(publicGroup._id, { joinPolicy: "open" });
+
+    return { success: true, message: "Public group is now open to join" };
+  },
+});
+
+/**
+ * Add a user as admin of the Public group by user ID
+ * Run with: npx convex run seed:addMeToPublicGroup --args '{"userId": "USER_ID"}'
+ */
+export const addMeToPublicGroup = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const groups = await ctx.db.query("groups").collect();
+    const publicGroup = groups.find((g) => g.isSystemGroup);
+
+    if (!publicGroup) {
+      return { success: false, message: "Public group not found" };
+    }
+
+    // Check if already a member
+    const existing = await ctx.db
+      .query("groupMembers")
+      .withIndex("by_group_and_user", (q) =>
+        q.eq("groupId", publicGroup._id).eq("userId", args.userId)
+      )
+      .unique();
+
+    if (existing) {
+      return { success: false, message: "Already a member of Public group" };
+    }
+
+    await ctx.db.insert("groupMembers", {
+      groupId: publicGroup._id,
+      userId: args.userId,
+      role: "admin",
+      joinedAt: Date.now(),
+      promotedAt: Date.now(),
+    });
+
+    return { success: true, message: "Added as admin to Public group" };
+  },
+});
+
+/**
+ * Add a user as admin of the Public group by username
+ * Run with: npx convex run seed:addUserToPublicGroupByUsername --args '{"username": "your_username"}'
+ */
+export const addUserToPublicGroupByUsername = mutation({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    // Find user by username
+    const users = await ctx.db.query("users").collect();
+    const user = users.find((u) => u.username === args.username);
+
+    if (!user) {
+      return { success: false, message: `User "${args.username}" not found` };
+    }
+
+    const groups = await ctx.db.query("groups").collect();
+    const publicGroup = groups.find((g) => g.isSystemGroup);
+
+    if (!publicGroup) {
+      return { success: false, message: "Public group not found" };
+    }
+
+    // Check if already a member
+    const existing = await ctx.db
+      .query("groupMembers")
+      .withIndex("by_group_and_user", (q) =>
+        q.eq("groupId", publicGroup._id).eq("userId", user._id)
+      )
+      .unique();
+
+    if (existing) {
+      // If already a member but not admin, promote them
+      if (existing.role !== "admin" && existing.role !== "owner") {
+        await ctx.db.patch(existing._id, {
+          role: "admin",
+          promotedAt: Date.now(),
+        });
+        return { success: true, message: `Promoted "${args.username}" to admin of Public group` };
+      }
+      return { success: false, message: `"${args.username}" is already an admin/owner of Public group` };
+    }
+
+    await ctx.db.insert("groupMembers", {
+      groupId: publicGroup._id,
+      userId: user._id,
+      role: "admin",
+      joinedAt: Date.now(),
+      promotedAt: Date.now(),
+    });
+
+    return { success: true, message: `Added "${args.username}" as admin to Public group` };
   },
 });

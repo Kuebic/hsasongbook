@@ -20,6 +20,7 @@ import { addSongSchema, type AddSongFormData } from '../validation/songSchemas';
 import { generateSlug } from '@/features/shared/utils/slugGenerator';
 import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
 import { extractErrorMessage } from '@/lib/utils';
+import OwnerSelector, { type OwnerSelection } from '@/features/shared/components/OwnerSelector';
 
 interface AddSongFormProps {
   onSuccess?: () => void;
@@ -42,6 +43,8 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
   const createSong = useMutation(api.songs.create);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Phase 2: Owner selection state
+  const [owner, setOwner] = useState<OwnerSelection>({ ownerType: 'user' });
 
   const {
     register,
@@ -78,6 +81,9 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
         copyright: undefined,
         lyrics: data.lyrics || undefined,
         slug,
+        // Phase 2: Pass ownership info
+        ownerType: owner.ownerType,
+        ownerId: owner.ownerId,
       });
 
       // Success - navigate to the new song
@@ -102,6 +108,13 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
           <p className="text-sm">{submitError}</p>
         </div>
       )}
+
+      {/* Phase 2: Owner selector (only shows if user has postable groups) */}
+      <OwnerSelector
+        value={owner}
+        onChange={setOwner}
+        disabled={isSubmitting}
+      />
 
       {/* Title field (required) */}
       <div>

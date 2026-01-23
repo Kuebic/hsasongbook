@@ -27,6 +27,9 @@ import {
 import type { Id } from '../../../../convex/_generated/dataModel';
 import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
 import { extractErrorMessage } from '@/lib/utils';
+import OwnerSelector, { type OwnerSelection } from '@/features/shared/components/OwnerSelector';
+import CoAuthorPicker, { type CoAuthor } from '@/features/shared/components/CoAuthorPicker';
+import { useAuth } from '@/features/auth';
 
 interface AddArrangementFormProps {
   songId: string;
@@ -57,9 +60,13 @@ export default function AddArrangementForm({
   onCancel,
 }: AddArrangementFormProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const createArrangement = useMutation(api.arrangements.create);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Phase 2: Owner selection and co-authors state
+  const [owner, setOwner] = useState<OwnerSelection>({ ownerType: 'user' });
+  const [coAuthors, setCoAuthors] = useState<CoAuthor[]>([]);
 
   const {
     register,
@@ -93,6 +100,14 @@ export default function AddArrangementForm({
       // Generate initial ChordPro content from song lyrics if available
       const initialChordProContent = songLyrics ? songLyrics.trim() : '';
 
+      // Phase 2: Prepare co-authors for the mutation
+      const coAuthorData = owner.ownerType === 'group' && coAuthors.length > 0
+        ? coAuthors.map((author) => ({
+            userId: author.userId as Id<'users'>,
+            isPrimary: author.isPrimary,
+          }))
+        : undefined;
+
       // Create arrangement via Convex mutation
       await createArrangement({
         songId: songId as Id<'songs'>,
@@ -103,6 +118,10 @@ export default function AddArrangementForm({
         chordProContent: initialChordProContent,
         slug,
         tags,
+        // Phase 2: Pass ownership and co-authors info
+        ownerType: owner.ownerType,
+        ownerId: owner.ownerId,
+        coAuthors: coAuthorData,
       });
 
       // Success - navigate to the new arrangement
@@ -126,6 +145,29 @@ export default function AddArrangementForm({
           <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
           <p className="text-sm">{submitError}</p>
         </div>
+      )}
+
+      {/* Phase 2: Owner selector (only shows if user has postable groups) */}
+      <OwnerSelector
+        value={owner}
+        onChange={(newOwner) => {
+          setOwner(newOwner);
+          // Clear co-authors when switching back to user ownership
+          if (newOwner.ownerType === 'user') {
+            setCoAuthors([]);
+          }
+        }}
+        disabled={isSubmitting}
+      />
+
+      {/* Phase 2: Co-author picker (only for group-owned arrangements) */}
+      {owner.ownerType === 'group' && user && (
+        <CoAuthorPicker
+          selectedAuthors={coAuthors}
+          onChange={setCoAuthors}
+          currentUserId={user._id}
+          disabled={isSubmitting}
+        />
       )}
 
       {/* Name field (required) */}

@@ -1,0 +1,134 @@
+/**
+ * ArrangementOwnershipActions Component
+ *
+ * Allows the original arrangement creator to:
+ * - Transfer their arrangement to Public (crowdsourced editing)
+ * - Reclaim their arrangement from Public back to personal ownership
+ */
+
+import { useState } from 'react';
+import { useMutation } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Globe, User, Loader2 } from 'lucide-react';
+import type { Id } from '../../../../convex/_generated/dataModel';
+
+interface ArrangementOwnershipActionsProps {
+  arrangementId: string;
+  isOwner: boolean;
+  isPublicOwned: boolean;
+}
+
+export function ArrangementOwnershipActions({
+  arrangementId,
+  isOwner,
+  isPublicOwned,
+}: ArrangementOwnershipActionsProps) {
+  const [isTransferring, setIsTransferring] = useState(false);
+  const [isReclaiming, setIsReclaiming] = useState(false);
+
+  const transferToPublic = useMutation(api.arrangements.transferToPublic);
+  const reclaimFromPublic = useMutation(api.arrangements.reclaimFromPublic);
+
+  // Only show for the original creator
+  if (!isOwner) return null;
+
+  const handleTransfer = async () => {
+    setIsTransferring(true);
+    try {
+      await transferToPublic({ id: arrangementId as Id<'arrangements'> });
+    } catch (error) {
+      console.error('Failed to transfer arrangement:', error);
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  const handleReclaim = async () => {
+    setIsReclaiming(true);
+    try {
+      await reclaimFromPublic({ id: arrangementId as Id<'arrangements'> });
+    } catch (error) {
+      console.error('Failed to reclaim arrangement:', error);
+    } finally {
+      setIsReclaiming(false);
+    }
+  };
+
+  if (isPublicOwned) {
+    // Show reclaim option
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline" size="sm" disabled={isReclaiming}>
+            {isReclaiming ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <User className="h-4 w-4 mr-2" />
+            )}
+            Reclaim Arrangement
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reclaim this arrangement?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will move the arrangement back to your personal ownership.
+              Public group members will no longer be able to edit it. You can
+              always transfer it back to Public later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReclaim}>
+              Reclaim Arrangement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
+
+  // Show transfer option
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="sm" disabled={isTransferring}>
+          {isTransferring ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Globe className="h-4 w-4 mr-2" />
+          )}
+          Make Public
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Transfer to Public?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will allow anyone in the Public group to edit this arrangement.
+            You'll retain edit rights as the original creator and can reclaim
+            ownership anytime.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleTransfer}>
+            Transfer to Public
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}

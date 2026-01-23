@@ -16,6 +16,7 @@ import { VersionHistoryPanel } from '@/features/versions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit, Music, Plus, X } from 'lucide-react';
+import { SongOwnershipActions } from '../components/SongOwnershipActions';
 import type { Song } from '@/types/Song.types';
 import type { ArrangementWithCreator } from '@/types/Arrangement.types';
 
@@ -35,9 +36,15 @@ export function SongPage() {
   );
 
   // Check if user can edit this song
-  const { canEdit, loading: permissionsLoading } = useSongPermissions(
+  const { canEdit, isOwner, loading: permissionsLoading } = useSongPermissions(
     convexSong?._id ?? null
   );
+
+  // Check if song is owned by Public group
+  const isPublicOwned =
+    convexSong?.ownerType === 'group' &&
+    convexSong?.owner?.type === 'group' &&
+    convexSong?.owner?.name === 'Public';
 
   // Get arrangements for this song (with creator info)
   const convexArrangements = useQuery(
@@ -128,17 +135,29 @@ export function SongPage() {
           <div className="flex items-center justify-between mb-6">
             <Breadcrumbs items={breadcrumbs} />
 
-            {/* Edit button (only if user can edit) */}
-            {canEdit && !isEditMode && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditMode(true)}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Song
-              </Button>
-            )}
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              {/* Ownership transfer/reclaim (only for original creator) */}
+              {isAuthenticated && (
+                <SongOwnershipActions
+                  songId={song?.id ?? ''}
+                  isOwner={isOwner}
+                  isPublicOwned={isPublicOwned}
+                />
+              )}
+
+              {/* Edit button (only if user can edit) */}
+              {canEdit && !isEditMode && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditMode(true)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Song
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Song Metadata or Edit Form */}

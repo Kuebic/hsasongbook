@@ -1,17 +1,77 @@
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
-import { Clock, Music, Guitar, Hash } from 'lucide-react'
+import { Clock, Music, Guitar, Hash, Users, Globe } from 'lucide-react'
 import { getCreatorDisplayName } from '../../shared/utils/userDisplay'
 import type { Arrangement, CreatorInfo } from '@/types'
+
+// Phase 2: Owner info type for group ownership display
+export interface OwnerInfo {
+  type: 'user' | 'group';
+  id: string;
+  name: string;
+  slug?: string;
+  avatarKey?: string;
+}
 
 interface ArrangementHeaderProps {
   arrangement: Arrangement;
   songTitle: string;
   artist: string;
   creator?: CreatorInfo | null;
+  owner?: OwnerInfo | null;
 }
 
-export default function ArrangementHeader({ arrangement, songTitle, artist, creator }: ArrangementHeaderProps) {
+export default function ArrangementHeader({ arrangement, songTitle, artist, creator, owner }: ArrangementHeaderProps) {
+  // Phase 2: Determine if this is a group-owned or Public arrangement
+  const isGroupOwned = owner?.type === 'group';
+  const isPublicGroup = isGroupOwned && owner?.name === 'Public';
+
+  // Render owner attribution based on ownership type
+  const renderOwnerAttribution = () => {
+    if (isPublicGroup) {
+      // Public group - show special badge
+      return (
+        <span className="inline-flex items-center gap-1 text-primary font-medium">
+          <Globe className="h-4 w-4" />
+          Public (Crowdsourced)
+        </span>
+      );
+    }
+
+    if (isGroupOwned && owner?.slug) {
+      // Group-owned - link to group page
+      return (
+        <>
+          {' · By '}
+          <Link
+            to={`/groups/${owner.slug}`}
+            className="inline-flex items-center gap-1 hover:text-foreground hover:underline transition-colors"
+          >
+            <Users className="h-4 w-4" />
+            {owner.name}
+          </Link>
+        </>
+      );
+    }
+
+    // User-owned or fallback - show creator
+    if (creator?.username) {
+      return (
+        <>
+          {' · Arranged by '}
+          <Link
+            to={`/user/${creator.username}`}
+            className="hover:text-foreground hover:underline transition-colors"
+          >
+            {getCreatorDisplayName(creator)}
+          </Link>
+        </>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="space-y-4">
       {/* Title and Artist */}
@@ -24,17 +84,7 @@ export default function ArrangementHeader({ arrangement, songTitle, artist, crea
         </h1>
         <p className="text-muted-foreground text-lg mt-1">
           {artist}
-          {creator?.username && (
-            <>
-              {' · Arranged by '}
-              <Link
-                to={`/user/${creator.username}`}
-                className="hover:text-foreground hover:underline transition-colors"
-              >
-                {getCreatorDisplayName(creator)}
-              </Link>
-            </>
-          )}
+          {renderOwnerAttribution()}
         </p>
       </div>
 

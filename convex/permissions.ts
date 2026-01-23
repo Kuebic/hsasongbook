@@ -231,8 +231,9 @@ export async function isArrangementCoAuthor(
  * Check if a user can edit an arrangement
  *
  * Phase 2 Logic:
- * 1. If ownerType='user': check owner or collaborator/co-author
- * 2. If ownerType='group':
+ * 1. Original creator (createdBy) can ALWAYS edit their arrangement
+ * 2. If ownerType='user': check owner or collaborator/co-author
+ * 3. If ownerType='group':
  *    - For Public group: any member can edit
  *    - For other groups: owner/admin can edit, members if co-author
  */
@@ -243,6 +244,9 @@ export async function canEditArrangement(
 ): Promise<boolean> {
   const arrangement = await ctx.db.get(arrangementId);
   if (!arrangement) return false;
+
+  // Original creator can always edit (even after transferring to Public)
+  if (arrangement.createdBy === userId) return true;
 
   // Group ownership (Phase 2)
   if (arrangement.ownerType === "group" && arrangement.ownerId) {
@@ -309,8 +313,9 @@ export async function isSongOwner(
  * Check if a user can edit a song
  *
  * Phase 2 Logic:
- * 1. If ownerType='user': only creator can edit
- * 2. If ownerType='group':
+ * 1. Original creator (createdBy) can ALWAYS edit their song
+ * 2. If ownerType='user': only creator can edit (covered by #1)
+ * 3. If ownerType='group':
  *    - For Public group: any member can edit
  *    - For other groups: owner/admin can edit
  */
@@ -321,6 +326,9 @@ export async function canEditSong(
 ): Promise<boolean> {
   const song = await ctx.db.get(songId);
   if (!song) return false;
+
+  // Original creator can always edit (even after transferring to Public)
+  if (song.createdBy === userId) return true;
 
   // Group ownership (Phase 2)
   if (song.ownerType === "group" && song.ownerId) {
@@ -337,8 +345,7 @@ export async function canEditSong(
     return await isGroupAdminOrOwner(ctx, groupId, userId);
   }
 
-  // User ownership: only creator can edit
-  return song.createdBy === userId;
+  return false;
 }
 
 // ============ UNIFIED CONTENT PERMISSION CHECK ============

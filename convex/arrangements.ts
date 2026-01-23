@@ -12,6 +12,9 @@ import {
   requireAuthenticatedUser,
   formatUserInfo,
   getPublicGroup,
+  isGroupAdminOrOwner,
+  isPublicGroup,
+  getContentOwnerInfo,
 } from "./permissions";
 import { hasContentChanged } from "./versions";
 
@@ -61,8 +64,10 @@ export const getBySlug = query({
 });
 
 /**
- * Get arrangement by URL slug WITH creator info
+ * Get arrangement by URL slug WITH creator info and owner info
  * Access: Everyone
+ *
+ * Phase 2: Also returns owner info for group ownership display
  */
 export const getBySlugWithCreator = query({
   args: { slug: v.string() },
@@ -78,9 +83,13 @@ export const getBySlugWithCreator = query({
       ? await ctx.db.get(arrangement.createdBy)
       : null;
 
+    // Phase 2: Get owner info for display
+    const owner = await getContentOwnerInfo(ctx, arrangement);
+
     return {
       ...arrangement,
       creator: formatUserInfo(creator),
+      owner,
     };
   },
 });
@@ -230,6 +239,11 @@ export const getFeaturedWithSongs = query({
 /**
  * Create a new arrangement
  * Access: Authenticated users only (not anonymous)
+ *
+ * Phase 2: Supports group ownership and co-authors
+ * - If ownerType='group', verify user is owner/admin of that group
+ * - Public group excluded (transfer only)
+ * - Creates arrangementAuthors records for co-authors
  */
 export const create = mutation({
   args: {
@@ -242,6 +256,18 @@ export const create = mutation({
     chordProContent: v.string(),
     slug: v.string(),
     tags: v.optional(v.array(v.string())),
+    // Phase 2: Group ownership
+    ownerType: v.optional(v.union(v.literal("user"), v.literal("group"))),
+    ownerId: v.optional(v.string()),
+    // Phase 2: Co-authors (for group-owned arrangements)
+    coAuthors: v.optional(
+      v.array(
+        v.object({
+          userId: v.id("users"),
+          isPrimary: v.boolean(),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const { userId } = await requireAuthenticatedUser(ctx);
@@ -261,6 +287,33 @@ export const create = mutation({
       throw new Error("An arrangement with this slug already exists");
     }
 
+    // Phase 2: Validate group ownership
+    let ownerType = args.ownerType;
+    let ownerId = args.ownerId;
+
+    if (ownerType === "group" && ownerId) {
+      // Prevent creating content directly owned by the Public group
+      const isPublic = await isPublicGroup(ctx, ownerId);
+      if (isPublic) {
+        throw new Error(
+          "Cannot create content directly owned by the Public group. Content must be transferred to Public."
+        );
+      }
+
+      // Verify user is owner/admin of the group
+      const groupId = ownerId as Id<"groups">;
+      const canPostAsGroup = await isGroupAdminOrOwner(ctx, groupId, userId);
+      if (!canPostAsGroup) {
+        throw new Error(
+          "You must be an owner or admin of the group to post on its behalf"
+        );
+      }
+    } else {
+      // Default to user ownership
+      ownerType = undefined;
+      ownerId = undefined;
+    }
+
     const arrangementId = await ctx.db.insert("arrangements", {
       songId: args.songId,
       name: args.name,
@@ -274,7 +327,45 @@ export const create = mutation({
       rating: 0,
       favorites: 0,
       tags: args.tags ?? [],
+      ownerType,
+      ownerId,
     });
+
+    // Phase 2: Create co-author records for group-owned arrangements
+    if (ownerType === "group" && args.coAuthors && args.coAuthors.length > 0) {
+      // Check if current user is in the coAuthors list
+      const currentUserIncluded = args.coAuthors.some(
+        (author) => author.userId === userId
+      );
+
+      // If not, add current user as primary author
+      if (!currentUserIncluded) {
+        await ctx.db.insert("arrangementAuthors", {
+          arrangementId,
+          userId,
+          isPrimary: true,
+          addedAt: Date.now(),
+        });
+      }
+
+      // Insert all specified co-authors
+      for (const author of args.coAuthors) {
+        await ctx.db.insert("arrangementAuthors", {
+          arrangementId,
+          userId: author.userId,
+          isPrimary: author.isPrimary,
+          addedAt: Date.now(),
+        });
+      }
+    } else if (ownerType === "group") {
+      // Group-owned with no co-authors specified: add current user as primary
+      await ctx.db.insert("arrangementAuthors", {
+        arrangementId,
+        userId,
+        isPrimary: true,
+        addedAt: Date.now(),
+      });
+    }
 
     return arrangementId;
   },
@@ -439,6 +530,39 @@ export const getCollaborators = query({
   },
 });
 
+/**
+ * Get co-authors for an arrangement (Phase 2)
+ * Returns list of co-authors with user info for display
+ * Access: Everyone (for display purposes)
+ */
+export const getCoAuthors = query({
+  args: { arrangementId: v.id("arrangements") },
+  handler: async (ctx, args) => {
+    const authors = await ctx.db
+      .query("arrangementAuthors")
+      .withIndex("by_arrangement", (q) => q.eq("arrangementId", args.arrangementId))
+      .collect();
+
+    if (authors.length === 0) {
+      return [];
+    }
+
+    // Join with user data
+    return Promise.all(
+      authors.map(async (author) => {
+        const user = await ctx.db.get(author.userId);
+        return {
+          _id: author._id,
+          userId: author.userId,
+          isPrimary: author.isPrimary,
+          addedAt: author.addedAt,
+          user: formatUserInfo(user),
+        };
+      })
+    );
+  },
+});
+
 // ============ COLLABORATOR MUTATIONS ============
 
 /**
@@ -525,6 +649,96 @@ export const removeCollaborator = mutation({
     }
 
     await ctx.db.delete(collaborator._id);
+
+    return { success: true };
+  },
+});
+
+/**
+ * Transfer an arrangement to the Public group (crowdsourced)
+ * Access: Original creator only
+ *
+ * This allows anyone to donate their arrangement to Public for community editing,
+ * even if they're not a member of the Public group.
+ * The original creator retains edit rights via createdBy.
+ */
+export const transferToPublic = mutation({
+  args: { id: v.id("arrangements") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const arrangement = await ctx.db.get(args.id);
+    if (!arrangement) {
+      throw new Error("Arrangement not found");
+    }
+
+    // Only original creator can transfer
+    if (arrangement.createdBy !== userId) {
+      throw new Error("Only the original creator can transfer this arrangement");
+    }
+
+    // Check if already public
+    const publicGroup = await getPublicGroup(ctx);
+    if (!publicGroup) {
+      throw new Error("Public group not found");
+    }
+
+    if (
+      arrangement.ownerType === "group" &&
+      arrangement.ownerId === publicGroup._id.toString()
+    ) {
+      throw new Error("Arrangement is already owned by Public");
+    }
+
+    // Transfer to Public
+    await ctx.db.patch(args.id, {
+      ownerType: "group",
+      ownerId: publicGroup._id.toString(),
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Reclaim an arrangement from the Public group back to personal ownership
+ * Access: Original creator only
+ *
+ * Allows the person who originally created and transferred the arrangement
+ * to take it back under their personal ownership.
+ */
+export const reclaimFromPublic = mutation({
+  args: { id: v.id("arrangements") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const arrangement = await ctx.db.get(args.id);
+    if (!arrangement) {
+      throw new Error("Arrangement not found");
+    }
+
+    // Only original creator can reclaim
+    if (arrangement.createdBy !== userId) {
+      throw new Error("Only the original creator can reclaim this arrangement");
+    }
+
+    // Check if currently public
+    const publicGroup = await getPublicGroup(ctx);
+    if (
+      !publicGroup ||
+      arrangement.ownerType !== "group" ||
+      arrangement.ownerId !== publicGroup._id.toString()
+    ) {
+      throw new Error("Arrangement is not currently owned by Public");
+    }
+
+    // Reclaim to personal ownership
+    await ctx.db.patch(args.id, {
+      ownerType: undefined,
+      ownerId: undefined,
+      updatedAt: Date.now(),
+    });
 
     return { success: true };
   },

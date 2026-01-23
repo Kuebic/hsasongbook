@@ -4,11 +4,14 @@ import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { useArrangementData } from '../hooks/useArrangementData';
 import { useArrangementPermissions } from '../hooks/useArrangementPermissions';
+import { useArrangementCoAuthors } from '../hooks/useArrangementCoAuthors';
 import ChordProViewer from '@/features/chordpro';
 import ArrangementSwitcher from '../components/ArrangementSwitcher';
 import ArrangementHeader from '../components/ArrangementHeader';
 import ArrangementMetadataForm from '../components/ArrangementMetadataForm';
 import CollaboratorsDialog from '../components/CollaboratorsDialog';
+import CoAuthorsList from '../components/CoAuthorsList';
+import { ArrangementOwnershipActions } from '../components/ArrangementOwnershipActions';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
 import { PageSpinner } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
@@ -27,6 +30,7 @@ export function ArrangementPage() {
   const { breadcrumbs } = useNavigation();
   const [isEditMode, setIsEditMode] = useState(false);
   const [showCollaboratorsDialog, setShowCollaboratorsDialog] = useState(false);
+  const [showChords, setShowChords] = useState(true);
 
   // Use Convex hook to load arrangement data (uses URL slug automatically)
   const {
@@ -49,10 +53,26 @@ export function ArrangementPage() {
     arrangementSlug ? { slug: arrangementSlug } : 'skip'
   );
 
-  // Extract creator from the combined query result
+  // Extract creator and owner from the combined query result
   const creator = useMemo(() => {
     return arrangementWithCreator?.creator ?? null;
   }, [arrangementWithCreator]);
+
+  // Phase 2: Extract owner info from query result
+  const owner = useMemo(() => {
+    return arrangementWithCreator?.owner ?? null;
+  }, [arrangementWithCreator]);
+
+  // Check if arrangement is owned by Public group
+  const isPublicOwned =
+    arrangementWithCreator?.ownerType === 'group' &&
+    owner?.type === 'group' &&
+    owner?.name === 'Public';
+
+  // Phase 2: Fetch co-authors for group-owned arrangements
+  const { coAuthors, loading: coAuthorsLoading } = useArrangementCoAuthors(
+    arrangement?.id ?? null
+  );
 
   // Auto-enable edit mode when arrangement has no content AND user can edit
   useEffect(() => {
@@ -100,6 +120,13 @@ export function ArrangementPage() {
             <Breadcrumbs items={breadcrumbs} />
 
             <div className="flex gap-2 items-center">
+              {/* Ownership transfer/reclaim (only for original creator) */}
+              <ArrangementOwnershipActions
+                arrangementId={arrangement?.id ?? ''}
+                isOwner={isOwner}
+                isPublicOwned={isPublicOwned}
+              />
+
               {/* Collaborators Button (owner only) */}
               {isOwner && (
                 <Button
@@ -139,8 +166,16 @@ export function ArrangementPage() {
             songTitle={song.title}
             artist={song.artist}
             creator={creator}
+            owner={owner}
           />
         </div>
+
+        {/* Phase 2: Co-authors list (for group-owned arrangements) */}
+        {coAuthors.length > 0 && (
+          <div className="mb-6 no-print">
+            <CoAuthorsList coAuthors={coAuthors} />
+          </div>
+        )}
 
         {/* Metadata Form - Only show in edit mode when user can edit */}
         {isEditMode && canEdit && (

@@ -149,7 +149,18 @@ export const getUserGroups = query({
     return Promise.all(
       memberships.map(async (membership) => {
         const group = await ctx.db.get(membership.groupId);
-        return group ? { ...group, role: membership.role } : null;
+        if (!group) return null;
+        // Include all group fields plus membership info
+        return {
+          _id: group._id,
+          name: group.name,
+          slug: group.slug,
+          description: group.description,
+          avatarKey: group.avatarKey,
+          joinPolicy: group.joinPolicy,
+          isSystemGroup: group.isSystemGroup,
+          role: membership.role,
+        };
       })
     ).then((groups) => groups.filter((g) => g !== null));
   },
