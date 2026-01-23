@@ -16,7 +16,7 @@ import {
   isCommunityGroup,
   getContentOwnerInfo,
 } from "./permissions";
-import { hasContentChanged } from "./versions";
+import { maybeCreateVersionSnapshot } from "./versions";
 
 // ============ HELPER FUNCTIONS ============
 
@@ -400,40 +400,13 @@ export const update = mutation({
       throw new Error("You don't have permission to edit this arrangement");
     }
 
-    // Smart version creation for Community-owned arrangements (only if changed)
-    const communityGroup = await getCommunityGroup(ctx);
-    const isCommunityOwned =
-      arrangement.ownerType === "group" &&
-      arrangement.ownerId === communityGroup?._id.toString();
-
-    if (isCommunityOwned) {
-      // Create snapshot of current state before update
-      const snapshot = JSON.stringify({
-        name: arrangement.name,
-        key: arrangement.key,
-        tempo: arrangement.tempo,
-        capo: arrangement.capo,
-        timeSignature: arrangement.timeSignature,
-        chordProContent: arrangement.chordProContent,
-        tags: arrangement.tags,
-      });
-
-      // Only create version if content actually changed
-      const hasChanged = await hasContentChanged(
-        ctx,
-        "arrangement",
-        args.id,
-        snapshot
-      );
-      if (hasChanged) {
-        await ctx.runMutation(internal.versions.createVersion, {
-          contentType: "arrangement",
-          contentId: args.id,
-          snapshot,
-          changedBy: userId,
-        });
-      }
-    }
+    // Create version snapshot for Community-owned arrangements (if changed)
+    await maybeCreateVersionSnapshot(
+      ctx,
+      "arrangement",
+      { ...arrangement, _id: args.id },
+      userId
+    );
 
     const { id: _id, ...updates } = args;
 

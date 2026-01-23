@@ -71,6 +71,7 @@ export interface OwnerInfo {
   name: string;
   slug?: string;
   avatarKey?: string;
+  isSystemGroup?: boolean;
 }
 
 /**

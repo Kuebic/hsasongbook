@@ -273,9 +273,6 @@ export async function canEditArrangement(
   }
 
   // User ownership (Phase 1 logic)
-  // Check ownership first (most common case)
-  if (arrangement.createdBy === userId) return true;
-
   // Check collaborator status
   if (await isArrangementCollaborator(ctx, arrangementId, userId)) return true;
 

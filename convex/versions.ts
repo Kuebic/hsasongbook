@@ -104,11 +104,81 @@ async function getNextVersion(
 }
 
 /**
+ * Create a version snapshot for Community-owned content if it has changed.
+ * This is the centralized helper for version creation in update mutations.
+ *
+ * @param ctx - Mutation context
+ * @param contentType - "song" or "arrangement"
+ * @param content - The current content object (before update)
+ * @param userId - The user making the change
+ */
+export async function maybeCreateVersionSnapshot(
+  ctx: MutationCtx,
+  contentType: "song" | "arrangement",
+  content: {
+    _id: string;
+    ownerType?: "user" | "group";
+    ownerId?: string;
+    // Song fields
+    title?: string;
+    artist?: string;
+    themes?: string[];
+    copyright?: string;
+    lyrics?: string;
+    // Arrangement fields
+    name?: string;
+    key?: string;
+    tempo?: number;
+    capo?: number;
+    timeSignature?: string;
+    chordProContent?: string;
+    tags?: string[];
+  },
+  userId: Id<"users">
+): Promise<void> {
+  // Check if Community-owned
+  const isCommunity = await isCommunityGroupOwned(ctx, contentType, content._id);
+  if (!isCommunity) return;
+
+  // Create snapshot based on content type
+  const snapshot =
+    contentType === "song"
+      ? JSON.stringify({
+          title: content.title,
+          artist: content.artist,
+          themes: content.themes,
+          copyright: content.copyright,
+          lyrics: content.lyrics,
+        })
+      : JSON.stringify({
+          name: content.name,
+          key: content.key,
+          tempo: content.tempo,
+          capo: content.capo,
+          timeSignature: content.timeSignature,
+          chordProContent: content.chordProContent,
+          tags: content.tags,
+        });
+
+  // Only create version if content changed
+  const changed = await hasContentChanged(ctx, contentType, content._id, snapshot);
+  if (changed) {
+    await ctx.db.insert("contentVersions", {
+      contentType,
+      contentId: content._id,
+      version: await getNextVersion(ctx, contentType, content._id),
+      snapshot,
+      changedBy: userId,
+      changedAt: Date.now(),
+    });
+  }
+}
+
+/**
  * Check if content has actually changed since the last version.
  * Returns true if a new version should be created.
- * Exported for use in arrangements.ts and songs.ts
  */
-export async function hasContentChanged(
+async function hasContentChanged(
   ctx: MutationCtx,
   contentType: "song" | "arrangement",
   contentId: string,

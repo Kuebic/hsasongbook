@@ -2,16 +2,7 @@ import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Clock, Music, Guitar, Hash, Users, Globe } from 'lucide-react'
 import { getCreatorDisplayName } from '../../shared/utils/userDisplay'
-import type { Arrangement, CreatorInfo } from '@/types'
-
-// Phase 2: Owner info type for group ownership display
-export interface OwnerInfo {
-  type: 'user' | 'group';
-  id: string;
-  name: string;
-  slug?: string;
-  avatarKey?: string;
-}
+import type { Arrangement, CreatorInfo, OwnerInfo } from '@/types'
 
 interface ArrangementHeaderProps {
   arrangement: Arrangement;

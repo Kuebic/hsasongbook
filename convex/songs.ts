@@ -14,7 +14,7 @@ import {
   isCommunityGroup,
 } from "./permissions";
 import { Id } from "./_generated/dataModel";
-import { hasContentChanged } from "./versions";
+import { maybeCreateVersionSnapshot } from "./versions";
 
 // ============ QUERIES ============
 
@@ -225,33 +225,8 @@ export const update = mutation({
       throw new Error("You don't have permission to edit this song");
     }
 
-    // Smart version creation for Community-owned songs (only if changed)
-    const communityGroup = await getCommunityGroup(ctx);
-    const isCommunityOwned =
-      song.ownerType === "group" &&
-      song.ownerId === communityGroup?._id.toString();
-
-    if (isCommunityOwned) {
-      // Create snapshot of current state before update
-      const snapshot = JSON.stringify({
-        title: song.title,
-        artist: song.artist,
-        themes: song.themes,
-        copyright: song.copyright,
-        lyrics: song.lyrics,
-      });
-
-      // Only create version if content actually changed
-      const hasChanged = await hasContentChanged(ctx, "song", args.id, snapshot);
-      if (hasChanged) {
-        await ctx.runMutation(internal.versions.createVersion, {
-          contentType: "song",
-          contentId: args.id,
-          snapshot,
-          changedBy: userId,
-        });
-      }
-    }
+    // Create version snapshot for Community-owned songs (if changed)
+    await maybeCreateVersionSnapshot(ctx, "song", { ...song, _id: args.id }, userId);
 
     // Patch song with updated timestamp
     const { id: _id, ...updates } = args;
