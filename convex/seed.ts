@@ -1,7 +1,7 @@
 import { mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { nanoid } from "nanoid";
-import { generateSlug } from "./permissions";
+import { slugify } from "./permissions";
 
 /**
  * Seed song data
@@ -573,7 +573,7 @@ export const seedDatabase = mutation({
         themes: song.themes,
         copyright: song.copyright,
         lyrics: song.lyrics,
-        slug: generateSlug(song.title),
+        slug: slugify(song.title),
         createdBy: systemUserId,
       });
       songIdMap.set(song.title, songId);

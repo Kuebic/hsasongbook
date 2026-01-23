@@ -27,7 +27,8 @@ import { useAuthActions } from '../hooks/useAuth';
 import { signUpSchema } from '../validation/authSchemas';
 import { AlertCircle, Check, X, Loader2 } from 'lucide-react';
 import { api } from '../../../../convex/_generated/api';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useDebounce } from '@/features/shared/hooks/useDebounce';
+import { extractErrorMessage } from '@/lib/utils';
 
 // Infer TypeScript type from Zod schema
 type SignUpFormData = z.infer<typeof signUpSchema>;
@@ -130,12 +131,7 @@ export default function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
     } catch (error) {
       // Clear pending username on error
       localStorage.removeItem('pendingUsername');
-      // Display error message
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'An unexpected error occurred. Please try again.';
-      setSubmitError(errorMessage);
+      setSubmitError(extractErrorMessage(error));
       setIsSubmitting(false);
     }
   };

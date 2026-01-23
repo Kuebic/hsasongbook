@@ -18,6 +18,8 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle } from 'lucide-react';
 import { addSongSchema, type AddSongFormData } from '../validation/songSchemas';
 import { generateSlug } from '@/features/shared/utils/slugGenerator';
+import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
+import { extractErrorMessage } from '@/lib/utils';
 
 interface AddSongFormProps {
   onSuccess?: () => void;
@@ -63,10 +65,7 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
 
       // Parse themes from comma-separated string
       const themesInput = (document.getElementById('themes') as HTMLInputElement)?.value || '';
-      const themes = themesInput
-        .split(',')
-        .map((t) => t.trim().toLowerCase())
-        .filter((t) => t.length > 0);
+      const themes = parseCommaSeparatedTags(themesInput);
 
       // Generate slug from title
       const slug = generateSlug(data.title, 'song');
@@ -85,11 +84,7 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
       onSuccess?.();
       navigate(`/song/${slug}`);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'An unexpected error occurred. Please try again.';
-      setSubmitError(errorMessage);
+      setSubmitError(extractErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

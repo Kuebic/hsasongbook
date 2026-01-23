@@ -25,6 +25,8 @@ import {
   type AddArrangementFormData,
 } from '../validation/arrangementSchemas';
 import type { Id } from '../../../../convex/_generated/dataModel';
+import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
+import { extractErrorMessage } from '@/lib/utils';
 
 interface AddArrangementFormProps {
   songId: string;
@@ -83,10 +85,7 @@ export default function AddArrangementForm({
       // Parse tags from comma-separated string
       const tagsInput =
         (document.getElementById('arrangement-tags') as HTMLInputElement)?.value || '';
-      const tags = tagsInput
-        .split(',')
-        .map((t) => t.trim().toLowerCase())
-        .filter((t) => t.length > 0);
+      const tags = parseCommaSeparatedTags(tagsInput);
 
       // Generate random 6-char slug for arrangements
       const slug = nanoid(6);
@@ -110,11 +109,7 @@ export default function AddArrangementForm({
       onSuccess?.();
       navigate(`/song/${songSlug}/${slug}`);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'An unexpected error occurred. Please try again.';
-      setSubmitError(errorMessage);
+      setSubmitError(extractErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

@@ -59,6 +59,18 @@ export function useDebouncedValue<T>(
 }
 
 /**
+ * Simple debounce hook with direct delay parameter.
+ * Alias for useDebouncedValue with simpler API.
+ *
+ * @param value - The value to debounce
+ * @param delay - Delay in milliseconds
+ * @returns The debounced value
+ */
+export function useDebounce<T>(value: T, delay: number): T {
+  return useDebouncedValue(value, { delay });
+}
+
+/**
  * Default export for convenient importing
  */
 export default useDebouncedValue;

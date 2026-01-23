@@ -59,8 +59,11 @@ export async function requireAuthenticatedUser(
  * Generate a URL-friendly slug from text.
  * Converts to lowercase, replaces non-alphanumeric chars with hyphens,
  * trims leading/trailing hyphens, and optionally limits length.
+ *
+ * Note: This is for simple slugification (e.g., group names).
+ * For songs/arrangements with nanoid suffixes, use slugGenerator.ts in frontend.
  */
-export function generateSlug(text: string, maxLength = 50): string {
+export function slugify(text: string, maxLength = 50): string {
   return text
     .toLowerCase()
     .trim()

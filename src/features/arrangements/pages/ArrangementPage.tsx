@@ -25,7 +25,6 @@ export function ArrangementPage() {
   const navigate = useNavigate();
   const { arrangementSlug } = useParams();
   const { breadcrumbs } = useNavigation();
-  const [showChords] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showCollaboratorsDialog, setShowCollaboratorsDialog] = useState(false);
 

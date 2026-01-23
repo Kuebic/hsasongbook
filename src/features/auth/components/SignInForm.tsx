@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { useAuthActions } from '../hooks/useAuth';
 import { signInSchema } from '../validation/authSchemas';
 import { AlertCircle } from 'lucide-react';
+import { extractErrorMessage } from '@/lib/utils';
 
 // Infer TypeScript type from Zod schema
 type SignInFormData = z.infer<typeof signInSchema>;
@@ -71,12 +72,7 @@ export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
       // See POST_MVP_ROADMAP.md "Convex Auth Sign-in State Race Condition"
       location.reload();
     } catch (error) {
-      // Display error message
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'An unexpected error occurred. Please try again.';
-      setSubmitError(errorMessage);
+      setSubmitError(extractErrorMessage(error));
       setIsSubmitting(false);
     }
   };

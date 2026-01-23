@@ -37,6 +37,8 @@ export default defineSchema({
     // Ownership (Phase 2) - defaults to user ownership
     ownerType: v.optional(v.union(v.literal("user"), v.literal("group"))),
     ownerId: v.optional(v.string()), // userId or groupId as string
+    // Track edits
+    updatedAt: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
     .index("by_title", ["title"])

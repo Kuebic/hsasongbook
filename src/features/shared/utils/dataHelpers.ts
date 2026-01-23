@@ -3,6 +3,21 @@ import type { Arrangement } from '@/types/Arrangement.types';
 import songsData from '../data/songs.json';
 import arrangementsData from '../data/arrangements.json';
 
+/**
+ * Parse a comma-separated string into an array of trimmed, lowercase tags.
+ * Filters out empty strings.
+ *
+ * @example
+ * parseCommaSeparatedTags('Worship, Praise, hymn')
+ * // => ['worship', 'praise', 'hymn']
+ */
+export function parseCommaSeparatedTags(input: string): string[] {
+  return input
+    .split(',')
+    .map((t) => t.trim().toLowerCase())
+    .filter((t) => t.length > 0);
+}
+
 // Cache the data for performance
 interface DataCache {
   songs: Song[] | null;

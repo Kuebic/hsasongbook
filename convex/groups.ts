@@ -3,7 +3,7 @@ import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import {
   filterUndefined,
-  generateSlug,
+  slugify,
   getGroupMembership,
   requireAuth,
   requireAuthenticatedUser,
@@ -249,7 +249,7 @@ export const create = mutation({
     const { userId } = await requireAuthenticatedUser(ctx);
 
     // Generate slug and ensure uniqueness
-    let slug = generateSlug(args.name);
+    let slug = slugify(args.name);
     let existing = await ctx.db
       .query("groups")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
@@ -257,7 +257,7 @@ export const create = mutation({
 
     let counter = 1;
     while (existing) {
-      slug = `${generateSlug(args.name)}-${counter}`;
+      slug = `${slugify(args.name)}-${counter}`;
       existing = await ctx.db
         .query("groups")
         .withIndex("by_slug", (q) => q.eq("slug", slug))

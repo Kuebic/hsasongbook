@@ -15,6 +15,8 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import type { Id } from '../../../../convex/_generated/dataModel';
+import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
+import { extractErrorMessage } from '@/lib/utils';
 
 // Edit form schema (all fields optional since partial updates allowed)
 const editSongSchema = z.object({
@@ -85,10 +87,7 @@ export default function SongEditForm({
 
       // Parse themes from comma-separated string
       const themes = data.themes
-        ? data.themes
-            .split(',')
-            .map((t) => t.trim().toLowerCase())
-            .filter((t) => t.length > 0)
+        ? parseCommaSeparatedTags(data.themes)
         : undefined;
 
       // Update song via Convex mutation
@@ -103,11 +102,7 @@ export default function SongEditForm({
 
       onSuccess?.();
     } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'An unexpected error occurred. Please try again.';
-      setSubmitError(errorMessage);
+      setSubmitError(extractErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

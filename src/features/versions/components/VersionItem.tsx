@@ -8,6 +8,7 @@ import UserAvatar from '@/components/UserAvatar';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
 import type { Id } from '../../../../convex/_generated/dataModel';
+import { getDisplayName } from '@/features/shared/utils/userDisplay';
 
 interface VersionItemProps {
   version: {
@@ -35,10 +36,7 @@ export default function VersionItem({
     addSuffix: true,
   });
 
-  const displayName =
-    version.changedByUser?.displayName ||
-    version.changedByUser?.username ||
-    'Unknown';
+  const displayName = getDisplayName(version.changedByUser, { prefixUsername: false });
 
   return (
     <div className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50 transition-colors">

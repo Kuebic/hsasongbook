@@ -27,7 +27,7 @@ import SignInModal from '@/features/auth/components/SignInModal';
 import ProfilePictureUpload from '@/features/auth/components/ProfilePictureUpload';
 import { api } from '../../../../convex/_generated/api';
 import type { Id } from '../../../../convex/_generated/dataModel';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useDebounce } from '@/features/shared/hooks/useDebounce';
 import { formatDateString } from '../../shared/utils/dateFormatter';
 
 export default function AccountSection() {

@@ -18,6 +18,7 @@ import { useVersionHistory } from '../hooks/useVersionHistory';
 import { useIsPublicGroupModerator } from '../hooks/useIsPublicGroupModerator';
 import VersionHistoryList from './VersionHistoryList';
 import RollbackConfirmDialog from './RollbackConfirmDialog';
+import { getDisplayName } from '@/features/shared/utils/userDisplay';
 
 type ContentType = 'song' | 'arrangement';
 
@@ -71,10 +72,7 @@ export default function VersionHistoryPanel({
       setRollbackTarget({
         version: targetVersion.version,
         changedAt: targetVersion.changedAt,
-        changedByUser:
-          targetVersion.changedByUser?.displayName ||
-          targetVersion.changedByUser?.username ||
-          'Unknown',
+        changedByUser: getDisplayName(targetVersion.changedByUser, { prefixUsername: false }),
       });
     }
   };

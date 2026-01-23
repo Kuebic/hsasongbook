@@ -203,9 +203,13 @@ export const update = mutation({
       }
     }
 
-    // Patch song
+    // Patch song with updated timestamp
     const { id: _id, ...updates } = args;
-    await ctx.db.patch(args.id, filterUndefined(updates));
+    const cleanUpdates = {
+      ...filterUndefined(updates),
+      updatedAt: Date.now(),
+    };
+    await ctx.db.patch(args.id, cleanUpdates);
 
     return args.id;
   },
