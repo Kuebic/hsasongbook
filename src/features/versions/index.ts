@@ -5,7 +5,7 @@
 
 // Hooks
 export { useVersionHistory } from './hooks/useVersionHistory';
-export { useIsCommunityGroupModerator } from './hooks/useIsCommunityGroupModerator';
+export { useIsCommunityGroupModerator, useCanAccessVersionHistory } from './hooks/useIsCommunityGroupModerator';
 
 // Components
 export { default as VersionHistoryPanel } from './components/VersionHistoryPanel';

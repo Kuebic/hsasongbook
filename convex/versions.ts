@@ -50,6 +50,43 @@ async function isCommunityGroupOwned(
 }
 
 /**
+ * Check if user is the original creator of the content
+ */
+async function isOriginalCreator(
+  ctx: QueryCtx | MutationCtx,
+  contentType: "song" | "arrangement",
+  contentId: string,
+  userId: Id<"users">
+): Promise<boolean> {
+  if (contentType === "song") {
+    const song = await ctx.db.get(contentId as Id<"songs">);
+    return song?.createdBy === userId;
+  } else {
+    const arrangement = await ctx.db.get(contentId as Id<"arrangements">);
+    return arrangement?.createdBy === userId;
+  }
+}
+
+/**
+ * Check if user can access version history for content
+ * (either Community group moderator OR original creator)
+ */
+async function canAccessVersionHistory(
+  ctx: QueryCtx | MutationCtx,
+  contentType: "song" | "arrangement",
+  contentId: string,
+  userId: Id<"users">
+): Promise<boolean> {
+  // Community group moderators can access all community content
+  const isModerator = await isCommunityGroupModerator(ctx, userId);
+  if (isModerator) return true;
+
+  // Original creators can access their own content's version history
+  const isCreator = await isOriginalCreator(ctx, contentType, contentId, userId);
+  return isCreator;
+}
+
+/**
  * Get the next version number for content
  */
 async function getNextVersion(
@@ -114,7 +151,34 @@ export const isCurrentUserCommunityModerator = query({
 });
 
 /**
- * Get version history for content (Community group admin/owner only)
+ * Check if current user can access version history for specific content
+ * Returns true if user is Community group moderator OR original content creator
+ * Used by frontend to conditionally show version history UI
+ */
+export const canCurrentUserAccessVersionHistory = query({
+  args: {
+    contentType: v.union(v.literal("song"), v.literal("arrangement")),
+    contentId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return false;
+
+    // Must be community-owned content
+    const isCommunityOwned = await isCommunityGroupOwned(
+      ctx,
+      args.contentType,
+      args.contentId
+    );
+    if (!isCommunityOwned) return false;
+
+    return await canAccessVersionHistory(ctx, args.contentType, args.contentId, userId);
+  },
+});
+
+/**
+ * Get version history for content
+ * Access: Community group moderators OR original content creator
  */
 export const getHistory = query({
   args: {
@@ -126,10 +190,6 @@ export const getHistory = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    // Only Community group admins/owners can view version history
-    const isModerator = await isCommunityGroupModerator(ctx, userId);
-    if (!isModerator) return [];
-
     // Only show history for Community-owned content
     const isCommunityOwned = await isCommunityGroupOwned(
       ctx,
@@ -137,6 +197,15 @@ export const getHistory = query({
       args.contentId
     );
     if (!isCommunityOwned) return [];
+
+    // Check if user can access version history (moderator or original creator)
+    const canAccess = await canAccessVersionHistory(
+      ctx,
+      args.contentType,
+      args.contentId,
+      userId
+    );
+    if (!canAccess) return [];
 
     const versions = await ctx.db
       .query("contentVersions")
@@ -164,7 +233,8 @@ export const getHistory = query({
 });
 
 /**
- * Get a specific version (Community group admin/owner only)
+ * Get a specific version
+ * Access: Community group moderators OR original content creator
  */
 export const getVersion = query({
   args: {
@@ -176,10 +246,6 @@ export const getVersion = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
 
-    // Only Community group admins/owners can view versions
-    const isModerator = await isCommunityGroupModerator(ctx, userId);
-    if (!isModerator) return null;
-
     // Only show for Community-owned content
     const isCommunityOwned = await isCommunityGroupOwned(
       ctx,
@@ -187,6 +253,15 @@ export const getVersion = query({
       args.contentId
     );
     if (!isCommunityOwned) return null;
+
+    // Check if user can access version history (moderator or original creator)
+    const canAccess = await canAccessVersionHistory(
+      ctx,
+      args.contentType,
+      args.contentId,
+      userId
+    );
+    if (!canAccess) return null;
 
     const version = await ctx.db
       .query("contentVersions")
@@ -239,7 +314,8 @@ export const createVersion = internalMutation({
 });
 
 /**
- * Rollback to a specific version (Community group admin/owner only)
+ * Rollback to a specific version
+ * Access: Community group moderators OR original content creator
  */
 export const rollback = mutation({
   args: {
@@ -250,12 +326,6 @@ export const rollback = mutation({
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
 
-    // Only Community group admins/owners can rollback
-    const isModerator = await isCommunityGroupModerator(ctx, userId);
-    if (!isModerator) {
-      throw new Error("Only Community group moderators can rollback versions");
-    }
-
     // Only for Community-owned content
     const isCommunityOwned = await isCommunityGroupOwned(
       ctx,
@@ -264,6 +334,17 @@ export const rollback = mutation({
     );
     if (!isCommunityOwned) {
       throw new Error("Can only rollback Community group content");
+    }
+
+    // Check if user can access version history (moderator or original creator)
+    const canAccess = await canAccessVersionHistory(
+      ctx,
+      args.contentType,
+      args.contentId,
+      userId
+    );
+    if (!canAccess) {
+      throw new Error("Only Community group moderators or original creators can rollback versions");
     }
 
     // Get the target version

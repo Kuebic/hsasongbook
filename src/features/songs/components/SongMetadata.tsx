@@ -14,8 +14,8 @@ export default function SongMetadata({ song, owner }: SongMetadataProps) {
 
   const hasLyrics = song.lyrics?.en || song.lyrics;
 
-  // Check if owner is the Community system group (name === "Community")
-  const isCommunityGroup = owner?.type === 'group' && owner.name === 'Community';
+  // Check if owner is the Community system group
+  const isCommunityGroup = owner?.type === 'group' && owner.isSystemGroup === true;
 
   // Render owner attribution
   const renderOwnerAttribution = () => {

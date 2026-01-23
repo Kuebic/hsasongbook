@@ -13,3 +13,23 @@ export function useIsCommunityGroupModerator() {
     loading: isModerator === undefined,
   };
 }
+
+/**
+ * Hook to check if the current user can access version history for specific content.
+ * Returns true if user is Community group moderator OR original content creator.
+ * Used to conditionally show version history UI.
+ */
+export function useCanAccessVersionHistory(
+  contentType: 'song' | 'arrangement',
+  contentId: string | null
+) {
+  const canAccess = useQuery(
+    api.versions.canCurrentUserAccessVersionHistory,
+    contentId ? { contentType, contentId } : 'skip'
+  );
+
+  return {
+    canAccess: canAccess ?? false,
+    loading: canAccess === undefined,
+  };
+}

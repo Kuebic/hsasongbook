@@ -696,6 +696,25 @@ export const transferToCommunity = mutation({
       throw new Error("Arrangement is already owned by Community");
     }
 
+    // Create initial version snapshot before transferring
+    const snapshot = JSON.stringify({
+      name: arrangement.name,
+      key: arrangement.key,
+      tempo: arrangement.tempo,
+      capo: arrangement.capo,
+      timeSignature: arrangement.timeSignature,
+      chordProContent: arrangement.chordProContent,
+      tags: arrangement.tags,
+    });
+
+    await ctx.runMutation(internal.versions.createVersion, {
+      contentType: "arrangement",
+      contentId: args.id.toString(),
+      snapshot,
+      changedBy: userId,
+      changeDescription: "Original version (before community transfer)",
+    });
+
     // Transfer to Community
     await ctx.db.patch(args.id, {
       ownerType: "group",

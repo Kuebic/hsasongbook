@@ -40,11 +40,11 @@ export function SongPage() {
     convexSong?._id ?? null
   );
 
-  // Check if song is owned by Community group
+  // Check if song is owned by Community group (system group)
   const isCommunityOwned =
     convexSong?.ownerType === 'group' &&
     convexSong?.owner?.type === 'group' &&
-    convexSong?.owner?.name === 'Community';
+    convexSong?.owner?.isSystemGroup === true;
 
   // Get arrangements for this song (with creator info)
   const convexArrangements = useQuery(

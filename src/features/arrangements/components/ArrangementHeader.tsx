@@ -24,7 +24,7 @@ interface ArrangementHeaderProps {
 export default function ArrangementHeader({ arrangement, songTitle, artist, creator, owner }: ArrangementHeaderProps) {
   // Phase 2: Determine if this is a group-owned or Community arrangement
   const isGroupOwned = owner?.type === 'group';
-  const isCommunityGroup = isGroupOwned && owner?.name === 'Community';
+  const isCommunityGroup = isGroupOwned && owner?.isSystemGroup === true;
 
   // Render owner attribution based on ownership type
   const renderOwnerAttribution = () => {

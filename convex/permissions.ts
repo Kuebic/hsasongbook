@@ -385,6 +385,7 @@ export async function getContentOwnerInfo(
   name: string;
   slug?: string;
   avatarKey?: string;
+  isSystemGroup?: boolean;
 }> {
   if (content.ownerType === "group" && content.ownerId) {
     const group = await ctx.db.get(content.ownerId as Id<"groups">);
@@ -395,6 +396,7 @@ export async function getContentOwnerInfo(
         name: group.name,
         slug: group.slug,
         avatarKey: group.avatarKey,
+        isSystemGroup: group.isSystemGroup,
       };
     }
   }

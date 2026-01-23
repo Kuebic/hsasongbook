@@ -63,11 +63,11 @@ export function ArrangementPage() {
     return arrangementWithCreator?.owner ?? null;
   }, [arrangementWithCreator]);
 
-  // Check if arrangement is owned by Community group
+  // Check if arrangement is owned by Community group (system group)
   const isCommunityOwned =
     arrangementWithCreator?.ownerType === 'group' &&
     owner?.type === 'group' &&
-    owner?.name === 'Community';
+    owner?.isSystemGroup === true;
 
   // Phase 2: Fetch co-authors for group-owned arrangements
   const { coAuthors, loading: coAuthorsLoading } = useArrangementCoAuthors(
