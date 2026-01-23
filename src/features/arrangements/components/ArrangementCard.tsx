@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Music, Clock, Guitar, Hash, PlayCircle } from 'lucide-react'
+import { Music, Clock, Guitar, Hash, PlayCircle, Users } from 'lucide-react'
 import RatingDisplay from '../../shared/components/RatingDisplay'
 import PopularityDisplay from '../../shared/components/PopularityDisplay'
 import { getCreatorDisplayName } from '../../shared/utils/userDisplay'
@@ -24,6 +24,11 @@ function ArrangementCard({ arrangement, songSlug }: ArrangementCardProps) {
   const resolvedSongSlug = hasEmbeddedSong ? arrangement.song.slug : songSlug;
   const resolvedSongTitle = hasEmbeddedSong ? arrangement.song.title : undefined;
 
+  // Determine owner display (Phase 2: Groups)
+  const isGroupOwned = arrangement.owner?.type === 'group';
+  const ownerName = arrangement.owner?.name;
+  const ownerSlug = arrangement.owner?.slug;
+
   const handleViewArrangement = (): void => {
     if (!resolvedSongSlug) {
       console.error('ArrangementCard: Missing song slug for arrangement', arrangement.id);
@@ -31,6 +36,38 @@ function ArrangementCard({ arrangement, songSlug }: ArrangementCardProps) {
     }
     navigate(`/song/${resolvedSongSlug}/${arrangement.slug}`)
   }
+
+  // Render the "by" attribution
+  const renderAttribution = () => {
+    // If group-owned, show group name
+    if (isGroupOwned && ownerName) {
+      return (
+        <Link
+          to={ownerSlug ? `/groups/${ownerSlug}` : '#'}
+          className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors mt-1 inline-flex items-center gap-1"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Users className="h-3 w-3" />
+          By {ownerName}
+        </Link>
+      );
+    }
+
+    // Default: show creator username
+    if (arrangement.creator?.username) {
+      return (
+        <Link
+          to={`/user/${arrangement.creator.username}`}
+          className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors mt-1 inline-block"
+          onClick={(e) => e.stopPropagation()}
+        >
+          by {getCreatorDisplayName(arrangement.creator)}
+        </Link>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <Card className="h-full flex flex-col hover:shadow-lg transition-all duration-200 hover:scale-[1.01] hover:-translate-y-1 group">
@@ -46,15 +83,7 @@ function ArrangementCard({ arrangement, songSlug }: ArrangementCardProps) {
             <span>{arrangement.name}</span>
           )}
         </CardTitle>
-        {arrangement.creator?.username && (
-          <Link
-            to={`/user/${arrangement.creator.username}`}
-            className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors mt-1 inline-block"
-            onClick={(e) => e.stopPropagation()}
-          >
-            by {getCreatorDisplayName(arrangement.creator)}
-          </Link>
-        )}
+        {renderAttribution()}
         <CardDescription className="space-y-1 mt-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Music className="h-3 w-3 opacity-70" />

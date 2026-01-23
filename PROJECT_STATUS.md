@@ -1,7 +1,7 @@
 # HSA Songbook - Project Status & MVP Roadmap
 
-**Last Updated**: 2026-01-22
-**Current Phase**: 5.5 (User Display & Profiles)
+**Last Updated**: 2026-01-23
+**Current Phase**: 6.2 (Groups with Ownership)
 **Goal**: MVP ASAP - solid skeleton, secure foundation
 
 ---
@@ -215,6 +215,48 @@ npx convex run seed:clearDatabase  # Clear all data (for testing)
 
 ---
 
+## Phase 6: Groups & Permissions (NEW)
+
+**Goal**: Implement comprehensive permissions and groups system per PRD_GROUPS_PERMISSIONS.md
+
+### Phase 6.1: Collaborators ✅ COMPLETE
+- [x] Add `arrangementCollaborators` table to schema
+- [x] Create `convex/permissions.ts` with `canEditArrangement`, `isArrangementOwner`, `isArrangementCollaborator`
+- [x] Add collaborator queries/mutations to `convex/arrangements.ts`
+- [x] Update arrangement `update` mutation to use permission check
+- [x] Create `useArrangementPermissions` hook
+- [x] Update `ArrangementPage.tsx` to gate editing based on permissions
+- [x] Create `CollaboratorsDialog.tsx` and `CollaboratorsList.tsx`
+
+### Phase 6.2: Groups with Ownership ✅ COMPLETE
+- [x] Add groups tables to schema (`groups`, `groupMembers`, `groupJoinRequests`, `arrangementAuthors`, `contentVersions`)
+- [x] Add ownership fields to songs/arrangements (`ownerType`, `ownerId`)
+- [x] Create migration functions in `convex/seed.ts` (`migrateOwnership`, `seedPublicGroup`)
+- [x] Create `convex/groups.ts` API with full CRUD and membership management
+- [x] Create `convex/versions.ts` for version history (Public group content)
+- [x] Update `convex/permissions.ts` with group ownership logic
+- [x] Create groups feature module (`src/features/groups/`)
+  - Pages: `GroupsIndexPage`, `GroupPage`, `GroupSettingsPage`
+  - Components: `GroupCard`, `GroupHeader`, `GroupJoinButton`, `GroupMemberList`, `JoinRequestList`, `CreateGroupDialog`, `GroupSettingsForm`
+  - Hooks: `useGroupData`, `useGroupMembership`, `useGroupPermissions`
+  - Validation: `groupSchemas.ts`
+- [x] Update `ArrangementCard.tsx` for group ownership display
+- [x] Add routes for groups pages (`/groups`, `/groups/:slug`, `/groups/:slug/settings`)
+
+### Phase 6.2b: Version History (Pending)
+- [ ] Create version history UI components (`src/features/versions/`)
+- [ ] Hook version creation into save flow for Public content
+- [ ] Add version history panel to ArrangementPage for Public-owned content
+
+### Still To Do
+- [ ] Add owner selector to song/arrangement create forms ("Post as myself" or "Post as [group]")
+- [ ] Add co-author picker for group posts
+- [ ] Update SongPage for group ownership display and version history
+- [ ] Run migration: `npx convex run seed:migrateOwnership`
+- [ ] Seed Public group: `npx convex run seed:seedPublicGroup`
+
+---
+
 ## Post-MVP Features
 
 See [POST_MVP_ROADMAP.md](POST_MVP_ROADMAP.md) for:
@@ -233,6 +275,8 @@ See [POST_MVP_ROADMAP.md](POST_MVP_ROADMAP.md) for:
 
 | Date | Change |
 |------|--------|
+| 2026-01-23 | **Phase 6.2 complete**: Groups feature with ownership, membership, permissions. Routes: `/groups`, `/groups/:slug`, `/groups/:slug/settings` |
+| 2026-01-23 | **Phase 6.1 complete**: Collaborators system for arrangements with permissions checking |
 | 2026-01-22 | **Phase 5.5 complete**: Creator display on arrangements, user profile page at `/user/:username` |
 | 2026-01-22 | **R2 file storage integration**: Added Cloudflare R2 for profile pictures via @convex-dev/r2 |
 | 2026-01-22 | **Deferred OAuth to post-MVP**: Moved Google/Apple OAuth details to POST_MVP_ROADMAP.md |

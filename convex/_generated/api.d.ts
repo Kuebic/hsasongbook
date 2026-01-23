@@ -11,12 +11,14 @@
 import type * as arrangements from "../arrangements.js";
 import type * as auth from "../auth.js";
 import type * as files from "../files.js";
+import type * as groups from "../groups.js";
 import type * as http from "../http.js";
 import type * as permissions from "../permissions.js";
 import type * as seed from "../seed.js";
 import type * as setlists from "../setlists.js";
 import type * as songs from "../songs.js";
 import type * as users from "../users.js";
+import type * as versions from "../versions.js";
 
 import type {
   ApiFromModules,
@@ -28,12 +30,14 @@ declare const fullApi: ApiFromModules<{
   arrangements: typeof arrangements;
   auth: typeof auth;
   files: typeof files;
+  groups: typeof groups;
   http: typeof http;
   permissions: typeof permissions;
   seed: typeof seed;
   setlists: typeof setlists;
   songs: typeof songs;
   users: typeof users;
+  versions: typeof versions;
 }>;
 
 /**

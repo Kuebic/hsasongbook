@@ -27,6 +27,9 @@ export interface Arrangement {
   syncStatus?: 'pending' | 'synced' | 'conflict';
   version?: number;
   lastAccessedAt?: number;
+  // Phase 2 fields (Groups & Ownership)
+  ownerType?: 'user' | 'group';        // Type of owner
+  ownerId?: string;                    // userId or groupId as string
 }
 
 /**
@@ -59,11 +62,24 @@ export interface CreatorInfo {
 }
 
 /**
+ * Owner info for display (can be user or group)
+ * Phase 2: Groups - unified owner display
+ */
+export interface OwnerInfo {
+  type: 'user' | 'group';
+  id: string;
+  name: string;
+  slug?: string;
+  avatarKey?: string;
+}
+
+/**
  * Arrangement with embedded creator data
  * Used when displaying who created an arrangement
  */
 export interface ArrangementWithCreator extends Arrangement {
   creator: CreatorInfo | null;
+  owner?: OwnerInfo; // Phase 2: Optional owner info (defaults to creator)
 }
 
 /**

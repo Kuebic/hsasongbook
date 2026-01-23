@@ -658,3 +658,108 @@ export const clearDatabase = mutation({
     };
   },
 });
+
+// ============ PHASE 2: GROUPS & OWNERSHIP MIGRATIONS ============
+
+/**
+ * Migrate existing songs and arrangements to have ownership fields
+ * Sets ownerType='user' and ownerId=createdBy for all existing content
+ * Run with: npx convex run seed:migrateOwnership
+ */
+export const migrateOwnership = mutation({
+  args: {},
+  handler: async (ctx) => {
+    let songCount = 0;
+    let arrangementCount = 0;
+
+    // Migrate songs
+    const songs = await ctx.db.query("songs").collect();
+    for (const song of songs) {
+      if (!song.ownerType) {
+        await ctx.db.patch(song._id, {
+          ownerType: "user",
+          ownerId: song.createdBy.toString(),
+        });
+        songCount++;
+      }
+    }
+
+    // Migrate arrangements
+    const arrangements = await ctx.db.query("arrangements").collect();
+    for (const arr of arrangements) {
+      if (!arr.ownerType) {
+        await ctx.db.patch(arr._id, {
+          ownerType: "user",
+          ownerId: arr.createdBy.toString(),
+        });
+        arrangementCount++;
+      }
+    }
+
+    return {
+      success: true,
+      message: `Migrated ${songCount} songs and ${arrangementCount} arrangements to have ownership fields`,
+      songCount,
+      arrangementCount,
+    };
+  },
+});
+
+/**
+ * Seed the Public system group
+ * This group is used for crowdsourced/wiki-style content
+ * Run with: npx convex run seed:seedPublicGroup
+ */
+export const seedPublicGroup = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Check if Public group already exists
+    const groups = await ctx.db.query("groups").collect();
+    const existingPublicGroup = groups.find((g) => g.isSystemGroup);
+    if (existingPublicGroup) {
+      return {
+        success: false,
+        message: "Public group already exists",
+        groupId: existingPublicGroup._id,
+      };
+    }
+
+    // Get a user to be the initial owner
+    // Prefer system user, but fall back to any existing user
+    const existingUsers = await ctx.db.query("users").collect();
+    const systemUser = existingUsers.find((u) => u.email === "system@hsasongbook.app");
+    const ownerUser = systemUser ?? existingUsers[0];
+
+    if (!ownerUser) {
+      return {
+        success: false,
+        message: "No users found. At least one user must exist to create the Public group.",
+      };
+    }
+
+    // Create the Public group
+    const groupId = await ctx.db.insert("groups", {
+      name: "Public",
+      slug: "public",
+      description:
+        "The community group for crowdsourced songs and arrangements. All members can edit, with full version history for moderation.",
+      createdBy: ownerUser._id,
+      joinPolicy: "approval", // Require admin approval to join
+      isSystemGroup: true,
+    });
+
+    // Add owner user as group owner
+    await ctx.db.insert("groupMembers", {
+      groupId,
+      userId: ownerUser._id,
+      role: "owner",
+      joinedAt: Date.now(),
+    });
+
+    return {
+      success: true,
+      message: "Public group created successfully",
+      groupId,
+    };
+  },
+});

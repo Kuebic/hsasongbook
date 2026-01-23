@@ -2,12 +2,87 @@ import { QueryCtx, MutationCtx } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 /**
- * Centralized permission helpers for arrangements
+ * Centralized permission helpers for songs and arrangements
  * Phase 1: Collaborators - Owner-only editing with collaborator support
+ * Phase 2: Groups - Group ownership with role-based access
  */
 
+// ============ HELPER TYPES ============
+
+type ContentOwnership = {
+  ownerType?: "user" | "group";
+  ownerId?: string;
+  createdBy: Id<"users">;
+};
+
+// ============ GROUP HELPERS ============
+
 /**
- * Check if a user is the owner of an arrangement
+ * Get the system Public group
+ */
+export async function getPublicGroup(ctx: QueryCtx | MutationCtx) {
+  const groups = await ctx.db.query("groups").collect();
+  return groups.find((g) => g.isSystemGroup) ?? null;
+}
+
+/**
+ * Check if a group is the Public system group
+ */
+export async function isPublicGroup(
+  ctx: QueryCtx | MutationCtx,
+  groupId: string
+): Promise<boolean> {
+  const publicGroup = await getPublicGroup(ctx);
+  return publicGroup?._id.toString() === groupId;
+}
+
+/**
+ * Get user's membership in a group
+ */
+export async function getGroupMembership(
+  ctx: QueryCtx | MutationCtx,
+  groupId: Id<"groups">,
+  userId: Id<"users">
+) {
+  return await ctx.db
+    .query("groupMembers")
+    .withIndex("by_group_and_user", (q) =>
+      q.eq("groupId", groupId).eq("userId", userId)
+    )
+    .unique();
+}
+
+/**
+ * Check if user is a member of a group
+ */
+export async function isGroupMember(
+  ctx: QueryCtx | MutationCtx,
+  groupId: Id<"groups">,
+  userId: Id<"users">
+): Promise<boolean> {
+  const membership = await getGroupMembership(ctx, groupId, userId);
+  return membership !== null;
+}
+
+/**
+ * Check if user is admin or owner of a group
+ */
+export async function isGroupAdminOrOwner(
+  ctx: QueryCtx | MutationCtx,
+  groupId: Id<"groups">,
+  userId: Id<"users">
+): Promise<boolean> {
+  const membership = await getGroupMembership(ctx, groupId, userId);
+  return (
+    membership !== null &&
+    (membership.role === "admin" || membership.role === "owner")
+  );
+}
+
+// ============ ARRANGEMENT PERMISSIONS (Phase 1 + Phase 2) ============
+
+/**
+ * Check if a user is the owner of an arrangement (user ownership)
  */
 export async function isArrangementOwner(
   ctx: QueryCtx | MutationCtx,
@@ -16,6 +91,16 @@ export async function isArrangementOwner(
 ): Promise<boolean> {
   const arrangement = await ctx.db.get(arrangementId);
   if (!arrangement) return false;
+
+  // If group-owned, the "owner" concept is different
+  if (arrangement.ownerType === "group") {
+    // Check if user is group owner
+    const groupId = arrangement.ownerId as Id<"groups">;
+    const membership = await getGroupMembership(ctx, groupId, userId);
+    return membership?.role === "owner";
+  }
+
+  // Default: user ownership via createdBy
   return arrangement.createdBy === userId;
 }
 
@@ -37,17 +122,205 @@ export async function isArrangementCollaborator(
 }
 
 /**
- * Check if a user can edit an arrangement (is owner OR collaborator)
+ * Check if a user is a co-author on an arrangement
+ */
+export async function isArrangementCoAuthor(
+  ctx: QueryCtx | MutationCtx,
+  arrangementId: Id<"arrangements">,
+  userId: Id<"users">
+): Promise<boolean> {
+  const author = await ctx.db
+    .query("arrangementAuthors")
+    .withIndex("by_arrangement", (q) => q.eq("arrangementId", arrangementId))
+    .collect()
+    .then((authors) => authors.find((a) => a.userId === userId));
+  return author !== undefined;
+}
+
+/**
+ * Check if a user can edit an arrangement
+ *
+ * Phase 2 Logic:
+ * 1. If ownerType='user': check owner or collaborator/co-author
+ * 2. If ownerType='group':
+ *    - For Public group: any member can edit
+ *    - For other groups: owner/admin can edit, members if co-author
  */
 export async function canEditArrangement(
   ctx: QueryCtx | MutationCtx,
   arrangementId: Id<"arrangements">,
   userId: Id<"users">
 ): Promise<boolean> {
+  const arrangement = await ctx.db.get(arrangementId);
+  if (!arrangement) return false;
+
+  // Group ownership (Phase 2)
+  if (arrangement.ownerType === "group" && arrangement.ownerId) {
+    const groupId = arrangement.ownerId as Id<"groups">;
+
+    // Check if this is the Public group
+    const publicGroup = await getPublicGroup(ctx);
+    if (publicGroup && publicGroup._id.toString() === arrangement.ownerId) {
+      // Public group: any member can edit
+      return await isGroupMember(ctx, groupId, userId);
+    }
+
+    // Other groups: admin/owner can always edit
+    if (await isGroupAdminOrOwner(ctx, groupId, userId)) {
+      return true;
+    }
+
+    // Members can edit if they are a co-author
+    if (await isGroupMember(ctx, groupId, userId)) {
+      return await isArrangementCoAuthor(ctx, arrangementId, userId);
+    }
+
+    return false;
+  }
+
+  // User ownership (Phase 1 logic)
   // Check ownership first (most common case)
-  const isOwner = await isArrangementOwner(ctx, arrangementId, userId);
-  if (isOwner) return true;
+  if (arrangement.createdBy === userId) return true;
 
   // Check collaborator status
-  return await isArrangementCollaborator(ctx, arrangementId, userId);
+  if (await isArrangementCollaborator(ctx, arrangementId, userId)) return true;
+
+  // Check co-author status
+  if (await isArrangementCoAuthor(ctx, arrangementId, userId)) return true;
+
+  return false;
+}
+
+// ============ SONG PERMISSIONS (Phase 2) ============
+
+/**
+ * Check if a user is the owner of a song
+ */
+export async function isSongOwner(
+  ctx: QueryCtx | MutationCtx,
+  songId: Id<"songs">,
+  userId: Id<"users">
+): Promise<boolean> {
+  const song = await ctx.db.get(songId);
+  if (!song) return false;
+
+  // If group-owned, check if user is group owner
+  if (song.ownerType === "group" && song.ownerId) {
+    const groupId = song.ownerId as Id<"groups">;
+    const membership = await getGroupMembership(ctx, groupId, userId);
+    return membership?.role === "owner";
+  }
+
+  // Default: user ownership via createdBy
+  return song.createdBy === userId;
+}
+
+/**
+ * Check if a user can edit a song
+ *
+ * Phase 2 Logic:
+ * 1. If ownerType='user': only creator can edit
+ * 2. If ownerType='group':
+ *    - For Public group: any member can edit
+ *    - For other groups: owner/admin can edit
+ */
+export async function canEditSong(
+  ctx: QueryCtx | MutationCtx,
+  songId: Id<"songs">,
+  userId: Id<"users">
+): Promise<boolean> {
+  const song = await ctx.db.get(songId);
+  if (!song) return false;
+
+  // Group ownership (Phase 2)
+  if (song.ownerType === "group" && song.ownerId) {
+    const groupId = song.ownerId as Id<"groups">;
+
+    // Check if this is the Public group
+    const publicGroup = await getPublicGroup(ctx);
+    if (publicGroup && publicGroup._id.toString() === song.ownerId) {
+      // Public group: any member can edit
+      return await isGroupMember(ctx, groupId, userId);
+    }
+
+    // Other groups: only admin/owner can edit
+    return await isGroupAdminOrOwner(ctx, groupId, userId);
+  }
+
+  // User ownership: only creator can edit
+  return song.createdBy === userId;
+}
+
+// ============ UNIFIED CONTENT PERMISSION CHECK ============
+
+/**
+ * Unified permission check for songs and arrangements
+ */
+export async function canEditContent(
+  ctx: QueryCtx | MutationCtx,
+  contentType: "song" | "arrangement",
+  contentId: string,
+  userId: Id<"users">
+): Promise<boolean> {
+  if (contentType === "song") {
+    return await canEditSong(ctx, contentId as Id<"songs">, userId);
+  } else {
+    return await canEditArrangement(
+      ctx,
+      contentId as Id<"arrangements">,
+      userId
+    );
+  }
+}
+
+// ============ OWNERSHIP HELPERS ============
+
+/**
+ * Get the owner display info for content
+ * Returns either user info or group info based on ownerType
+ */
+export async function getContentOwnerInfo(
+  ctx: QueryCtx | MutationCtx,
+  content: ContentOwnership
+): Promise<{
+  type: "user" | "group";
+  id: string;
+  name: string;
+  slug?: string;
+  avatarKey?: string;
+}> {
+  if (content.ownerType === "group" && content.ownerId) {
+    const group = await ctx.db.get(content.ownerId as Id<"groups">);
+    if (group) {
+      return {
+        type: "group",
+        id: group._id.toString(),
+        name: group.name,
+        slug: group.slug,
+        avatarKey: group.avatarKey,
+      };
+    }
+  }
+
+  // Default to user ownership
+  const user = await ctx.db.get(content.createdBy);
+  if (user) {
+    const displayName =
+      user.showRealName && user.displayName
+        ? user.displayName
+        : user.username ?? "Unknown";
+    return {
+      type: "user",
+      id: user._id.toString(),
+      name: displayName,
+      slug: user.username,
+      avatarKey: user.avatarKey,
+    };
+  }
+
+  return {
+    type: "user",
+    id: content.createdBy.toString(),
+    name: "Unknown",
+  };
 }

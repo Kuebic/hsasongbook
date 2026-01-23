@@ -14,7 +14,7 @@
  */
 
 import { useState } from 'react';
-import { User, Settings, LogOut, LogIn } from 'lucide-react';
+import { User, Settings, LogOut, LogIn, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
   DropdownMenu,
@@ -118,6 +118,12 @@ export default function UserDropdown() {
                 <Link to="/profile">
                   <User className="mr-2 h-4 w-4" />
                   Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/groups">
+                  <Users className="mr-2 h-4 w-4" />
+                  Groups
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

@@ -7,6 +7,7 @@ import { ArrangementPage } from '../features/arrangements'
 import { SetlistsIndexPage, SetlistPage, SetlistPerformancePage } from '../features/setlists'
 import { SettingsPage } from '../features/settings'
 import { ProfilePage, UserProfilePage } from '../features/profile'
+import { GroupsIndexPage, GroupPage, GroupSettingsPage } from '../features/groups'
 import SignInPage from '../features/auth/pages/SignInPage'
 import SignUpPage from '../features/auth/pages/SignUpPage'
 import { NotFound } from '../features/shared/pages/NotFound'
@@ -112,6 +113,10 @@ function AppWithFeatures() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/user/:username" element={<UserProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          {/* Groups routes (Phase 2: Groups & Permissions) */}
+          <Route path="/groups" element={<GroupsIndexPage />} />
+          <Route path="/groups/:groupSlug" element={<GroupPage />} />
+          <Route path="/groups/:groupSlug/settings" element={<GroupSettingsPage />} />
           {/* Auth routes (Phase 5) */}
           <Route path="/auth/signin" element={<SignInPage />} />
           <Route path="/auth/signup" element={<SignUpPage />} />
