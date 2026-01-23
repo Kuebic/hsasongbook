@@ -269,3 +269,13 @@ If a user signs up with email then later uses Google/Apple with the same email:
 - `src/features/pwa/db/database.ts` - IndexedDB setup (currently for drafts)
 - `src/features/pwa/hooks/useOnlineStatus.ts` - Connection detection
 - `convex/setlists.ts:getWithArrangements` - Fetches full setlist data
+
+---
+
+# Additional notes in no particular order
+- when user is added as a collaborator, they have no way of knowing. They aren't listed as a song artist, no private profile feed showing them all the arrangements they can edit, and no notification that they were added. work through how this should work
+- when editing chords, there should be an easy way to go back to the public view of the arrangement. Current workaround is go back to the song, then find your arrangement again
+- remove the bottom-right arrangement switcher. Useless.
+- need a way to browse songs on homepage, not just arrangements. Just being able to browser in general with custom filters would be ideal
+- on mobile, when editing chords, preview pane does not work
+- when editing a chord progression, it's nice to be able to input a string like [D / / / | A/C# / / / |] and have the chords within be recognized as chords so they will transpose along with the rest of the chords when transposing/preferring flats/sharps.
