@@ -19,6 +19,8 @@ export interface UseArrangementPermissionsReturn {
   isOwner: boolean;
   /** Whether the current user is a collaborator on this arrangement */
   isCollaborator: boolean;
+  /** Whether the current user originally created this arrangement (important for reclaim) */
+  isOriginalCreator: boolean;
   /** Whether permission data is still loading */
   loading: boolean;
 }
@@ -57,11 +59,13 @@ export function useArrangementPermissions(
   const canEdit = permissions?.canEdit ?? false;
   const isOwner = permissions?.isOwner ?? false;
   const isCollaborator = permissions?.isCollaborator ?? false;
+  const isOriginalCreator = permissions?.isOriginalCreator ?? false;
 
   return {
     canEdit,
     isOwner,
     isCollaborator,
+    isOriginalCreator,
     loading,
   };
 }

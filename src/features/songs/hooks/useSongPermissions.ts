@@ -10,6 +10,8 @@ export interface UseSongPermissionsReturn {
   canEdit: boolean;
   /** Whether the current user is the owner of this song */
   isOwner: boolean;
+  /** Whether the current user originally created this song (important for reclaim) */
+  isOriginalCreator: boolean;
   /** Whether permission data is still loading */
   loading: boolean;
 }
@@ -19,7 +21,7 @@ export interface UseSongPermissionsReturn {
  * Returns permission state for the given song.
  *
  * @param songId - The song ID to check permissions for (can be null)
- * @returns Permission state { canEdit, isOwner, loading }
+ * @returns Permission state { canEdit, isOwner, isOriginalCreator, loading }
  */
 export function useSongPermissions(songId: string | null): UseSongPermissionsReturn {
   const permissions = useQuery(
@@ -30,6 +32,7 @@ export function useSongPermissions(songId: string | null): UseSongPermissionsRet
   return {
     canEdit: permissions?.canEdit ?? false,
     isOwner: permissions?.isOwner ?? false,
+    isOriginalCreator: permissions?.isOriginalCreator ?? false,
     loading: permissions === undefined,
   };
 }

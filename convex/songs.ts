@@ -90,27 +90,33 @@ export const count = query({
 
 /**
  * Check if current user can edit a song
- * Returns { canEdit, isOwner }
+ * Returns { canEdit, isOwner, isOriginalCreator }
+ *
+ * - isOwner: true if user owns the song (or is group owner for group-owned songs)
+ * - isOriginalCreator: true if user originally created the song (via createdBy)
+ *   This is important for reclaim functionality - original creator can always reclaim
  */
 export const canEdit = query({
   args: { songId: v.id("songs") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
-      return { canEdit: false, isOwner: false };
+      return { canEdit: false, isOwner: false, isOriginalCreator: false };
     }
 
     const song = await ctx.db.get(args.songId);
     if (!song) {
-      return { canEdit: false, isOwner: false };
+      return { canEdit: false, isOwner: false, isOriginalCreator: false };
     }
 
     const isOwner = await isSongOwner(ctx, args.songId, userId);
+    const isOriginalCreator = song.createdBy === userId;
     const canEditResult = await canEditSong(ctx, args.songId, userId);
 
     return {
       canEdit: canEditResult,
       isOwner,
+      isOriginalCreator,
     };
   },
 });

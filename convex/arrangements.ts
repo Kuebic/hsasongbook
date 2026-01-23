@@ -453,22 +453,27 @@ export const update = mutation({
 
 /**
  * Check if current user can edit an arrangement
- * Returns { canEdit, isOwner, isCollaborator }
+ * Returns { canEdit, isOwner, isCollaborator, isOriginalCreator }
+ *
+ * - isOwner: true if user owns the arrangement (or is group owner for group-owned)
+ * - isOriginalCreator: true if user originally created the arrangement (via createdBy)
+ *   This is important for reclaim functionality - original creator can always reclaim
  */
 export const canEdit = query({
   args: { arrangementId: v.id("arrangements") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
-      return { canEdit: false, isOwner: false, isCollaborator: false };
+      return { canEdit: false, isOwner: false, isCollaborator: false, isOriginalCreator: false };
     }
 
     const arrangement = await ctx.db.get(args.arrangementId);
     if (!arrangement) {
-      return { canEdit: false, isOwner: false, isCollaborator: false };
+      return { canEdit: false, isOwner: false, isCollaborator: false, isOriginalCreator: false };
     }
 
     const isOwner = await isArrangementOwner(ctx, args.arrangementId, userId);
+    const isOriginalCreator = arrangement.createdBy === userId;
     const isCollaborator = await isArrangementCollaborator(
       ctx,
       args.arrangementId,
@@ -476,9 +481,10 @@ export const canEdit = query({
     );
 
     return {
-      canEdit: isOwner || isCollaborator,
+      canEdit: isOwner || isCollaborator || isOriginalCreator,
       isOwner,
       isCollaborator,
+      isOriginalCreator,
     };
   },
 });

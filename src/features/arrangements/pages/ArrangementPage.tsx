@@ -43,7 +43,7 @@ export function ArrangementPage() {
   } = useArrangementData();
 
   // Check permissions for the current arrangement
-  const { canEdit, isOwner, loading: permissionsLoading } = useArrangementPermissions(
+  const { canEdit, isOwner, isOriginalCreator, loading: permissionsLoading } = useArrangementPermissions(
     arrangement?.id ?? null
   );
 
@@ -123,7 +123,7 @@ export function ArrangementPage() {
               {/* Ownership transfer/reclaim (only for original creator) */}
               <ArrangementOwnershipActions
                 arrangementId={arrangement?.id ?? ''}
-                isOwner={isOwner}
+                isOwner={isOriginalCreator}
                 isPublicOwned={isPublicOwned}
               />
 

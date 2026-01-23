@@ -36,7 +36,7 @@ export function SongPage() {
   );
 
   // Check if user can edit this song
-  const { canEdit, isOwner, loading: permissionsLoading } = useSongPermissions(
+  const { canEdit, isOriginalCreator, loading: permissionsLoading } = useSongPermissions(
     convexSong?._id ?? null
   );
 
@@ -141,7 +141,7 @@ export function SongPage() {
               {isAuthenticated && (
                 <SongOwnershipActions
                   songId={song?.id ?? ''}
-                  isOwner={isOwner}
+                  isOwner={isOriginalCreator}
                   isPublicOwned={isPublicOwned}
                 />
               )}
