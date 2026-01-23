@@ -1,16 +1,65 @@
+import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Hash, Music2, Copyright } from 'lucide-react';
+import { User, Hash, Music2, Copyright, Users, Globe } from 'lucide-react';
 import type { Song } from '@/types';
+
+interface OwnerInfo {
+  type: 'user' | 'group';
+  id: string;
+  name: string;
+  slug?: string;
+  avatarKey?: string;
+}
 
 interface SongMetadataProps {
   song: Song | null;
+  owner?: OwnerInfo | null;
 }
 
-export default function SongMetadata({ song }: SongMetadataProps) {
+export default function SongMetadata({ song, owner }: SongMetadataProps) {
   if (!song) return null;
 
   const hasLyrics = song.lyrics?.en || song.lyrics;
+
+  // Check if owner is the Public system group (name === "Public")
+  const isPublicGroup = owner?.type === 'group' && owner.name === 'Public';
+
+  // Render owner attribution
+  const renderOwnerAttribution = () => {
+    if (!owner) return null;
+
+    if (owner.type === 'group') {
+      if (isPublicGroup) {
+        return (
+          <div className="flex items-center gap-2 text-sm mt-2">
+            <Globe className="h-3 w-3 text-primary" />
+            <span className="text-primary font-medium">Public (Crowdsourced)</span>
+          </div>
+        );
+      }
+      return (
+        <Link
+          to={`/groups/${owner.slug}`}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors mt-2"
+        >
+          <Users className="h-3 w-3" />
+          By {owner.name}
+        </Link>
+      );
+    }
+
+    // User-owned
+    return (
+      <Link
+        to={`/user/${owner.slug}`}
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors mt-2"
+      >
+        <User className="h-3 w-3" />
+        Added by {owner.name}
+      </Link>
+    );
+  };
 
   return (
     <Card className="shadow-lg">
@@ -31,6 +80,9 @@ export default function SongMetadata({ song }: SongMetadataProps) {
             {song.copyright}
           </div>
         )}
+
+        {/* Owner attribution */}
+        {renderOwnerAttribution()}
       </CardHeader>
 
       <CardContent>

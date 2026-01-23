@@ -24,9 +24,9 @@ export function SongPage() {
   const { user } = useAuth();
   const isAuthenticated = user && !user.isAnonymous;
 
-  // Get song by slug from Convex
+  // Get song by slug from Convex (with owner info for display)
   const convexSong = useQuery(
-    api.songs.getBySlug,
+    api.songs.getBySlugWithOwner,
     songSlug ? { slug: songSlug } : 'skip'
   );
 
@@ -122,7 +122,7 @@ export function SongPage() {
 
           {/* Song Metadata */}
           <div className="mb-8">
-            <SongMetadata song={song} />
+            <SongMetadata song={song} owner={convexSong?.owner} />
           </div>
 
           {/* Arrangements Section */}

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { requireAuthenticatedUser } from "./permissions";
+import { requireAuthenticatedUser, getContentOwnerInfo } from "./permissions";
 
 // ============ QUERIES ============
 
@@ -37,6 +37,26 @@ export const getBySlug = query({
       .query("songs")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .unique();
+  },
+});
+
+/**
+ * Get song by URL slug WITH owner info for display
+ * Access: Everyone
+ */
+export const getBySlugWithOwner = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const song = await ctx.db
+      .query("songs")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .unique();
+
+    if (!song) return null;
+
+    const owner = await getContentOwnerInfo(ctx, song);
+
+    return { ...song, owner };
   },
 });
 
