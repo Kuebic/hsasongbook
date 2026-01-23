@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import SongMetadata from '../components/SongMetadata';
+import SongEditForm from '../components/SongEditForm';
+import { useSongPermissions } from '../hooks/useSongPermissions';
 import ArrangementList from '../../arrangements/components/ArrangementList';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
 import { PageSpinner } from '../../shared/components/LoadingStates';
@@ -10,9 +12,10 @@ import { SimplePageTransition } from '../../shared/components/PageTransition';
 import { useNavigation } from '../../shared/hooks/useNavigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import AddArrangementDialog from '@/features/arrangements/components/AddArrangementDialog';
-import { Card, CardContent } from '@/components/ui/card';
+import { VersionHistoryPanel } from '@/features/versions';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Music, Plus } from 'lucide-react';
+import { ArrowLeft, Edit, Music, Plus, X } from 'lucide-react';
 import type { Song } from '@/types/Song.types';
 import type { ArrangementWithCreator } from '@/types/Arrangement.types';
 
@@ -21,6 +24,7 @@ export function SongPage() {
   const navigate = useNavigate();
   const { breadcrumbs } = useNavigation();
   const [addArrangementDialogOpen, setAddArrangementDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const { user } = useAuth();
   const isAuthenticated = user && !user.isAnonymous;
 
@@ -28,6 +32,11 @@ export function SongPage() {
   const convexSong = useQuery(
     api.songs.getBySlugWithOwner,
     songSlug ? { slug: songSlug } : 'skip'
+  );
+
+  // Check if user can edit this song
+  const { canEdit, loading: permissionsLoading } = useSongPermissions(
+    convexSong?._id ?? null
   );
 
   // Get arrangements for this song (with creator info)
@@ -79,7 +88,7 @@ export function SongPage() {
   // Loading states
   const isLoadingSong = songSlug !== undefined && convexSong === undefined;
   const isLoadingArrangements = convexSong?._id && convexArrangements === undefined;
-  const isLoading = isLoadingSong || isLoadingArrangements;
+  const isLoading = isLoadingSong || isLoadingArrangements || permissionsLoading;
 
   // Loading state
   if (isLoading) {
@@ -116,14 +125,64 @@ export function SongPage() {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 max-w-6xl">
           {/* Improved Navigation */}
-          <div className="mb-6">
+          <div className="flex items-center justify-between mb-6">
             <Breadcrumbs items={breadcrumbs} />
+
+            {/* Edit button (only if user can edit) */}
+            {canEdit && !isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditMode(true)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Song
+              </Button>
+            )}
           </div>
 
-          {/* Song Metadata */}
+          {/* Song Metadata or Edit Form */}
           <div className="mb-8">
-            <SongMetadata song={song} owner={convexSong?.owner} />
+            {isEditMode && canEdit ? (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Edit Song</CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditMode(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <SongEditForm
+                    songId={song.id}
+                    initialData={{
+                      title: song.title,
+                      artist: song.artist,
+                      themes: song.themes,
+                      copyright: song.copyright,
+                      lyrics: convexSong?.lyrics,
+                    }}
+                    onSuccess={() => setIsEditMode(false)}
+                    onCancel={() => setIsEditMode(false)}
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <SongMetadata song={song} owner={convexSong?.owner} />
+            )}
           </div>
+
+          {/* Version History Panel (Public group moderators only) */}
+          <VersionHistoryPanel
+            contentType="song"
+            contentId={song.id}
+            ownerType={convexSong?.ownerType}
+          />
 
           {/* Arrangements Section */}
           <div>

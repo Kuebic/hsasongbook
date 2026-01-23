@@ -66,6 +66,8 @@ function mapConvexArrangement(arr: {
   favorites: number;
   chordProContent: string;
   updatedAt?: number;
+  ownerType?: 'user' | 'group';
+  ownerId?: string;
 }): Arrangement {
   return {
     id: arr._id,
@@ -84,6 +86,8 @@ function mapConvexArrangement(arr: {
     updatedAt: arr.updatedAt
       ? new Date(arr.updatedAt).toISOString()
       : new Date(arr._creationTime).toISOString(),
+    ownerType: arr.ownerType,
+    ownerId: arr.ownerId,
   };
 }
 

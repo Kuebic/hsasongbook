@@ -1,6 +1,17 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { requireAuthenticatedUser, getContentOwnerInfo } from "./permissions";
+import { internal } from "./_generated/api";
+import { getAuthUserId } from "@convex-dev/auth/server";
+import {
+  requireAuth,
+  requireAuthenticatedUser,
+  getContentOwnerInfo,
+  canEditSong,
+  isSongOwner,
+  getPublicGroup,
+  filterUndefined,
+} from "./permissions";
+import { hasContentChanged } from "./versions";
 
 // ============ QUERIES ============
 
@@ -72,6 +83,35 @@ export const count = query({
   },
 });
 
+// ============ PERMISSION QUERIES ============
+
+/**
+ * Check if current user can edit a song
+ * Returns { canEdit, isOwner }
+ */
+export const canEdit = query({
+  args: { songId: v.id("songs") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return { canEdit: false, isOwner: false };
+    }
+
+    const song = await ctx.db.get(args.songId);
+    if (!song) {
+      return { canEdit: false, isOwner: false };
+    }
+
+    const isOwner = await isSongOwner(ctx, args.songId, userId);
+    const canEditResult = await canEditSong(ctx, args.songId, userId);
+
+    return {
+      canEdit: canEditResult,
+      isOwner,
+    };
+  },
+});
+
 // ============ MUTATIONS ============
 
 /**
@@ -105,5 +145,68 @@ export const create = mutation({
     });
 
     return songId;
+  },
+});
+
+/**
+ * Update a song
+ * Access: Owner, or Public group members for Public-owned songs
+ */
+export const update = mutation({
+  args: {
+    id: v.id("songs"),
+    title: v.optional(v.string()),
+    artist: v.optional(v.string()),
+    themes: v.optional(v.array(v.string())),
+    copyright: v.optional(v.string()),
+    lyrics: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const song = await ctx.db.get(args.id);
+    if (!song) {
+      throw new Error("Song not found");
+    }
+
+    // Permission check
+    const canEdit = await canEditSong(ctx, args.id, userId);
+    if (!canEdit) {
+      throw new Error("You don't have permission to edit this song");
+    }
+
+    // Smart version creation for Public-owned songs (only if changed)
+    const publicGroup = await getPublicGroup(ctx);
+    const isPublicOwned =
+      song.ownerType === "group" &&
+      song.ownerId === publicGroup?._id.toString();
+
+    if (isPublicOwned) {
+      // Create snapshot of current state before update
+      const snapshot = JSON.stringify({
+        title: song.title,
+        artist: song.artist,
+        themes: song.themes,
+        copyright: song.copyright,
+        lyrics: song.lyrics,
+      });
+
+      // Only create version if content actually changed
+      const hasChanged = await hasContentChanged(ctx, "song", args.id, snapshot);
+      if (hasChanged) {
+        await ctx.runMutation(internal.versions.createVersion, {
+          contentType: "song",
+          contentId: args.id,
+          snapshot,
+          changedBy: userId,
+        });
+      }
+    }
+
+    // Patch song
+    const { id: _id, ...updates } = args;
+    await ctx.db.patch(args.id, filterUndefined(updates));
+
+    return args.id;
   },
 });

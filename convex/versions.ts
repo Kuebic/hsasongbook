@@ -66,7 +66,52 @@ async function getNextVersion(
   return versions.reduce((max, v) => Math.max(max, v.version), 0) + 1;
 }
 
+/**
+ * Check if content has actually changed since the last version.
+ * Returns true if a new version should be created.
+ * Exported for use in arrangements.ts and songs.ts
+ */
+export async function hasContentChanged(
+  ctx: MutationCtx,
+  contentType: "song" | "arrangement",
+  contentId: string,
+  newSnapshot: string
+): Promise<boolean> {
+  const versions = await ctx.db
+    .query("contentVersions")
+    .withIndex("by_content", (q) =>
+      q.eq("contentType", contentType).eq("contentId", contentId)
+    )
+    .collect();
+
+  // First version - always create
+  if (versions.length === 0) return true;
+
+  // Find the latest version
+  const latest = versions.reduce(
+    (max, v) => (v.version > max.version ? v : max),
+    versions[0]
+  );
+
+  // Compare snapshots
+  return latest.snapshot !== newSnapshot;
+}
+
 // ============ QUERIES ============
+
+/**
+ * Check if current user is a Public group moderator (admin/owner)
+ * Used by frontend to conditionally show version history UI
+ */
+export const isCurrentUserPublicModerator = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return false;
+
+    return await isPublicGroupModerator(ctx, userId);
+  },
+});
 
 /**
  * Get version history for content (Public group admin/owner only)

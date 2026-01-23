@@ -13,6 +13,7 @@ import Breadcrumbs from '../../shared/components/Breadcrumbs';
 import { PageSpinner } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
 import { useNavigation } from '../../shared/hooks/useNavigation';
+import { VersionHistoryPanel } from '@/features/versions';
 import { Button } from '@/components/ui/button';
 import logger from '@/lib/logger';
 import { Card, CardContent } from '@/components/ui/card';
@@ -203,6 +204,13 @@ export function ArrangementPage() {
             }}
           />
         </div>
+
+        {/* Version History Panel (Public group moderators only) */}
+        <VersionHistoryPanel
+          contentType="arrangement"
+          contentId={arrangement.id}
+          ownerType={arrangement.ownerType}
+        />
 
         {/* Navigation Footer */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between no-print">

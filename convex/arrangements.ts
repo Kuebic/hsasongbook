@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
 import {
@@ -10,7 +11,9 @@ import {
   requireAuth,
   requireAuthenticatedUser,
   formatUserInfo,
+  getPublicGroup,
 } from "./permissions";
+import { hasContentChanged } from "./versions";
 
 // ============ HELPER FUNCTIONS ============
 
@@ -304,6 +307,41 @@ export const update = mutation({
     const canEdit = await canEditArrangement(ctx, args.id, userId);
     if (!canEdit) {
       throw new Error("You don't have permission to edit this arrangement");
+    }
+
+    // Smart version creation for Public-owned arrangements (only if changed)
+    const publicGroup = await getPublicGroup(ctx);
+    const isPublicOwned =
+      arrangement.ownerType === "group" &&
+      arrangement.ownerId === publicGroup?._id.toString();
+
+    if (isPublicOwned) {
+      // Create snapshot of current state before update
+      const snapshot = JSON.stringify({
+        name: arrangement.name,
+        key: arrangement.key,
+        tempo: arrangement.tempo,
+        capo: arrangement.capo,
+        timeSignature: arrangement.timeSignature,
+        chordProContent: arrangement.chordProContent,
+        tags: arrangement.tags,
+      });
+
+      // Only create version if content actually changed
+      const hasChanged = await hasContentChanged(
+        ctx,
+        "arrangement",
+        args.id,
+        snapshot
+      );
+      if (hasChanged) {
+        await ctx.runMutation(internal.versions.createVersion, {
+          contentType: "arrangement",
+          contentId: args.id,
+          snapshot,
+          changedBy: userId,
+        });
+      }
     }
 
     const { id: _id, ...updates } = args;
