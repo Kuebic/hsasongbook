@@ -1,11 +1,33 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { Id } from "./_generated/dataModel";
 import {
   canEditArrangement,
   isArrangementOwner,
   isArrangementCollaborator,
+  requireAuth,
+  requireAuthenticatedUser,
+  formatUserInfo,
 } from "./permissions";
+
+// ============ HELPER FUNCTIONS ============
+
+/**
+ * Find a collaborator by arrangement and user ID
+ */
+async function findCollaborator(
+  ctx: QueryCtx | MutationCtx,
+  arrangementId: Id<"arrangements">,
+  userId: Id<"users">
+) {
+  return await ctx.db
+    .query("arrangementCollaborators")
+    .withIndex("by_arrangement_and_user", (q) =>
+      q.eq("arrangementId", arrangementId).eq("userId", userId)
+    )
+    .unique();
+}
 
 // ============ QUERIES ============
 
@@ -54,15 +76,7 @@ export const getBySlugWithCreator = query({
 
     return {
       ...arrangement,
-      creator: creator
-        ? {
-            _id: creator._id,
-            username: creator.username,
-            displayName: creator.displayName,
-            showRealName: creator.showRealName,
-            avatarKey: creator.avatarKey,
-          }
-        : null,
+      creator: formatUserInfo(creator),
     };
   },
 });
@@ -99,15 +113,7 @@ export const getBySongWithCreators = query({
         const creator = arr.createdBy ? await ctx.db.get(arr.createdBy) : null;
         return {
           ...arr,
-          creator: creator
-            ? {
-                _id: creator._id,
-                username: creator.username,
-                displayName: creator.displayName,
-                showRealName: creator.showRealName,
-                avatarKey: creator.avatarKey,
-              }
-            : null,
+          creator: formatUserInfo(creator),
         };
       })
     );
@@ -206,15 +212,7 @@ export const getFeaturedWithSongs = query({
                 artist: song.artist,
               }
             : null,
-          creator: creator
-            ? {
-                _id: creator._id,
-                username: creator.username,
-                displayName: creator.displayName,
-                showRealName: creator.showRealName,
-                avatarKey: creator.avatarKey,
-              }
-            : null,
+          creator: formatUserInfo(creator),
         };
       })
     );
@@ -242,18 +240,7 @@ export const create = mutation({
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated to create arrangements");
-    }
-
-    // Check user is not anonymous
-    const user = await ctx.db.get(userId);
-    if (!user?.email) {
-      throw new Error(
-        "Anonymous users cannot create arrangements. Please sign in."
-      );
-    }
+    const { userId } = await requireAuthenticatedUser(ctx);
 
     // Verify song exists
     const song = await ctx.db.get(args.songId);
@@ -305,10 +292,7 @@ export const update = mutation({
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated to update arrangements");
-    }
+    const userId = await requireAuth(ctx);
 
     const arrangement = await ctx.db.get(args.id);
     if (!arrangement) {
@@ -321,7 +305,7 @@ export const update = mutation({
       throw new Error("You don't have permission to edit this arrangement");
     }
 
-    const { id, ...updates } = args;
+    const { id: _id, ...updates } = args;
 
     // Filter out undefined values and build patch object
     const cleanUpdates: Record<string, unknown> = {};
@@ -408,15 +392,7 @@ export const getCollaborators = query({
           _id: collab._id,
           userId: collab.userId,
           addedAt: collab.addedAt,
-          user: user
-            ? {
-                _id: user._id,
-                username: user.username,
-                displayName: user.displayName,
-                showRealName: user.showRealName,
-                avatarKey: user.avatarKey,
-              }
-            : null,
+          user: formatUserInfo(user),
           addedBy: addedByUser
             ? {
                 _id: addedByUser._id,
@@ -441,10 +417,7 @@ export const addCollaborator = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const currentUserId = await getAuthUserId(ctx);
-    if (!currentUserId) {
-      throw new Error("Must be authenticated");
-    }
+    const currentUserId = await requireAuth(ctx);
 
     // Check ownership
     const isOwner = await isArrangementOwner(
@@ -471,12 +444,7 @@ export const addCollaborator = mutation({
     }
 
     // Check if already a collaborator
-    const existing = await ctx.db
-      .query("arrangementCollaborators")
-      .withIndex("by_arrangement_and_user", (q) =>
-        q.eq("arrangementId", args.arrangementId).eq("userId", args.userId)
-      )
-      .unique();
+    const existing = await findCollaborator(ctx, args.arrangementId, args.userId);
 
     if (existing) {
       throw new Error("User is already a collaborator");
@@ -503,10 +471,7 @@ export const removeCollaborator = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const currentUserId = await getAuthUserId(ctx);
-    if (!currentUserId) {
-      throw new Error("Must be authenticated");
-    }
+    const currentUserId = await requireAuth(ctx);
 
     // Check ownership
     const isOwner = await isArrangementOwner(
@@ -519,12 +484,7 @@ export const removeCollaborator = mutation({
     }
 
     // Find the collaborator record
-    const collaborator = await ctx.db
-      .query("arrangementCollaborators")
-      .withIndex("by_arrangement_and_user", (q) =>
-        q.eq("arrangementId", args.arrangementId).eq("userId", args.userId)
-      )
-      .unique();
+    const collaborator = await findCollaborator(ctx, args.arrangementId, args.userId);
 
     if (!collaborator) {
       throw new Error("User is not a collaborator");

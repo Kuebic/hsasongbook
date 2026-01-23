@@ -9,6 +9,7 @@ import UserAvatar from '@/components/UserAvatar';
 import { useGroupMembershipActions, type JoinRequest } from '../hooks/useGroupMembership';
 import { Check, X, Loader2, Clock, Users } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { getDisplayName } from '@/features/shared/utils/userDisplay';
 
 interface JoinRequestListProps {
   requests: JoinRequest[];
@@ -20,14 +21,6 @@ export default function JoinRequestList({
   loading,
 }: JoinRequestListProps) {
   const actions = useGroupMembershipActions();
-
-  const getDisplayName = (user: JoinRequest['user']) => {
-    if (!user) return 'Unknown';
-    if (user.showRealName && user.displayName) {
-      return user.displayName;
-    }
-    return user.username ?? 'Unknown';
-  };
 
   if (loading) {
     return (
@@ -64,7 +57,7 @@ export default function JoinRequestList({
               size="md"
             />
             <div>
-              <span className="font-medium">{getDisplayName(request.user)}</span>
+              <span className="font-medium">{getDisplayName(request.user, { prefixUsername: false })}</span>
               {request.user?.username && (
                 <p className="text-sm text-muted-foreground">
                   @{request.user.username}

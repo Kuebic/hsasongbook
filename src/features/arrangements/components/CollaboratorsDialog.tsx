@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import UserAvatar from '@/components/UserAvatar';
 import { Search, UserPlus, X, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getDisplayName } from '@/features/shared/utils/userDisplay';
 
 interface CollaboratorsDialogProps {
   open: boolean;
@@ -97,17 +98,6 @@ export default function CollaboratorsDialog({
     [arrangementId, removeCollaborator]
   );
 
-  const getDisplayName = (user: {
-    username?: string | null;
-    displayName?: string | null;
-    showRealName?: boolean | null;
-  }) => {
-    if (user.showRealName && user.displayName) {
-      return user.displayName;
-    }
-    return user.username ?? 'Unknown';
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -161,7 +151,7 @@ export default function CollaboratorsDialog({
                         />
                         <div className="flex flex-col">
                           <span className="text-sm font-medium">
-                            {getDisplayName(user)}
+                            {getDisplayName(user, { prefixUsername: false })}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             @{user.username}
@@ -220,7 +210,7 @@ export default function CollaboratorsDialog({
                       />
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">
-                          {collab.user ? getDisplayName(collab.user) : 'Unknown'}
+                          {getDisplayName(collab.user, { prefixUsername: false })}
                         </span>
                         {collab.user?.username && (
                           <span className="text-xs text-muted-foreground">

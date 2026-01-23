@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth, requireAuthenticatedUser } from "./permissions";
 
 // ============ QUERIES ============
 
@@ -109,18 +110,7 @@ export const create = mutation({
     arrangementIds: v.optional(v.array(v.id("arrangements"))),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated to create setlists");
-    }
-
-    // Check user is not anonymous
-    const user = await ctx.db.get(userId);
-    if (!user?.email) {
-      throw new Error(
-        "Anonymous users cannot create setlists. Please sign in."
-      );
-    }
+    const { userId } = await requireAuthenticatedUser(ctx);
 
     const setlistId = await ctx.db.insert("setlists", {
       name: args.name,
@@ -147,10 +137,7 @@ export const update = mutation({
     arrangementIds: v.optional(v.array(v.id("arrangements"))),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated to update setlists");
-    }
+    const userId = await requireAuth(ctx);
 
     const setlist = await ctx.db.get(args.id);
     if (!setlist) {
@@ -162,7 +149,7 @@ export const update = mutation({
       throw new Error("You can only edit your own setlists");
     }
 
-    const { id, ...updates } = args;
+    const { id: _id, ...updates } = args;
 
     // Filter out undefined values
     const cleanUpdates: Record<string, unknown> = {};
@@ -188,10 +175,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("setlists") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated to delete setlists");
-    }
+    const userId = await requireAuth(ctx);
 
     const setlist = await ctx.db.get(args.id);
     if (!setlist) {

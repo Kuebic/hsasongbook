@@ -11,6 +11,7 @@ import type { Id } from '../../../../convex/_generated/dataModel';
 import UserAvatar from '@/components/UserAvatar';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getDisplayName } from '@/features/shared/utils/userDisplay';
 
 interface CollaboratorsListProps {
   /** Arrangement ID to fetch collaborators for */
@@ -46,17 +47,6 @@ export default function CollaboratorsList({
     );
   }
   if (collaborators.length === 0) return null;
-
-  const getDisplayName = (user: {
-    username?: string | null;
-    displayName?: string | null;
-    showRealName?: boolean | null;
-  }) => {
-    if (user.showRealName && user.displayName) {
-      return user.displayName;
-    }
-    return user.username ?? 'Unknown';
-  };
 
   // Compact inline display (avatars only with tooltip-style names)
   if (compact) {
@@ -99,7 +89,7 @@ export default function CollaboratorsList({
               size="sm"
             />
             <span className="text-sm">
-              {collab.user ? getDisplayName(collab.user) : 'Unknown'}
+              {getDisplayName(collab.user, { prefixUsername: false })}
             </span>
           </div>
         ))}

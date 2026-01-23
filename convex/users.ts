@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { query, mutation } from "./_generated/server";
+import { requireAuthenticatedUser } from "./permissions";
 
 // ============ QUERIES ============
 
@@ -152,15 +153,7 @@ export const getUserStats = query({
 export const setUsername = mutation({
   args: { username: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated");
-    }
-
-    const user = await ctx.db.get(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const { userId, user } = await requireAuthenticatedUser(ctx);
 
     if (user.username) {
       throw new Error("Username already set");
@@ -196,17 +189,7 @@ export const setUsername = mutation({
 export const updateDisplayName = mutation({
   args: { displayName: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated to update display name");
-    }
-
-    const user = await ctx.db.get(userId);
-    if (!user?.email) {
-      throw new Error(
-        "Anonymous users cannot update display name. Please sign in."
-      );
-    }
+    const { userId } = await requireAuthenticatedUser(ctx);
 
     // Validate display name (3-50 chars, no leading/trailing whitespace)
     const trimmed = args.displayName.trim();
@@ -227,15 +210,7 @@ export const updateDisplayName = mutation({
 export const updateShowRealName = mutation({
   args: { showRealName: v.boolean() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated");
-    }
-
-    const user = await ctx.db.get(userId);
-    if (!user?.email) {
-      throw new Error("Anonymous users cannot update preferences. Please sign in.");
-    }
+    const { userId } = await requireAuthenticatedUser(ctx);
 
     await ctx.db.patch(userId, { showRealName: args.showRealName });
 

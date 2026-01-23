@@ -1,7 +1,13 @@
 import { v } from "convex/values";
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
+import {
+  getPublicGroup,
+  isGroupAdminOrOwner,
+  requireAuth,
+  formatUserInfo,
+} from "./permissions";
 
 // ============ HELPER FUNCTIONS ============
 
@@ -9,40 +15,24 @@ import { Id } from "./_generated/dataModel";
  * Check if a user is a Public group admin/owner
  */
 async function isPublicGroupModerator(
-  ctx: { db: any },
+  ctx: QueryCtx | MutationCtx,
   userId: Id<"users">
 ): Promise<boolean> {
-  // Find the Public system group
-  const groups = await ctx.db.query("groups").collect();
-  const publicGroup = groups.find((g: any) => g.isSystemGroup);
-
+  const publicGroup = await getPublicGroup(ctx);
   if (!publicGroup) return false;
 
-  const membership = await ctx.db
-    .query("groupMembers")
-    .withIndex("by_group_and_user", (q: any) =>
-      q.eq("groupId", publicGroup._id).eq("userId", userId)
-    )
-    .unique();
-
-  return (
-    membership !== null &&
-    (membership.role === "owner" || membership.role === "admin")
-  );
+  return await isGroupAdminOrOwner(ctx, publicGroup._id, userId);
 }
 
 /**
  * Check if content is owned by the Public group
  */
 async function isPublicGroupOwned(
-  ctx: { db: any },
+  ctx: QueryCtx | MutationCtx,
   contentType: "song" | "arrangement",
   contentId: string
 ): Promise<boolean> {
-  // Find the Public system group
-  const groups = await ctx.db.query("groups").collect();
-  const publicGroup = groups.find((g: any) => g.isSystemGroup);
-
+  const publicGroup = await getPublicGroup(ctx);
   if (!publicGroup) return false;
 
   if (contentType === "song") {
@@ -57,6 +47,23 @@ async function isPublicGroupOwned(
       arrangement?.ownerId === publicGroup._id.toString()
     );
   }
+}
+
+/**
+ * Get the next version number for content
+ */
+async function getNextVersion(
+  ctx: QueryCtx | MutationCtx,
+  contentType: "song" | "arrangement",
+  contentId: string
+): Promise<number> {
+  const versions = await ctx.db
+    .query("contentVersions")
+    .withIndex("by_content", (q) =>
+      q.eq("contentType", contentType).eq("contentId", contentId)
+    )
+    .collect();
+  return versions.reduce((max, v) => Math.max(max, v.version), 0) + 1;
 }
 
 // ============ QUERIES ============
@@ -104,15 +111,7 @@ export const getHistory = query({
         const user = await ctx.db.get(version.changedBy);
         return {
           ...version,
-          changedByUser: user
-            ? {
-                _id: user._id,
-                username: user.username,
-                displayName: user.displayName,
-                showRealName: user.showRealName,
-                avatarKey: user.avatarKey,
-              }
-            : null,
+          changedByUser: formatUserInfo(user),
         };
       })
     );
@@ -159,15 +158,7 @@ export const getVersion = query({
     const user = await ctx.db.get(version.changedBy);
     return {
       ...version,
-      changedByUser: user
-        ? {
-            _id: user._id,
-            username: user.username,
-            displayName: user.displayName,
-            showRealName: user.showRealName,
-            avatarKey: user.avatarKey,
-          }
-        : null,
+      changedByUser: formatUserInfo(user),
     };
   },
 });
@@ -186,23 +177,12 @@ export const createVersion = internalMutation({
     changeDescription: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Get the current highest version number
-    const existingVersions = await ctx.db
-      .query("contentVersions")
-      .withIndex("by_content", (q) =>
-        q.eq("contentType", args.contentType).eq("contentId", args.contentId)
-      )
-      .collect();
-
-    const maxVersion = existingVersions.reduce(
-      (max, v) => Math.max(max, v.version),
-      0
-    );
+    const nextVersion = await getNextVersion(ctx, args.contentType, args.contentId);
 
     const versionId = await ctx.db.insert("contentVersions", {
       contentType: args.contentType,
       contentId: args.contentId,
-      version: maxVersion + 1,
+      version: nextVersion,
       snapshot: args.snapshot,
       changedBy: args.changedBy,
       changedAt: Date.now(),
@@ -223,10 +203,7 @@ export const rollback = mutation({
     version: v.number(),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated");
-    }
+    const userId = await requireAuth(ctx);
 
     // Only Public group admins/owners can rollback
     const isModerator = await isPublicGroupModerator(ctx, userId);
@@ -280,15 +257,7 @@ export const rollback = mutation({
       await ctx.db.insert("contentVersions", {
         contentType: "song",
         contentId: args.contentId,
-        version:
-          (await ctx.db
-            .query("contentVersions")
-            .withIndex("by_content", (q) =>
-              q.eq("contentType", "song").eq("contentId", args.contentId)
-            )
-            .collect()
-            .then((v) => v.reduce((max, ver) => Math.max(max, ver.version), 0))) +
-          1,
+        version: await getNextVersion(ctx, "song", args.contentId),
         snapshot: currentSnapshot,
         changedBy: userId,
         changedAt: Date.now(),
@@ -308,15 +277,7 @@ export const rollback = mutation({
       await ctx.db.insert("contentVersions", {
         contentType: "song",
         contentId: args.contentId,
-        version:
-          (await ctx.db
-            .query("contentVersions")
-            .withIndex("by_content", (q) =>
-              q.eq("contentType", "song").eq("contentId", args.contentId)
-            )
-            .collect()
-            .then((v) => v.reduce((max, ver) => Math.max(max, ver.version), 0))) +
-          1,
+        version: await getNextVersion(ctx, "song", args.contentId),
         snapshot: targetVersion.snapshot,
         changedBy: userId,
         changedAt: Date.now(),
@@ -341,17 +302,7 @@ export const rollback = mutation({
       await ctx.db.insert("contentVersions", {
         contentType: "arrangement",
         contentId: args.contentId,
-        version:
-          (await ctx.db
-            .query("contentVersions")
-            .withIndex("by_content", (q) =>
-              q
-                .eq("contentType", "arrangement")
-                .eq("contentId", args.contentId)
-            )
-            .collect()
-            .then((v) => v.reduce((max, ver) => Math.max(max, ver.version), 0))) +
-          1,
+        version: await getNextVersion(ctx, "arrangement", args.contentId),
         snapshot: currentSnapshot,
         changedBy: userId,
         changedAt: Date.now(),
@@ -374,17 +325,7 @@ export const rollback = mutation({
       await ctx.db.insert("contentVersions", {
         contentType: "arrangement",
         contentId: args.contentId,
-        version:
-          (await ctx.db
-            .query("contentVersions")
-            .withIndex("by_content", (q) =>
-              q
-                .eq("contentType", "arrangement")
-                .eq("contentId", args.contentId)
-            )
-            .collect()
-            .then((v) => v.reduce((max, ver) => Math.max(max, ver.version), 0))) +
-          1,
+        version: await getNextVersion(ctx, "arrangement", args.contentId),
         snapshot: targetVersion.snapshot,
         changedBy: userId,
         changedAt: Date.now(),

@@ -1,9 +1,10 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { R2 } from "@convex-dev/r2";
 import { components } from "./_generated/api";
 import { DataModel } from "./_generated/dataModel";
+import { requireAuthenticatedUser } from "./permissions";
 
 const r2 = new R2(components.r2);
 
@@ -47,15 +48,7 @@ export const {
 export const saveAvatar = mutation({
   args: { key: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated to save avatar");
-    }
-
-    const user = await ctx.db.get(userId);
-    if (!user?.email) {
-      throw new Error("Anonymous users cannot save avatars. Please sign in.");
-    }
+    const { userId, user } = await requireAuthenticatedUser(ctx);
 
     // Delete old avatar from R2 if exists
     if (user.avatarKey) {
@@ -81,15 +74,7 @@ export const saveAvatar = mutation({
 export const removeAvatar = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated to remove avatar");
-    }
-
-    const user = await ctx.db.get(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const { userId, user } = await requireAuthenticatedUser(ctx);
 
     // Delete from R2 if exists
     if (user.avatarKey) {

@@ -1,7 +1,12 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { Id } from "./_generated/dataModel";
+import {
+  getGroupMembership,
+  requireAuth,
+  requireAuthenticatedUser,
+  formatUserInfo,
+} from "./permissions";
 
 // ============ HELPER FUNCTIONS ============
 
@@ -17,19 +22,16 @@ function generateSlug(name: string): string {
 }
 
 /**
- * Get group membership for a user
+ * Assert that a group is not a system group.
+ * Throws with a descriptive error message if it is.
  */
-async function getMembership(
-  ctx: { db: any },
-  groupId: Id<"groups">,
-  userId: Id<"users">
-) {
-  return await ctx.db
-    .query("groupMembers")
-    .withIndex("by_group_and_user", (q: any) =>
-      q.eq("groupId", groupId).eq("userId", userId)
-    )
-    .unique();
+function assertNotSystemGroup(
+  group: { isSystemGroup?: boolean },
+  action: string
+): void {
+  if (group.isSystemGroup) {
+    throw new Error(`Cannot ${action} system groups`);
+  }
 }
 
 /**
@@ -63,12 +65,12 @@ export const list = query({
       groups.map(async (group) => {
         let membership = null;
         if (userId) {
-          membership = await getMembership(ctx, group._id, userId);
+          membership = await getGroupMembership(ctx, group._id, userId);
         }
         const memberCount = (
           await ctx.db
             .query("groupMembers")
-            .withIndex("by_group", (q: any) => q.eq("groupId", group._id))
+            .withIndex("by_group", (q) => q.eq("groupId", group._id))
             .collect()
         ).length;
 
@@ -109,7 +111,7 @@ export const getBySlug = query({
     const userId = await getAuthUserId(ctx);
     let membership = null;
     if (userId) {
-      membership = await getMembership(ctx, group._id, userId);
+      membership = await getGroupMembership(ctx, group._id, userId);
     }
 
     const memberCount = (
@@ -131,7 +133,7 @@ export const getBySlug = query({
 /**
  * Get the system "Public" group
  */
-export const getPublicGroup = query({
+export const getPublicGroupQuery = query({
   args: {},
   handler: async (ctx) => {
     const groups = await ctx.db.query("groups").collect();
@@ -178,15 +180,7 @@ export const getMembers = query({
         const user = await ctx.db.get(member.userId);
         return {
           ...member,
-          user: user
-            ? {
-                _id: user._id,
-                username: user.username,
-                displayName: user.displayName,
-                showRealName: user.showRealName,
-                avatarKey: user.avatarKey,
-              }
-            : null,
+          user: formatUserInfo(user),
         };
       })
     );
@@ -203,7 +197,7 @@ export const getPendingRequests = query({
     if (!userId) return [];
 
     // Check if user is admin or owner
-    const membership = await getMembership(ctx, args.groupId, userId);
+    const membership = await getGroupMembership(ctx, args.groupId, userId);
     if (!membership || membership.role === "member") {
       return [];
     }
@@ -220,15 +214,7 @@ export const getPendingRequests = query({
         const user = await ctx.db.get(request.userId);
         return {
           ...request,
-          user: user
-            ? {
-                _id: user._id,
-                username: user.username,
-                displayName: user.displayName,
-                showRealName: user.showRealName,
-                avatarKey: user.avatarKey,
-              }
-            : null,
+          user: formatUserInfo(user),
         };
       })
     );
@@ -269,15 +255,7 @@ export const create = mutation({
     joinPolicy: v.union(v.literal("open"), v.literal("approval")),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated to create a group");
-    }
-
-    const user = await ctx.db.get(userId);
-    if (!user?.email) {
-      throw new Error("Anonymous users cannot create groups");
-    }
+    const { userId } = await requireAuthenticatedUser(ctx);
 
     // Generate slug and ensure uniqueness
     let slug = generateSlug(args.name);
@@ -328,12 +306,9 @@ export const update = mutation({
     joinPolicy: v.optional(v.union(v.literal("open"), v.literal("approval"))),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated");
-    }
+    const userId = await requireAuth(ctx);
 
-    const membership = await getMembership(ctx, args.id, userId);
+    const membership = await getGroupMembership(ctx, args.id, userId);
     if (!membership || membership.role !== "owner") {
       throw new Error("Only the owner can update the group");
     }
@@ -343,11 +318,9 @@ export const update = mutation({
       throw new Error("Group not found");
     }
 
-    if (group.isSystemGroup) {
-      throw new Error("Cannot modify system groups");
-    }
+    assertNotSystemGroup(group, "modify");
 
-    const { id, ...updates } = args;
+    const { id: _id, ...updates } = args;
     const cleanUpdates: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(updates)) {
       if (value !== undefined) {
@@ -366,12 +339,9 @@ export const update = mutation({
 export const deleteGroup = mutation({
   args: { id: v.id("groups") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated");
-    }
+    const userId = await requireAuth(ctx);
 
-    const membership = await getMembership(ctx, args.id, userId);
+    const membership = await getGroupMembership(ctx, args.id, userId);
     if (!membership || membership.role !== "owner") {
       throw new Error("Only the owner can delete the group");
     }
@@ -381,9 +351,7 @@ export const deleteGroup = mutation({
       throw new Error("Group not found");
     }
 
-    if (group.isSystemGroup) {
-      throw new Error("Cannot delete system groups");
-    }
+    assertNotSystemGroup(group, "delete");
 
     // Delete all members
     const members = await ctx.db
@@ -416,15 +384,7 @@ export const deleteGroup = mutation({
 export const requestJoin = mutation({
   args: { groupId: v.id("groups") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated");
-    }
-
-    const user = await ctx.db.get(userId);
-    if (!user?.email) {
-      throw new Error("Anonymous users cannot join groups");
-    }
+    const { userId } = await requireAuthenticatedUser(ctx);
 
     const group = await ctx.db.get(args.groupId);
     if (!group) {
@@ -432,7 +392,7 @@ export const requestJoin = mutation({
     }
 
     // Check if already a member
-    const existingMembership = await getMembership(ctx, args.groupId, userId);
+    const existingMembership = await getGroupMembership(ctx, args.groupId, userId);
     if (existingMembership) {
       throw new Error("Already a member of this group");
     }
@@ -480,10 +440,7 @@ export const requestJoin = mutation({
 export const cancelRequest = mutation({
   args: { groupId: v.id("groups") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated");
-    }
+    const userId = await requireAuth(ctx);
 
     const requests = await ctx.db
       .query("groupJoinRequests")
@@ -509,17 +466,14 @@ export const cancelRequest = mutation({
 export const approveJoin = mutation({
   args: { requestId: v.id("groupJoinRequests") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated");
-    }
+    const userId = await requireAuth(ctx);
 
     const request = await ctx.db.get(args.requestId);
     if (!request || request.status !== "pending") {
       throw new Error("Request not found or already resolved");
     }
 
-    const membership = await getMembership(ctx, request.groupId, userId);
+    const membership = await getGroupMembership(ctx, request.groupId, userId);
     if (!membership || membership.role === "member") {
       throw new Error("Only admins and owners can approve requests");
     }
@@ -550,17 +504,14 @@ export const approveJoin = mutation({
 export const rejectJoin = mutation({
   args: { requestId: v.id("groupJoinRequests") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated");
-    }
+    const userId = await requireAuth(ctx);
 
     const request = await ctx.db.get(args.requestId);
     if (!request || request.status !== "pending") {
       throw new Error("Request not found or already resolved");
     }
 
-    const membership = await getMembership(ctx, request.groupId, userId);
+    const membership = await getGroupMembership(ctx, request.groupId, userId);
     if (!membership || membership.role === "member") {
       throw new Error("Only admins and owners can reject requests");
     }
@@ -584,17 +535,14 @@ export const removeMember = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const currentUserId = await getAuthUserId(ctx);
-    if (!currentUserId) {
-      throw new Error("Must be authenticated");
-    }
+    const currentUserId = await requireAuth(ctx);
 
-    const actorMembership = await getMembership(ctx, args.groupId, currentUserId);
+    const actorMembership = await getGroupMembership(ctx, args.groupId, currentUserId);
     if (!actorMembership) {
       throw new Error("You are not a member of this group");
     }
 
-    const targetMembership = await getMembership(ctx, args.groupId, args.userId);
+    const targetMembership = await getGroupMembership(ctx, args.groupId, args.userId);
     if (!targetMembership) {
       throw new Error("User is not a member of this group");
     }
@@ -617,12 +565,9 @@ export const promoteToAdmin = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const currentUserId = await getAuthUserId(ctx);
-    if (!currentUserId) {
-      throw new Error("Must be authenticated");
-    }
+    const currentUserId = await requireAuth(ctx);
 
-    const actorMembership = await getMembership(ctx, args.groupId, currentUserId);
+    const actorMembership = await getGroupMembership(ctx, args.groupId, currentUserId);
     if (
       !actorMembership ||
       (actorMembership.role !== "owner" && actorMembership.role !== "admin")
@@ -630,7 +575,7 @@ export const promoteToAdmin = mutation({
       throw new Error("Only admins and owners can promote members");
     }
 
-    const targetMembership = await getMembership(ctx, args.groupId, args.userId);
+    const targetMembership = await getGroupMembership(ctx, args.groupId, args.userId);
     if (!targetMembership) {
       throw new Error("User is not a member of this group");
     }
@@ -658,17 +603,14 @@ export const demoteAdmin = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const currentUserId = await getAuthUserId(ctx);
-    if (!currentUserId) {
-      throw new Error("Must be authenticated");
-    }
+    const currentUserId = await requireAuth(ctx);
 
-    const actorMembership = await getMembership(ctx, args.groupId, currentUserId);
+    const actorMembership = await getGroupMembership(ctx, args.groupId, currentUserId);
     if (!actorMembership) {
       throw new Error("You are not a member of this group");
     }
 
-    const targetMembership = await getMembership(ctx, args.groupId, args.userId);
+    const targetMembership = await getGroupMembership(ctx, args.groupId, args.userId);
     if (!targetMembership) {
       throw new Error("User is not a member of this group");
     }
@@ -696,12 +638,9 @@ export const demoteAdmin = mutation({
 export const leaveGroup = mutation({
   args: { groupId: v.id("groups") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated");
-    }
+    const userId = await requireAuth(ctx);
 
-    const membership = await getMembership(ctx, args.groupId, userId);
+    const membership = await getGroupMembership(ctx, args.groupId, userId);
     if (!membership) {
       throw new Error("You are not a member of this group");
     }
@@ -723,7 +662,7 @@ export const leaveGroup = mutation({
       if (otherMembers.length === 0) {
         // No other members - delete the group (unless system group)
         if (group.isSystemGroup) {
-          throw new Error("Cannot leave system group as the only owner");
+          throw new Error("Cannot leave a system group as the only owner");
         }
 
         // Delete join requests
@@ -771,17 +710,14 @@ export const transferOwnership = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const currentUserId = await getAuthUserId(ctx);
-    if (!currentUserId) {
-      throw new Error("Must be authenticated");
-    }
+    const currentUserId = await requireAuth(ctx);
 
-    const actorMembership = await getMembership(ctx, args.groupId, currentUserId);
+    const actorMembership = await getGroupMembership(ctx, args.groupId, currentUserId);
     if (!actorMembership || actorMembership.role !== "owner") {
       throw new Error("Only the owner can transfer ownership");
     }
 
-    const targetMembership = await getMembership(ctx, args.groupId, args.userId);
+    const targetMembership = await getGroupMembership(ctx, args.groupId, args.userId);
     if (!targetMembership) {
       throw new Error("User is not a member of this group");
     }

@@ -1,5 +1,6 @@
 import { QueryCtx, MutationCtx } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
+import { Id, Doc } from "./_generated/dataModel";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 /**
  * Centralized permission helpers for songs and arrangements
@@ -14,6 +15,60 @@ type ContentOwnership = {
   ownerId?: string;
   createdBy: Id<"users">;
 };
+
+// ============ AUTHENTICATION HELPERS ============
+
+/**
+ * Require an authenticated user and return their ID.
+ * Throws if not authenticated.
+ */
+export async function requireAuth(
+  ctx: QueryCtx | MutationCtx
+): Promise<Id<"users">> {
+  const userId = await getAuthUserId(ctx);
+  if (!userId) {
+    throw new Error("Must be authenticated");
+  }
+  return userId;
+}
+
+/**
+ * Require an authenticated non-anonymous user.
+ * Returns both userId and user document.
+ * Throws if not authenticated or if user is anonymous (no email).
+ */
+export async function requireAuthenticatedUser(
+  ctx: QueryCtx | MutationCtx
+): Promise<{ userId: Id<"users">; user: Doc<"users"> }> {
+  const userId = await requireAuth(ctx);
+  const user = await ctx.db.get(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+  if (!user.email) {
+    throw new Error(
+      "Anonymous users cannot perform this action. Please sign in."
+    );
+  }
+  return { userId, user };
+}
+
+// ============ USER INFO FORMATTING ============
+
+/**
+ * Format user info for API responses.
+ * Extracts only the fields needed for display.
+ */
+export function formatUserInfo(user: Doc<"users"> | null) {
+  if (!user) return null;
+  return {
+    _id: user._id,
+    username: user.username,
+    displayName: user.displayName,
+    showRealName: user.showRealName,
+    avatarKey: user.avatarKey,
+  };
+}
 
 // ============ GROUP HELPERS ============
 

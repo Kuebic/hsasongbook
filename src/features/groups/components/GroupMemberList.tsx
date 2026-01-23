@@ -38,6 +38,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import type { Id } from '../../../../convex/_generated/dataModel';
+import { getDisplayName } from '@/features/shared/utils/userDisplay';
 
 interface GroupMemberListProps {
   groupId: Id<'groups'>;
@@ -98,14 +99,6 @@ export default function GroupMemberList({
     }
   };
 
-  const getDisplayName = (user: GroupMember['user']) => {
-    if (!user) return 'Unknown';
-    if (user.showRealName && user.displayName) {
-      return user.displayName;
-    }
-    return user.username ?? 'Unknown';
-  };
-
   const handleAction = async () => {
     if (!actionTarget) return;
 
@@ -133,7 +126,7 @@ export default function GroupMemberList({
     if (!actionTarget) return null;
 
     const { member, action } = actionTarget;
-    const name = getDisplayName(member.user);
+    const name = getDisplayName(member.user, { prefixUsername: false });
 
     switch (action) {
       case 'remove':
@@ -210,7 +203,7 @@ export default function GroupMemberList({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">
-                      {getDisplayName(member.user)}
+                      {getDisplayName(member.user, { prefixUsername: false })}
                     </span>
                     {getRoleBadge(member.role)}
                   </div>
