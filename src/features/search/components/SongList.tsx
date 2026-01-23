@@ -12,17 +12,8 @@ interface SongListProps {
 }
 
 export default function SongList({ songs }: SongListProps) {
-  // Get all arrangements to calculate counts per song
-  const allArrangements = useQuery(api.arrangements.list);
-
-  // Calculate arrangement counts per song
-  const arrangementCounts: Record<string, number> = {};
-  if (allArrangements) {
-    for (const arr of allArrangements) {
-      const songId = arr.songId as string;
-      arrangementCounts[songId] = (arrangementCounts[songId] || 0) + 1;
-    }
-  }
+  // Get arrangement counts per song (server-side aggregation, minimal data transfer)
+  const arrangementCounts = useQuery(api.arrangements.getCountsBySong) ?? {};
 
   if (!songs || songs.length === 0) {
     return (

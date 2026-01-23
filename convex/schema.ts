@@ -108,7 +108,8 @@ export default defineSchema({
     isSystemGroup: v.optional(v.boolean()), // True for "Community" group
   })
     .index("by_slug", ["slug"])
-    .index("by_createdBy", ["createdBy"]),
+    .index("by_createdBy", ["createdBy"])
+    .index("by_isSystemGroup", ["isSystemGroup"]),
 
   // Group Membership - With hierarchical admin seniority (Reddit-style)
   groupMembers: defineTable({

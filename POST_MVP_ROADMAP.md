@@ -173,15 +173,16 @@ Only implement if planning App Store release or significant iOS user base.
 
 ## Priority 10: Technical Debt
 
-| Issue | Fix | Effort |
-|-------|-----|--------|
-| **N+1 query in SongList** | Add `arrangements.countBySong` query | Low |
-| **Duplicated type mappers** | Extract to `convex/mappers.ts` | Low |
-| **Convex ID type casting** | Type IDs upstream to reduce casts | Medium |
-| **No-op `reload()` functions** | Remove from hooks (Convex auto-syncs) | Low |
-| **Stubbed `updateSongKey`** | Remove or throw error | Low |
-| **Fragile "Community" check** | Use ID comparison or `isSystemGroup` flag | Low |
-| **Repeated creator joins** | Extract `attachCreatorInfo()` helper | Medium |
+| Issue | Fix | Effort | Status |
+|-------|-----|--------|--------|
+| ~~**N+1 query in SongList**~~ | ~~Add `arrangements.getCountsBySong` query~~ | ~~Low~~ | ✅ Done |
+| ~~**N+1 queries in groups.ts list()**~~ | ~~Batch membership & member count queries~~ | ~~Medium~~ | ✅ Done |
+| ~~**Full table scan for Community group**~~ | ~~Add `isSystemGroup` index, use `.first()`~~ | ~~Low~~ | ✅ Done |
+| **Duplicated type mappers** | Extract to `convex/mappers.ts` | Low | |
+| **Convex ID type casting** | Type IDs upstream to reduce casts | Medium | |
+| **No-op `reload()` functions** | Remove from hooks (Convex auto-syncs) | Low | |
+| **Stubbed `updateSongKey`** | Remove or throw error | Low | |
+| **Repeated creator joins** | Extract `attachCreatorInfo()` helper | Medium | |
 
 ---
 
@@ -199,5 +200,26 @@ Only implement if planning App Store release or significant iOS user base.
 
 | Date | Change |
 |------|--------|
+| 2026-01-23 | Fixed N+1 queries in groups.ts, added `getCountsBySong` query, added `isSystemGroup` index |
 | 2026-01-23 | Reorganized by priority; consolidated scattered notes; added effort estimates |
 | 2026-01-22 | Initial extraction from PROJECT_STATUS.md |
+
+---
+
+## Remaining Database Optimization Notes
+
+### Still TODO (Lower Priority)
+
+These N+1 patterns exist but are less critical (Convex batches parallel `ctx.db.get()` calls internally):
+
+| File | Pattern | Impact |
+|------|---------|--------|
+| `convex/arrangements.ts` | Fetching creator data per arrangement in `getBySongWithCreators` | Low - typically <10 arrangements per song |
+| `convex/arrangements.ts` | Fetching collaborator + addedBy user data in loops | Low - few collaborators |
+| `convex/versions.ts` | Fetching user data per version in history | Low - versions are paginated |
+
+### Code Quality Notes
+
+- **Form boilerplate duplication**: Each form repeats ~20 lines of useState/try-catch/error handling. Could extract to a `useFormHandler` hook.
+- **Magic numbers**: Slug length (30) and nanoid length (6) should be constants
+- **Possibly unused**: `chordsheetjs` dependency - verify if actually used

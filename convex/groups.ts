@@ -52,27 +52,35 @@ export const list = query({
     const userId = await getAuthUserId(ctx);
     const groups = await ctx.db.query("groups").collect();
 
-    return Promise.all(
-      groups.map(async (group) => {
-        let membership = null;
-        if (userId) {
-          membership = await getGroupMembership(ctx, group._id, userId);
-        }
-        const memberCount = (
-          await ctx.db
-            .query("groupMembers")
-            .withIndex("by_group", (q) => q.eq("groupId", group._id))
-            .collect()
-        ).length;
-
-        return {
-          ...group,
-          memberCount,
-          isMember: membership !== null,
-          role: membership?.role ?? null,
-        };
-      })
+    // Batch: Get all user's memberships in ONE query
+    const userMemberships = userId
+      ? await ctx.db
+          .query("groupMembers")
+          .withIndex("by_user", (q) => q.eq("userId", userId))
+          .collect()
+      : [];
+    const membershipByGroup = new Map(
+      userMemberships.map((m) => [m.groupId.toString(), m])
     );
+
+    // Batch: Get ALL group members in ONE query, then count per group
+    const allMembers = await ctx.db.query("groupMembers").collect();
+    const memberCountByGroup = new Map<string, number>();
+    for (const member of allMembers) {
+      const key = member.groupId.toString();
+      memberCountByGroup.set(key, (memberCountByGroup.get(key) || 0) + 1);
+    }
+
+    return groups.map((group) => {
+      const groupKey = group._id.toString();
+      const membership = membershipByGroup.get(groupKey);
+      return {
+        ...group,
+        memberCount: memberCountByGroup.get(groupKey) || 0,
+        isMember: membership !== undefined,
+        role: membership?.role ?? null,
+      };
+    });
   },
 });
 
@@ -122,13 +130,15 @@ export const getBySlug = query({
 });
 
 /**
- * Get the system "Public" group
+ * Get the system "Community" group
  */
 export const getPublicGroupQuery = query({
   args: {},
   handler: async (ctx) => {
-    const groups = await ctx.db.query("groups").collect();
-    return groups.find((g) => g.isSystemGroup) ?? null;
+    return await ctx.db
+      .query("groups")
+      .withIndex("by_isSystemGroup", (q) => q.eq("isSystemGroup", true))
+      .first();
   },
 });
 

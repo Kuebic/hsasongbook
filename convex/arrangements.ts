@@ -189,6 +189,27 @@ export const count = query({
 });
 
 /**
+ * Get arrangement counts grouped by song
+ * Returns { [songId]: count } for all songs with arrangements
+ * Access: Everyone
+ *
+ * This is optimized for the song list - returns minimal data instead of
+ * fetching all arrangement objects with their full chordProContent.
+ */
+export const getCountsBySong = query({
+  args: {},
+  handler: async (ctx) => {
+    const arrangements = await ctx.db.query("arrangements").collect();
+    const counts: Record<string, number> = {};
+    for (const arr of arrangements) {
+      const songId = arr.songId.toString();
+      counts[songId] = (counts[songId] || 0) + 1;
+    }
+    return counts;
+  },
+});
+
+/**
  * Get featured arrangements WITH song data and creator info (joined)
  * This is what the frontend FeaturedArrangements widget needs
  * Access: Everyone

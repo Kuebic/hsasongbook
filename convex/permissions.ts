@@ -111,8 +111,10 @@ export function formatUserInfo(user: Doc<"users"> | null) {
  * Get the system Community group
  */
 export async function getCommunityGroup(ctx: QueryCtx | MutationCtx) {
-  const groups = await ctx.db.query("groups").collect();
-  return groups.find((g) => g.isSystemGroup) ?? null;
+  return await ctx.db
+    .query("groups")
+    .withIndex("by_isSystemGroup", (q) => q.eq("isSystemGroup", true))
+    .first();
 }
 
 /**

@@ -306,6 +306,7 @@ See [POST_MVP_ROADMAP.md](POST_MVP_ROADMAP.md) for:
 
 | Date | Change |
 |------|--------|
+| 2026-01-23 | **Database optimizations**: Fixed N+1 in `groups.ts list()`, added `isSystemGroup` index, added `arrangements.getCountsBySong` query, fixed SongList over-fetching |
 | 2026-01-23 | **Phase 6.2b complete**: Version history UI, owner selector in forms, co-author picker, song ownership display. Full groups & permissions system complete. |
 | 2026-01-23 | **Phase 6.2 complete**: Groups feature with ownership, membership, permissions. Routes: `/groups`, `/groups/:slug`, `/groups/:slug/settings` |
 | 2026-01-23 | **Phase 6.1 complete**: Collaborators system for arrangements with permissions checking |
