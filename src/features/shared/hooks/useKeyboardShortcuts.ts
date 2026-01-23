@@ -6,9 +6,13 @@ export function useKeyboardShortcuts(): void {
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent): void => {
-      // Don't trigger if typing in an input
+      // Don't trigger if typing in an input, textarea, or contenteditable element (like CodeMirror)
       const target = event.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
         return
       }
 
