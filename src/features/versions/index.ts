@@ -1,11 +1,11 @@
 /**
  * Version History Feature Module
- * Provides version history and rollback functionality for Public-owned content.
+ * Provides version history and rollback functionality for Community-owned content.
  */
 
 // Hooks
 export { useVersionHistory } from './hooks/useVersionHistory';
-export { useIsPublicGroupModerator } from './hooks/useIsPublicGroupModerator';
+export { useIsCommunityGroupModerator } from './hooks/useIsCommunityGroupModerator';
 
 // Components
 export { default as VersionHistoryPanel } from './components/VersionHistoryPanel';

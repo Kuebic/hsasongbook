@@ -2,11 +2,11 @@ import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 
 /**
- * Hook to check if the current user is a Public group moderator (admin/owner).
+ * Hook to check if the current user is a Community group moderator (admin/owner).
  * Used to conditionally show version history UI.
  */
-export function useIsPublicGroupModerator() {
-  const isModerator = useQuery(api.versions.isCurrentUserPublicModerator);
+export function useIsCommunityGroupModerator() {
+  const isModerator = useQuery(api.versions.isCurrentUserCommunityModerator);
 
   return {
     isModerator: isModerator ?? false,

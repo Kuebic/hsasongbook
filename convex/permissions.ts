@@ -108,22 +108,22 @@ export function formatUserInfo(user: Doc<"users"> | null) {
 // ============ GROUP HELPERS ============
 
 /**
- * Get the system Public group
+ * Get the system Community group
  */
-export async function getPublicGroup(ctx: QueryCtx | MutationCtx) {
+export async function getCommunityGroup(ctx: QueryCtx | MutationCtx) {
   const groups = await ctx.db.query("groups").collect();
   return groups.find((g) => g.isSystemGroup) ?? null;
 }
 
 /**
- * Check if a group is the Public system group
+ * Check if a group is the Community system group
  */
-export async function isPublicGroup(
+export async function isCommunityGroup(
   ctx: QueryCtx | MutationCtx,
   groupId: string
 ): Promise<boolean> {
-  const publicGroup = await getPublicGroup(ctx);
-  return publicGroup?._id.toString() === groupId;
+  const communityGroup = await getCommunityGroup(ctx);
+  return communityGroup?._id.toString() === groupId;
 }
 
 /**
@@ -252,10 +252,10 @@ export async function canEditArrangement(
   if (arrangement.ownerType === "group" && arrangement.ownerId) {
     const groupId = arrangement.ownerId as Id<"groups">;
 
-    // Check if this is the Public group
-    const publicGroup = await getPublicGroup(ctx);
-    if (publicGroup && publicGroup._id.toString() === arrangement.ownerId) {
-      // Public group: any member can edit
+    // Check if this is the Community group
+    const communityGroup = await getCommunityGroup(ctx);
+    if (communityGroup && communityGroup._id.toString() === arrangement.ownerId) {
+      // Community group: any member can edit
       return await isGroupMember(ctx, groupId, userId);
     }
 
@@ -334,10 +334,10 @@ export async function canEditSong(
   if (song.ownerType === "group" && song.ownerId) {
     const groupId = song.ownerId as Id<"groups">;
 
-    // Check if this is the Public group
-    const publicGroup = await getPublicGroup(ctx);
-    if (publicGroup && publicGroup._id.toString() === song.ownerId) {
-      // Public group: any member can edit
+    // Check if this is the Community group
+    const communityGroup = await getCommunityGroup(ctx);
+    if (communityGroup && communityGroup._id.toString() === song.ownerId) {
+      // Community group: any member can edit
       return await isGroupMember(ctx, groupId, userId);
     }
 

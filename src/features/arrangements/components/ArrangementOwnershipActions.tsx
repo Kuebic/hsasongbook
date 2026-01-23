@@ -2,8 +2,8 @@
  * ArrangementOwnershipActions Component
  *
  * Allows the original arrangement creator to:
- * - Transfer their arrangement to Public (crowdsourced editing)
- * - Reclaim their arrangement from Public back to personal ownership
+ * - Transfer their arrangement to Community (crowdsourced editing)
+ * - Reclaim their arrangement from Community back to personal ownership
  */
 
 import { useState } from 'react';
@@ -27,19 +27,19 @@ import type { Id } from '../../../../convex/_generated/dataModel';
 interface ArrangementOwnershipActionsProps {
   arrangementId: string;
   isOwner: boolean;
-  isPublicOwned: boolean;
+  isCommunityOwned: boolean;
 }
 
 export function ArrangementOwnershipActions({
   arrangementId,
   isOwner,
-  isPublicOwned,
+  isCommunityOwned,
 }: ArrangementOwnershipActionsProps) {
   const [isTransferring, setIsTransferring] = useState(false);
   const [isReclaiming, setIsReclaiming] = useState(false);
 
-  const transferToPublic = useMutation(api.arrangements.transferToPublic);
-  const reclaimFromPublic = useMutation(api.arrangements.reclaimFromPublic);
+  const transferToCommunity = useMutation(api.arrangements.transferToCommunity);
+  const reclaimFromCommunity = useMutation(api.arrangements.reclaimFromCommunity);
 
   // Only show for the original creator
   if (!isOwner) return null;
@@ -47,7 +47,7 @@ export function ArrangementOwnershipActions({
   const handleTransfer = async () => {
     setIsTransferring(true);
     try {
-      await transferToPublic({ id: arrangementId as Id<'arrangements'> });
+      await transferToCommunity({ id: arrangementId as Id<'arrangements'> });
     } catch (error) {
       console.error('Failed to transfer arrangement:', error);
     } finally {
@@ -58,7 +58,7 @@ export function ArrangementOwnershipActions({
   const handleReclaim = async () => {
     setIsReclaiming(true);
     try {
-      await reclaimFromPublic({ id: arrangementId as Id<'arrangements'> });
+      await reclaimFromCommunity({ id: arrangementId as Id<'arrangements'> });
     } catch (error) {
       console.error('Failed to reclaim arrangement:', error);
     } finally {
@@ -66,7 +66,7 @@ export function ArrangementOwnershipActions({
     }
   };
 
-  if (isPublicOwned) {
+  if (isCommunityOwned) {
     // Show reclaim option
     return (
       <AlertDialog>
@@ -85,8 +85,8 @@ export function ArrangementOwnershipActions({
             <AlertDialogTitle>Reclaim this arrangement?</AlertDialogTitle>
             <AlertDialogDescription>
               This will move the arrangement back to your personal ownership.
-              Public group members will no longer be able to edit it. You can
-              always transfer it back to Public later.
+              Community group members will no longer be able to edit it. You can
+              always transfer it back to Community later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -110,14 +110,14 @@ export function ArrangementOwnershipActions({
           ) : (
             <Globe className="h-4 w-4 mr-2" />
           )}
-          Make Public
+          Move to Community
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Transfer to Public?</AlertDialogTitle>
+          <AlertDialogTitle>Transfer to Community?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will allow anyone in the Public group to edit this arrangement.
+            This will allow anyone in the Community group to edit this arrangement.
             You'll retain edit rights as the original creator and can reclaim
             ownership anytime.
           </AlertDialogDescription>
@@ -125,7 +125,7 @@ export function ArrangementOwnershipActions({
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleTransfer}>
-            Transfer to Public
+            Transfer to Community
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

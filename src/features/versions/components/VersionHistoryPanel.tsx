@@ -1,7 +1,7 @@
 /**
  * VersionHistoryPanel Component
- * Collapsible panel for viewing version history of Public-owned content.
- * Only visible to Public group moderators (admin/owner).
+ * Collapsible panel for viewing version history of Community-owned content.
+ * Only visible to Community group moderators (admin/owner).
  */
 
 import { useState } from 'react';
@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, ChevronDown, ChevronUp, History, Loader2 } from 'lucide-react';
 import { useVersionHistory } from '../hooks/useVersionHistory';
-import { useIsPublicGroupModerator } from '../hooks/useIsPublicGroupModerator';
+import { useIsCommunityGroupModerator } from '../hooks/useIsCommunityGroupModerator';
 import VersionHistoryList from './VersionHistoryList';
 import RollbackConfirmDialog from './RollbackConfirmDialog';
 import { getDisplayName } from '@/features/shared/utils/userDisplay';
@@ -40,7 +40,7 @@ export default function VersionHistoryPanel({
     changedByUser: string;
   } | null>(null);
 
-  const { isModerator, loading: moderatorLoading } = useIsPublicGroupModerator();
+  const { isModerator, loading: moderatorLoading } = useIsCommunityGroupModerator();
   const {
     versions,
     loading: versionsLoading,
@@ -52,7 +52,7 @@ export default function VersionHistoryPanel({
 
   // Don't render if:
   // 1. Not a group-owned content
-  // 2. User is not a Public group moderator
+  // 2. User is not a Community group moderator
   // 3. Still loading moderator status
   if (ownerType !== 'group') {
     return null;

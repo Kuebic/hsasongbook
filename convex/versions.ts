@@ -3,7 +3,7 @@ import { query, mutation, internalMutation, QueryCtx, MutationCtx } from "./_gen
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
 import {
-  getPublicGroup,
+  getCommunityGroup,
   isGroupAdminOrOwner,
   requireAuth,
   formatUserInfo,
@@ -12,39 +12,39 @@ import {
 // ============ HELPER FUNCTIONS ============
 
 /**
- * Check if a user is a Public group admin/owner
+ * Check if a user is a Community group admin/owner
  */
-async function isPublicGroupModerator(
+async function isCommunityGroupModerator(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">
 ): Promise<boolean> {
-  const publicGroup = await getPublicGroup(ctx);
-  if (!publicGroup) return false;
+  const communityGroup = await getCommunityGroup(ctx);
+  if (!communityGroup) return false;
 
-  return await isGroupAdminOrOwner(ctx, publicGroup._id, userId);
+  return await isGroupAdminOrOwner(ctx, communityGroup._id, userId);
 }
 
 /**
- * Check if content is owned by the Public group
+ * Check if content is owned by the Community group
  */
-async function isPublicGroupOwned(
+async function isCommunityGroupOwned(
   ctx: QueryCtx | MutationCtx,
   contentType: "song" | "arrangement",
   contentId: string
 ): Promise<boolean> {
-  const publicGroup = await getPublicGroup(ctx);
-  if (!publicGroup) return false;
+  const communityGroup = await getCommunityGroup(ctx);
+  if (!communityGroup) return false;
 
   if (contentType === "song") {
     const song = await ctx.db.get(contentId as Id<"songs">);
     return (
-      song?.ownerType === "group" && song?.ownerId === publicGroup._id.toString()
+      song?.ownerType === "group" && song?.ownerId === communityGroup._id.toString()
     );
   } else {
     const arrangement = await ctx.db.get(contentId as Id<"arrangements">);
     return (
       arrangement?.ownerType === "group" &&
-      arrangement?.ownerId === publicGroup._id.toString()
+      arrangement?.ownerId === communityGroup._id.toString()
     );
   }
 }
@@ -100,21 +100,21 @@ export async function hasContentChanged(
 // ============ QUERIES ============
 
 /**
- * Check if current user is a Public group moderator (admin/owner)
+ * Check if current user is a Community group moderator (admin/owner)
  * Used by frontend to conditionally show version history UI
  */
-export const isCurrentUserPublicModerator = query({
+export const isCurrentUserCommunityModerator = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return false;
 
-    return await isPublicGroupModerator(ctx, userId);
+    return await isCommunityGroupModerator(ctx, userId);
   },
 });
 
 /**
- * Get version history for content (Public group admin/owner only)
+ * Get version history for content (Community group admin/owner only)
  */
 export const getHistory = query({
   args: {
@@ -126,17 +126,17 @@ export const getHistory = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    // Only Public group admins/owners can view version history
-    const isModerator = await isPublicGroupModerator(ctx, userId);
+    // Only Community group admins/owners can view version history
+    const isModerator = await isCommunityGroupModerator(ctx, userId);
     if (!isModerator) return [];
 
-    // Only show history for Public-owned content
-    const isPublicOwned = await isPublicGroupOwned(
+    // Only show history for Community-owned content
+    const isCommunityOwned = await isCommunityGroupOwned(
       ctx,
       args.contentType,
       args.contentId
     );
-    if (!isPublicOwned) return [];
+    if (!isCommunityOwned) return [];
 
     const versions = await ctx.db
       .query("contentVersions")
@@ -164,7 +164,7 @@ export const getHistory = query({
 });
 
 /**
- * Get a specific version (Public group admin/owner only)
+ * Get a specific version (Community group admin/owner only)
  */
 export const getVersion = query({
   args: {
@@ -176,17 +176,17 @@ export const getVersion = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
 
-    // Only Public group admins/owners can view versions
-    const isModerator = await isPublicGroupModerator(ctx, userId);
+    // Only Community group admins/owners can view versions
+    const isModerator = await isCommunityGroupModerator(ctx, userId);
     if (!isModerator) return null;
 
-    // Only show for Public-owned content
-    const isPublicOwned = await isPublicGroupOwned(
+    // Only show for Community-owned content
+    const isCommunityOwned = await isCommunityGroupOwned(
       ctx,
       args.contentType,
       args.contentId
     );
-    if (!isPublicOwned) return null;
+    if (!isCommunityOwned) return null;
 
     const version = await ctx.db
       .query("contentVersions")
@@ -239,7 +239,7 @@ export const createVersion = internalMutation({
 });
 
 /**
- * Rollback to a specific version (Public group admin/owner only)
+ * Rollback to a specific version (Community group admin/owner only)
  */
 export const rollback = mutation({
   args: {
@@ -250,20 +250,20 @@ export const rollback = mutation({
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
 
-    // Only Public group admins/owners can rollback
-    const isModerator = await isPublicGroupModerator(ctx, userId);
+    // Only Community group admins/owners can rollback
+    const isModerator = await isCommunityGroupModerator(ctx, userId);
     if (!isModerator) {
-      throw new Error("Only Public group moderators can rollback versions");
+      throw new Error("Only Community group moderators can rollback versions");
     }
 
-    // Only for Public-owned content
-    const isPublicOwned = await isPublicGroupOwned(
+    // Only for Community-owned content
+    const isCommunityOwned = await isCommunityGroupOwned(
       ctx,
       args.contentType,
       args.contentId
     );
-    if (!isPublicOwned) {
-      throw new Error("Can only rollback Public group content");
+    if (!isCommunityOwned) {
+      throw new Error("Can only rollback Community group content");
     }
 
     // Get the target version

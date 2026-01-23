@@ -4,7 +4,7 @@
  *
  * Shows "Post as myself" vs "Post as [group]" options.
  * Only renders if user belongs to groups where they're owner/admin.
- * Excludes Public system group (transfer only).
+ * Excludes Community system group (transfer only).
  */
 
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,7 @@ interface OwnerSelectorProps {
 /**
  * OwnerSelector - Select between posting as yourself or as a group
  *
- * Only renders if user belongs to postable groups (owner/admin, non-Public).
+ * Only renders if user belongs to postable groups (owner/admin, non-Community).
  * Returns null if user has no groups they can post as.
  */
 export default function OwnerSelector({
@@ -51,7 +51,7 @@ export default function OwnerSelector({
   const { user } = useAuth();
   const { groups, loading } = useUserGroups();
 
-  // Filter to groups where user is owner or admin, excluding Public system group
+  // Filter to groups where user is owner or admin, excluding Community system group
   const postableGroups = groups.filter(
     (group) =>
       (group.role === 'owner' || group.role === 'admin') && !group.isSystemGroup

@@ -40,11 +40,11 @@ export function SongPage() {
     convexSong?._id ?? null
   );
 
-  // Check if song is owned by Public group
-  const isPublicOwned =
+  // Check if song is owned by Community group
+  const isCommunityOwned =
     convexSong?.ownerType === 'group' &&
     convexSong?.owner?.type === 'group' &&
-    convexSong?.owner?.name === 'Public';
+    convexSong?.owner?.name === 'Community';
 
   // Get arrangements for this song (with creator info)
   const convexArrangements = useQuery(
@@ -142,7 +142,7 @@ export function SongPage() {
                 <SongOwnershipActions
                   songId={song?.id ?? ''}
                   isOwner={isOriginalCreator}
-                  isPublicOwned={isPublicOwned}
+                  isCommunityOwned={isCommunityOwned}
                 />
               )}
 
@@ -196,7 +196,7 @@ export function SongPage() {
             )}
           </div>
 
-          {/* Version History Panel (Public group moderators only) */}
+          {/* Version History Panel (Community group moderators only) */}
           <VersionHistoryPanel
             contentType="song"
             contentId={song.id}

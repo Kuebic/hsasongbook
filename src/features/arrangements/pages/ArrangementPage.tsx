@@ -63,11 +63,11 @@ export function ArrangementPage() {
     return arrangementWithCreator?.owner ?? null;
   }, [arrangementWithCreator]);
 
-  // Check if arrangement is owned by Public group
-  const isPublicOwned =
+  // Check if arrangement is owned by Community group
+  const isCommunityOwned =
     arrangementWithCreator?.ownerType === 'group' &&
     owner?.type === 'group' &&
-    owner?.name === 'Public';
+    owner?.name === 'Community';
 
   // Phase 2: Fetch co-authors for group-owned arrangements
   const { coAuthors, loading: coAuthorsLoading } = useArrangementCoAuthors(
@@ -124,7 +124,7 @@ export function ArrangementPage() {
               <ArrangementOwnershipActions
                 arrangementId={arrangement?.id ?? ''}
                 isOwner={isOriginalCreator}
-                isPublicOwned={isPublicOwned}
+                isCommunityOwned={isCommunityOwned}
               />
 
               {/* Collaborators Button (owner only) */}
@@ -239,7 +239,7 @@ export function ArrangementPage() {
           />
         </div>
 
-        {/* Version History Panel (Public group moderators only) */}
+        {/* Version History Panel (Community group moderators only) */}
         <VersionHistoryPanel
           contentType="arrangement"
           contentId={arrangement.id}

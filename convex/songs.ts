@@ -8,10 +8,10 @@ import {
   getContentOwnerInfo,
   canEditSong,
   isSongOwner,
-  getPublicGroup,
+  getCommunityGroup,
   filterUndefined,
   isGroupAdminOrOwner,
-  isPublicGroup,
+  isCommunityGroup,
 } from "./permissions";
 import { Id } from "./_generated/dataModel";
 import { hasContentChanged } from "./versions";
@@ -129,7 +129,7 @@ export const canEdit = query({
  *
  * Phase 2: Supports group ownership
  * - If ownerType='group', verify user is owner/admin of that group
- * - Public group excluded (transfer only)
+ * - Community group excluded (transfer only)
  */
 export const create = mutation({
   args: {
@@ -160,11 +160,11 @@ export const create = mutation({
     let ownerId = args.ownerId;
 
     if (ownerType === "group" && ownerId) {
-      // Prevent creating content directly owned by the Public group
-      const isPublic = await isPublicGroup(ctx, ownerId);
-      if (isPublic) {
+      // Prevent creating content directly owned by the Community group
+      const isCommunity = await isCommunityGroup(ctx, ownerId);
+      if (isCommunity) {
         throw new Error(
-          "Cannot create content directly owned by the Public group. Content must be transferred to Public."
+          "Cannot create content directly owned by the Community group. Content must be transferred to Community."
         );
       }
 
@@ -200,7 +200,7 @@ export const create = mutation({
 
 /**
  * Update a song
- * Access: Owner, or Public group members for Public-owned songs
+ * Access: Owner, or Community group members for Community-owned songs
  */
 export const update = mutation({
   args: {
@@ -225,13 +225,13 @@ export const update = mutation({
       throw new Error("You don't have permission to edit this song");
     }
 
-    // Smart version creation for Public-owned songs (only if changed)
-    const publicGroup = await getPublicGroup(ctx);
-    const isPublicOwned =
+    // Smart version creation for Community-owned songs (only if changed)
+    const communityGroup = await getCommunityGroup(ctx);
+    const isCommunityOwned =
       song.ownerType === "group" &&
-      song.ownerId === publicGroup?._id.toString();
+      song.ownerId === communityGroup?._id.toString();
 
-    if (isPublicOwned) {
+    if (isCommunityOwned) {
       // Create snapshot of current state before update
       const snapshot = JSON.stringify({
         title: song.title,
@@ -266,14 +266,14 @@ export const update = mutation({
 });
 
 /**
- * Transfer a song to the Public group (crowdsourced)
+ * Transfer a song to the Community group (crowdsourced)
  * Access: Original creator only
  *
- * This allows anyone to donate their song to Public for community editing,
- * even if they're not a member of the Public group.
+ * This allows anyone to donate their song to Community for community editing,
+ * even if they're not a member of the Community group.
  * The original creator retains edit rights via createdBy.
  */
-export const transferToPublic = mutation({
+export const transferToCommunity = mutation({
   args: { id: v.id("songs") },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
@@ -288,23 +288,23 @@ export const transferToPublic = mutation({
       throw new Error("Only the original creator can transfer this song");
     }
 
-    // Check if already public
-    const publicGroup = await getPublicGroup(ctx);
-    if (!publicGroup) {
-      throw new Error("Public group not found");
+    // Check if already community-owned
+    const communityGroup = await getCommunityGroup(ctx);
+    if (!communityGroup) {
+      throw new Error("Community group not found");
     }
 
     if (
       song.ownerType === "group" &&
-      song.ownerId === publicGroup._id.toString()
+      song.ownerId === communityGroup._id.toString()
     ) {
-      throw new Error("Song is already owned by Public");
+      throw new Error("Song is already owned by Community");
     }
 
-    // Transfer to Public
+    // Transfer to Community
     await ctx.db.patch(args.id, {
       ownerType: "group",
-      ownerId: publicGroup._id.toString(),
+      ownerId: communityGroup._id.toString(),
       updatedAt: Date.now(),
     });
 
@@ -313,13 +313,13 @@ export const transferToPublic = mutation({
 });
 
 /**
- * Reclaim a song from the Public group back to personal ownership
+ * Reclaim a song from the Community group back to personal ownership
  * Access: Original creator only
  *
  * Allows the person who originally created and transferred the song
  * to take it back under their personal ownership.
  */
-export const reclaimFromPublic = mutation({
+export const reclaimFromCommunity = mutation({
   args: { id: v.id("songs") },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
@@ -334,14 +334,14 @@ export const reclaimFromPublic = mutation({
       throw new Error("Only the original creator can reclaim this song");
     }
 
-    // Check if currently public
-    const publicGroup = await getPublicGroup(ctx);
+    // Check if currently community-owned
+    const communityGroup = await getCommunityGroup(ctx);
     if (
-      !publicGroup ||
+      !communityGroup ||
       song.ownerType !== "group" ||
-      song.ownerId !== publicGroup._id.toString()
+      song.ownerId !== communityGroup._id.toString()
     ) {
-      throw new Error("Song is not currently owned by Public");
+      throw new Error("Song is not currently owned by Community");
     }
 
     // Reclaim to personal ownership

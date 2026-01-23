@@ -22,18 +22,18 @@ interface ArrangementHeaderProps {
 }
 
 export default function ArrangementHeader({ arrangement, songTitle, artist, creator, owner }: ArrangementHeaderProps) {
-  // Phase 2: Determine if this is a group-owned or Public arrangement
+  // Phase 2: Determine if this is a group-owned or Community arrangement
   const isGroupOwned = owner?.type === 'group';
-  const isPublicGroup = isGroupOwned && owner?.name === 'Public';
+  const isCommunityGroup = isGroupOwned && owner?.name === 'Community';
 
   // Render owner attribution based on ownership type
   const renderOwnerAttribution = () => {
-    if (isPublicGroup) {
-      // Public group - show special badge
+    if (isCommunityGroup) {
+      // Community group - show special badge
       return (
         <span className="inline-flex items-center gap-1 text-primary font-medium">
           <Globe className="h-4 w-4" />
-          Public (Crowdsourced)
+          Community (Crowdsourced)
         </span>
       );
     }

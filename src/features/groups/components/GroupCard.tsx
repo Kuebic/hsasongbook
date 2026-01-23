@@ -16,7 +16,7 @@ interface GroupCardProps {
 }
 
 export default function GroupCard({ group, className }: GroupCardProps) {
-  const isPublic = group.isSystemGroup;
+  const isSystemGroup = group.isSystemGroup;
 
   return (
     <Link to={`/groups/${group.slug}`}>
@@ -32,7 +32,7 @@ export default function GroupCard({ group, className }: GroupCardProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-semibold truncate">{group.name}</h3>
-                {isPublic && (
+                {isSystemGroup && (
                   <Badge variant="secondary" className="text-xs">
                     System
                   </Badge>

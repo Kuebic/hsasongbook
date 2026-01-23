@@ -697,21 +697,21 @@ export const migrateOwnership = mutation({
 });
 
 /**
- * Seed the Public system group
+ * Seed the Community system group
  * This group is used for crowdsourced/wiki-style content
- * Run with: npx convex run seed:seedPublicGroup
+ * Run with: npx convex run seed:seedCommunityGroup
  */
-export const seedPublicGroup = mutation({
+export const seedCommunityGroup = mutation({
   args: {},
   handler: async (ctx) => {
-    // Check if Public group already exists
+    // Check if Community group already exists
     const groups = await ctx.db.query("groups").collect();
-    const existingPublicGroup = groups.find((g) => g.isSystemGroup);
-    if (existingPublicGroup) {
+    const existingCommunityGroup = groups.find((g) => g.isSystemGroup);
+    if (existingCommunityGroup) {
       return {
         success: false,
-        message: "Public group already exists",
-        groupId: existingPublicGroup._id,
+        message: "Community group already exists",
+        groupId: existingCommunityGroup._id,
       };
     }
 
@@ -724,14 +724,14 @@ export const seedPublicGroup = mutation({
     if (!ownerUser) {
       return {
         success: false,
-        message: "No users found. At least one user must exist to create the Public group.",
+        message: "No users found. At least one user must exist to create the Community group.",
       };
     }
 
-    // Create the Public group
+    // Create the Community group
     const groupId = await ctx.db.insert("groups", {
-      name: "Public",
-      slug: "public",
+      name: "Community",
+      slug: "community",
       description:
         "The community group for crowdsourced songs and arrangements. All members can edit, with full version history for moderation.",
       createdBy: ownerUser._id,
@@ -749,75 +749,75 @@ export const seedPublicGroup = mutation({
 
     return {
       success: true,
-      message: "Public group created successfully",
+      message: "Community group created successfully",
       groupId,
     };
   },
 });
 
 /**
- * Make the Public group open (no approval required)
- * Run with: npx convex run seed:makePublicGroupOpen
+ * Make the Community group open (no approval required)
+ * Run with: npx convex run seed:makeCommunityGroupOpen
  */
-export const makePublicGroupOpen = mutation({
+export const makeCommunityGroupOpen = mutation({
   args: {},
   handler: async (ctx) => {
     const groups = await ctx.db.query("groups").collect();
-    const publicGroup = groups.find((g) => g.isSystemGroup);
+    const communityGroup = groups.find((g) => g.isSystemGroup);
 
-    if (!publicGroup) {
-      return { success: false, message: "Public group not found" };
+    if (!communityGroup) {
+      return { success: false, message: "Community group not found" };
     }
 
-    await ctx.db.patch(publicGroup._id, { joinPolicy: "open" });
+    await ctx.db.patch(communityGroup._id, { joinPolicy: "open" });
 
-    return { success: true, message: "Public group is now open to join" };
+    return { success: true, message: "Community group is now open to join" };
   },
 });
 
 /**
- * Add a user as admin of the Public group by user ID
- * Run with: npx convex run seed:addMeToPublicGroup --args '{"userId": "USER_ID"}'
+ * Add a user as admin of the Community group by user ID
+ * Run with: npx convex run seed:addMeToCommunityGroup --args '{"userId": "USER_ID"}'
  */
-export const addMeToPublicGroup = mutation({
+export const addMeToCommunityGroup = mutation({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     const groups = await ctx.db.query("groups").collect();
-    const publicGroup = groups.find((g) => g.isSystemGroup);
+    const communityGroup = groups.find((g) => g.isSystemGroup);
 
-    if (!publicGroup) {
-      return { success: false, message: "Public group not found" };
+    if (!communityGroup) {
+      return { success: false, message: "Community group not found" };
     }
 
     // Check if already a member
     const existing = await ctx.db
       .query("groupMembers")
       .withIndex("by_group_and_user", (q) =>
-        q.eq("groupId", publicGroup._id).eq("userId", args.userId)
+        q.eq("groupId", communityGroup._id).eq("userId", args.userId)
       )
       .unique();
 
     if (existing) {
-      return { success: false, message: "Already a member of Public group" };
+      return { success: false, message: "Already a member of Community group" };
     }
 
     await ctx.db.insert("groupMembers", {
-      groupId: publicGroup._id,
+      groupId: communityGroup._id,
       userId: args.userId,
       role: "admin",
       joinedAt: Date.now(),
       promotedAt: Date.now(),
     });
 
-    return { success: true, message: "Added as admin to Public group" };
+    return { success: true, message: "Added as admin to Community group" };
   },
 });
 
 /**
- * Add a user as admin of the Public group by username
- * Run with: npx convex run seed:addUserToPublicGroupByUsername --args '{"username": "your_username"}'
+ * Add a user as admin of the Community group by username
+ * Run with: npx convex run seed:addUserToCommunityGroupByUsername --args '{"username": "your_username"}'
  */
-export const addUserToPublicGroupByUsername = mutation({
+export const addUserToCommunityGroupByUsername = mutation({
   args: { username: v.string() },
   handler: async (ctx, args) => {
     // Find user by username
@@ -829,17 +829,17 @@ export const addUserToPublicGroupByUsername = mutation({
     }
 
     const groups = await ctx.db.query("groups").collect();
-    const publicGroup = groups.find((g) => g.isSystemGroup);
+    const communityGroup = groups.find((g) => g.isSystemGroup);
 
-    if (!publicGroup) {
-      return { success: false, message: "Public group not found" };
+    if (!communityGroup) {
+      return { success: false, message: "Community group not found" };
     }
 
     // Check if already a member
     const existing = await ctx.db
       .query("groupMembers")
       .withIndex("by_group_and_user", (q) =>
-        q.eq("groupId", publicGroup._id).eq("userId", user._id)
+        q.eq("groupId", communityGroup._id).eq("userId", user._id)
       )
       .unique();
 
@@ -850,19 +850,19 @@ export const addUserToPublicGroupByUsername = mutation({
           role: "admin",
           promotedAt: Date.now(),
         });
-        return { success: true, message: `Promoted "${args.username}" to admin of Public group` };
+        return { success: true, message: `Promoted "${args.username}" to admin of Community group` };
       }
-      return { success: false, message: `"${args.username}" is already an admin/owner of Public group` };
+      return { success: false, message: `"${args.username}" is already an admin/owner of Community group` };
     }
 
     await ctx.db.insert("groupMembers", {
-      groupId: publicGroup._id,
+      groupId: communityGroup._id,
       userId: user._id,
       role: "admin",
       joinedAt: Date.now(),
       promotedAt: Date.now(),
     });
 
-    return { success: true, message: `Added "${args.username}" as admin to Public group` };
+    return { success: true, message: `Added "${args.username}" as admin to Community group` };
   },
 });

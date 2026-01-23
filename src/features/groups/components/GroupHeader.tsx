@@ -15,7 +15,7 @@ interface GroupHeaderProps {
 }
 
 export default function GroupHeader({ group, hasPendingRequest }: GroupHeaderProps) {
-  const isPublic = group.isSystemGroup;
+  const isSystemGroup = group.isSystemGroup;
 
   const getRoleBadge = () => {
     if (!group.isMember) return null;
@@ -53,7 +53,7 @@ export default function GroupHeader({ group, hasPendingRequest }: GroupHeaderPro
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <h1 className="text-3xl font-bold">{group.name}</h1>
         <div className="flex items-center gap-2">
-          {isPublic && (
+          {isSystemGroup && (
             <Badge variant="secondary">System Group</Badge>
           )}
           {getRoleBadge()}

@@ -11,9 +11,9 @@ import {
   requireAuth,
   requireAuthenticatedUser,
   formatUserInfo,
-  getPublicGroup,
+  getCommunityGroup,
   isGroupAdminOrOwner,
-  isPublicGroup,
+  isCommunityGroup,
   getContentOwnerInfo,
 } from "./permissions";
 import { hasContentChanged } from "./versions";
@@ -242,7 +242,7 @@ export const getFeaturedWithSongs = query({
  *
  * Phase 2: Supports group ownership and co-authors
  * - If ownerType='group', verify user is owner/admin of that group
- * - Public group excluded (transfer only)
+ * - Community group excluded (transfer only)
  * - Creates arrangementAuthors records for co-authors
  */
 export const create = mutation({
@@ -292,11 +292,11 @@ export const create = mutation({
     let ownerId = args.ownerId;
 
     if (ownerType === "group" && ownerId) {
-      // Prevent creating content directly owned by the Public group
-      const isPublic = await isPublicGroup(ctx, ownerId);
-      if (isPublic) {
+      // Prevent creating content directly owned by the Community group
+      const isCommunity = await isCommunityGroup(ctx, ownerId);
+      if (isCommunity) {
         throw new Error(
-          "Cannot create content directly owned by the Public group. Content must be transferred to Public."
+          "Cannot create content directly owned by the Community group. Content must be transferred to Community."
         );
       }
 
@@ -400,13 +400,13 @@ export const update = mutation({
       throw new Error("You don't have permission to edit this arrangement");
     }
 
-    // Smart version creation for Public-owned arrangements (only if changed)
-    const publicGroup = await getPublicGroup(ctx);
-    const isPublicOwned =
+    // Smart version creation for Community-owned arrangements (only if changed)
+    const communityGroup = await getCommunityGroup(ctx);
+    const isCommunityOwned =
       arrangement.ownerType === "group" &&
-      arrangement.ownerId === publicGroup?._id.toString();
+      arrangement.ownerId === communityGroup?._id.toString();
 
-    if (isPublicOwned) {
+    if (isCommunityOwned) {
       // Create snapshot of current state before update
       const snapshot = JSON.stringify({
         name: arrangement.name,
@@ -661,14 +661,14 @@ export const removeCollaborator = mutation({
 });
 
 /**
- * Transfer an arrangement to the Public group (crowdsourced)
+ * Transfer an arrangement to the Community group (crowdsourced)
  * Access: Original creator only
  *
- * This allows anyone to donate their arrangement to Public for community editing,
- * even if they're not a member of the Public group.
+ * This allows anyone to donate their arrangement to Community for community editing,
+ * even if they're not a member of the Community group.
  * The original creator retains edit rights via createdBy.
  */
-export const transferToPublic = mutation({
+export const transferToCommunity = mutation({
   args: { id: v.id("arrangements") },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
@@ -683,23 +683,23 @@ export const transferToPublic = mutation({
       throw new Error("Only the original creator can transfer this arrangement");
     }
 
-    // Check if already public
-    const publicGroup = await getPublicGroup(ctx);
-    if (!publicGroup) {
-      throw new Error("Public group not found");
+    // Check if already community-owned
+    const communityGroup = await getCommunityGroup(ctx);
+    if (!communityGroup) {
+      throw new Error("Community group not found");
     }
 
     if (
       arrangement.ownerType === "group" &&
-      arrangement.ownerId === publicGroup._id.toString()
+      arrangement.ownerId === communityGroup._id.toString()
     ) {
-      throw new Error("Arrangement is already owned by Public");
+      throw new Error("Arrangement is already owned by Community");
     }
 
-    // Transfer to Public
+    // Transfer to Community
     await ctx.db.patch(args.id, {
       ownerType: "group",
-      ownerId: publicGroup._id.toString(),
+      ownerId: communityGroup._id.toString(),
       updatedAt: Date.now(),
     });
 
@@ -708,13 +708,13 @@ export const transferToPublic = mutation({
 });
 
 /**
- * Reclaim an arrangement from the Public group back to personal ownership
+ * Reclaim an arrangement from the Community group back to personal ownership
  * Access: Original creator only
  *
  * Allows the person who originally created and transferred the arrangement
  * to take it back under their personal ownership.
  */
-export const reclaimFromPublic = mutation({
+export const reclaimFromCommunity = mutation({
   args: { id: v.id("arrangements") },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
@@ -729,14 +729,14 @@ export const reclaimFromPublic = mutation({
       throw new Error("Only the original creator can reclaim this arrangement");
     }
 
-    // Check if currently public
-    const publicGroup = await getPublicGroup(ctx);
+    // Check if currently community-owned
+    const communityGroup = await getCommunityGroup(ctx);
     if (
-      !publicGroup ||
+      !communityGroup ||
       arrangement.ownerType !== "group" ||
-      arrangement.ownerId !== publicGroup._id.toString()
+      arrangement.ownerId !== communityGroup._id.toString()
     ) {
-      throw new Error("Arrangement is not currently owned by Public");
+      throw new Error("Arrangement is not currently owned by Community");
     }
 
     // Reclaim to personal ownership

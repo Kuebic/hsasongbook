@@ -14,19 +14,19 @@ export default function SongMetadata({ song, owner }: SongMetadataProps) {
 
   const hasLyrics = song.lyrics?.en || song.lyrics;
 
-  // Check if owner is the Public system group (name === "Public")
-  const isPublicGroup = owner?.type === 'group' && owner.name === 'Public';
+  // Check if owner is the Community system group (name === "Community")
+  const isCommunityGroup = owner?.type === 'group' && owner.name === 'Community';
 
   // Render owner attribution
   const renderOwnerAttribution = () => {
     if (!owner) return null;
 
     if (owner.type === 'group') {
-      if (isPublicGroup) {
+      if (isCommunityGroup) {
         return (
           <div className="flex items-center gap-2 text-sm mt-2">
             <Globe className="h-3 w-3 text-primary" />
-            <span className="text-primary font-medium">Public (Crowdsourced)</span>
+            <span className="text-primary font-medium">Community (Crowdsourced)</span>
           </div>
         );
       }

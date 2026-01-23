@@ -2,8 +2,8 @@
  * SongOwnershipActions Component
  *
  * Allows the original song creator to:
- * - Transfer their song to Public (crowdsourced editing)
- * - Reclaim their song from Public back to personal ownership
+ * - Transfer their song to Community (crowdsourced editing)
+ * - Reclaim their song from Community back to personal ownership
  */
 
 import { useState } from 'react';
@@ -27,19 +27,19 @@ import type { Id } from '../../../../convex/_generated/dataModel';
 interface SongOwnershipActionsProps {
   songId: string;
   isOwner: boolean;
-  isPublicOwned: boolean;
+  isCommunityOwned: boolean;
 }
 
 export function SongOwnershipActions({
   songId,
   isOwner,
-  isPublicOwned,
+  isCommunityOwned,
 }: SongOwnershipActionsProps) {
   const [isTransferring, setIsTransferring] = useState(false);
   const [isReclaiming, setIsReclaiming] = useState(false);
 
-  const transferToPublic = useMutation(api.songs.transferToPublic);
-  const reclaimFromPublic = useMutation(api.songs.reclaimFromPublic);
+  const transferToCommunity = useMutation(api.songs.transferToCommunity);
+  const reclaimFromCommunity = useMutation(api.songs.reclaimFromCommunity);
 
   // Only show for the original creator
   if (!isOwner) return null;
@@ -47,7 +47,7 @@ export function SongOwnershipActions({
   const handleTransfer = async () => {
     setIsTransferring(true);
     try {
-      await transferToPublic({ id: songId as Id<'songs'> });
+      await transferToCommunity({ id: songId as Id<'songs'> });
     } catch (error) {
       console.error('Failed to transfer song:', error);
     } finally {
@@ -58,7 +58,7 @@ export function SongOwnershipActions({
   const handleReclaim = async () => {
     setIsReclaiming(true);
     try {
-      await reclaimFromPublic({ id: songId as Id<'songs'> });
+      await reclaimFromCommunity({ id: songId as Id<'songs'> });
     } catch (error) {
       console.error('Failed to reclaim song:', error);
     } finally {
@@ -66,7 +66,7 @@ export function SongOwnershipActions({
     }
   };
 
-  if (isPublicOwned) {
+  if (isCommunityOwned) {
     // Show reclaim option
     return (
       <AlertDialog>
@@ -84,9 +84,9 @@ export function SongOwnershipActions({
           <AlertDialogHeader>
             <AlertDialogTitle>Reclaim this song?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will move the song back to your personal ownership. Public
+              This will move the song back to your personal ownership. Community
               group members will no longer be able to edit it. You can always
-              transfer it back to Public later.
+              transfer it back to Community later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -110,14 +110,14 @@ export function SongOwnershipActions({
           ) : (
             <Globe className="h-4 w-4 mr-2" />
           )}
-          Make Public
+          Move to Community
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Transfer to Public?</AlertDialogTitle>
+          <AlertDialogTitle>Transfer to Community?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will allow anyone in the Public group to edit this song's
+            This will allow anyone in the Community group to edit this song's
             metadata. You'll retain edit rights as the original creator and can
             reclaim ownership anytime.
           </AlertDialogDescription>
@@ -125,7 +125,7 @@ export function SongOwnershipActions({
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleTransfer}>
-            Transfer to Public
+            Transfer to Community
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

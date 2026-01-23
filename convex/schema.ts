@@ -105,7 +105,7 @@ export default defineSchema({
     avatarKey: v.optional(v.string()), // R2 object key for group avatar
     createdBy: v.id("users"),
     joinPolicy: v.union(v.literal("open"), v.literal("approval")),
-    isSystemGroup: v.optional(v.boolean()), // True for "Public" group
+    isSystemGroup: v.optional(v.boolean()), // True for "Community" group
   })
     .index("by_slug", ["slug"])
     .index("by_createdBy", ["createdBy"]),
