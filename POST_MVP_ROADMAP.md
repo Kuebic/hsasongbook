@@ -234,6 +234,8 @@ If a user signs up with email then later uses Google/Apple with the same email:
 | **Convex ID type casting** | Reduce `as Id<'setlists'>` casts by typing IDs upstream |
 | **No-op `reload()` functions** | Remove from `useSetlistData`/`useSetlists` (Convex auto-syncs) |
 | **Stubbed `updateSongKey`** | Remove from interface or throw error instead of logging warning |
+| **Fragile "Public" group check** | `SongMetadata.tsx` checks `owner.name === 'Public'` string; should use ID-based comparison or add `isSystemGroup` flag to owner info from backend |
+| **Repeated creator data fetching** | Multiple arrangement queries repeat the same creator-join pattern; extract `attachCreatorInfo(ctx, doc)` helper to `permissions.ts` |
 
 ---
 

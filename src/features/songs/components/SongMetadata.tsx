@@ -2,15 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { User, Hash, Music2, Copyright, Users, Globe } from 'lucide-react';
-import type { Song } from '@/types';
-
-interface OwnerInfo {
-  type: 'user' | 'group';
-  id: string;
-  name: string;
-  slug?: string;
-  avatarKey?: string;
-}
+import type { Song, OwnerInfo } from '@/types';
 
 interface SongMetadataProps {
   song: Song | null;

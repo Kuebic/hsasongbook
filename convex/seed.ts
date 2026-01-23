@@ -1,17 +1,7 @@
 import { mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { nanoid } from "nanoid";
-
-/**
- * Generate a URL-friendly slug from a string
- */
-function generateSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .substring(0, 50);
-}
+import { generateSlug } from "./permissions";
 
 /**
  * Seed song data

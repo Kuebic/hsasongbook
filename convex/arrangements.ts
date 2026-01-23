@@ -4,6 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
 import {
   canEditArrangement,
+  filterUndefined,
   isArrangementOwner,
   isArrangementCollaborator,
   requireAuth,
@@ -307,16 +308,11 @@ export const update = mutation({
 
     const { id: _id, ...updates } = args;
 
-    // Filter out undefined values and build patch object
-    const cleanUpdates: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined) {
-        cleanUpdates[key] = value;
-      }
-    }
-
-    // Add updatedAt timestamp
-    cleanUpdates.updatedAt = Date.now();
+    // Filter out undefined values and add timestamp
+    const cleanUpdates = {
+      ...filterUndefined(updates),
+      updatedAt: Date.now(),
+    };
 
     await ctx.db.patch(args.id, cleanUpdates);
 

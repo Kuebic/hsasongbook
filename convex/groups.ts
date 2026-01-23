@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import {
+  filterUndefined,
+  generateSlug,
   getGroupMembership,
   requireAuth,
   requireAuthenticatedUser,
@@ -9,17 +11,6 @@ import {
 } from "./permissions";
 
 // ============ HELPER FUNCTIONS ============
-
-/**
- * Generate a URL-friendly slug from a name
- */
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 /**
  * Assert that a group is not a system group.
@@ -321,12 +312,7 @@ export const update = mutation({
     assertNotSystemGroup(group, "modify");
 
     const { id: _id, ...updates } = args;
-    const cleanUpdates: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined) {
-        cleanUpdates[key] = value;
-      }
-    }
+    const cleanUpdates = filterUndefined(updates);
 
     await ctx.db.patch(args.id, cleanUpdates);
     return args.id;

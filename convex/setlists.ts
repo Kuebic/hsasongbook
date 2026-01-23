@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { requireAuth, requireAuthenticatedUser } from "./permissions";
+import { filterUndefined, requireAuth, requireAuthenticatedUser } from "./permissions";
 
 // ============ QUERIES ============
 
@@ -151,16 +151,11 @@ export const update = mutation({
 
     const { id: _id, ...updates } = args;
 
-    // Filter out undefined values
-    const cleanUpdates: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined) {
-        cleanUpdates[key] = value;
-      }
-    }
-
-    // Add updatedAt timestamp
-    cleanUpdates.updatedAt = Date.now();
+    // Filter out undefined values and add timestamp
+    const cleanUpdates = {
+      ...filterUndefined(updates),
+      updatedAt: Date.now(),
+    };
 
     await ctx.db.patch(args.id, cleanUpdates);
 

@@ -53,6 +53,38 @@ export async function requireAuthenticatedUser(
   return { userId, user };
 }
 
+// ============ UTILITY HELPERS ============
+
+/**
+ * Generate a URL-friendly slug from text.
+ * Converts to lowercase, replaces non-alphanumeric chars with hyphens,
+ * trims leading/trailing hyphens, and optionally limits length.
+ */
+export function generateSlug(text: string, maxLength = 50): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .substring(0, maxLength);
+}
+
+/**
+ * Filter out undefined values from an object.
+ * Useful for building partial update objects for database patches.
+ */
+export function filterUndefined<T extends Record<string, unknown>>(
+  obj: T
+): Partial<T> {
+  const result: Partial<T> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      result[key as keyof T] = value as T[keyof T];
+    }
+  }
+  return result;
+}
+
 // ============ USER INFO FORMATTING ============
 
 /**
