@@ -4,7 +4,7 @@ import { api } from '../../../../convex/_generated/api'
 
 export interface Breadcrumb {
   label: string
-  path: string
+  path?: string
 }
 
 export interface UseNavigationReturn {

@@ -23,10 +23,7 @@ export default function BrowsePage() {
     limit: 100,
   });
 
-  const breadcrumbs = [
-    { label: 'Home', to: '/' },
-    { label: 'Browse Songs' },
-  ];
+  const breadcrumbs = [{ label: 'Browse Songs' }];
 
   return (
     <SimplePageTransition>
