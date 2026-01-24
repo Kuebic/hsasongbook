@@ -104,8 +104,8 @@ export default function FilterPanel({
                   onChange={(difficulty) => onFilterChange('hasDifficulty', difficulty)}
                 />
                 <ArrangementCountFilter
-                  value={filters.minArrangements}
-                  onChange={(count) => onFilterChange('minArrangements', count)}
+                  value={filters.arrangementFilter}
+                  onChange={(filter) => onFilterChange('arrangementFilter', filter)}
                 />
               </div>
             </div>

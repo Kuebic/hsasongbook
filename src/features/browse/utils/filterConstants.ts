@@ -43,10 +43,3 @@ export const SORT_OPTIONS = {
 } as const;
 
 export type SortOption = keyof typeof SORT_OPTIONS;
-
-export const MIN_ARRANGEMENT_OPTIONS = [
-  { value: 0, label: 'Any' },
-  { value: 1, label: '1+' },
-  { value: 2, label: '2+' },
-  { value: 3, label: '3+' },
-] as const;

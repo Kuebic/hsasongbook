@@ -39,11 +39,24 @@ export default defineSchema({
     ownerId: v.optional(v.string()), // userId or groupId as string
     // Track edits
     updatedAt: v.optional(v.number()),
+    // Denormalized arrangement summary (updated by arrangement mutations)
+    arrangementCount: v.optional(v.number()),
+    arrangementKeys: v.optional(v.array(v.string())),
+    arrangementTempoMin: v.optional(v.number()),
+    arrangementTempoMax: v.optional(v.number()),
+    arrangementDifficulties: v.optional(
+      v.array(
+        v.union(v.literal("simple"), v.literal("standard"), v.literal("advanced"))
+      )
+    ),
+    arrangementAvgRating: v.optional(v.number()),
+    arrangementTotalFavorites: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
     .index("by_title", ["title"])
     .index("by_createdBy", ["createdBy"])
-    .index("by_owner", ["ownerType", "ownerId"]),
+    .index("by_owner", ["ownerType", "ownerId"])
+    .index("by_arrangementCount", ["arrangementCount"]),
 
   // Arrangements - User-owned versions of songs
   // Read: Everyone | Write: Creator, collaborators, or group members (for group-owned)
@@ -73,7 +86,9 @@ export default defineSchema({
     .index("by_slug", ["slug"])
     .index("by_song", ["songId"])
     .index("by_createdBy", ["createdBy"])
-    .index("by_owner", ["ownerType", "ownerId"]),
+    .index("by_owner", ["ownerType", "ownerId"])
+    .index("by_favorites", ["favorites"])
+    .index("by_rating", ["rating"]),
 
   // Setlists - Private to user
   // Read: Owner only | Write: Owner only

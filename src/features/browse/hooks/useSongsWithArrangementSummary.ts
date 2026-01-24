@@ -30,7 +30,7 @@ export function useSongsWithArrangementSummary({
     hasKey: filters.hasKey || undefined,
     tempoRange: filters.tempoRange || undefined,
     hasDifficulty: filters.hasDifficulty || undefined,
-    minArrangements: filters.minArrangements || undefined,
+    arrangementFilter: filters.arrangementFilter !== 'all' ? filters.arrangementFilter : undefined,
     sortBy: filters.sortBy,
     limit,
   });

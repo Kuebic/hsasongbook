@@ -19,6 +19,8 @@ import {
   DIFFICULTY_OPTIONS,
 } from '../utils/filterConstants';
 
+export type ArrangementFilter = 'all' | 'has_arrangements' | 'needs_arrangements';
+
 export interface BrowseFilters {
   // Song-level
   themes: string[];
@@ -29,7 +31,7 @@ export interface BrowseFilters {
   hasKey: string | null;
   tempoRange: TempoRange | null;
   hasDifficulty: DifficultyLevel | null;
-  minArrangements: number;
+  arrangementFilter: ArrangementFilter;
   // Sort
   sortBy: SortOption;
 }
@@ -42,9 +44,13 @@ const DEFAULT_FILTERS: BrowseFilters = {
   hasKey: null,
   tempoRange: null,
   hasDifficulty: null,
-  minArrangements: 0,
+  arrangementFilter: 'all',
   sortBy: 'popular',
 };
+
+function isValidArrangementFilter(value: string | null): value is ArrangementFilter {
+  return value === 'all' || value === 'has_arrangements' || value === 'needs_arrangements';
+}
 
 // Type guards for URL parameter validation
 function isValidDatePreset(value: string | null): value is DatePreset {
@@ -72,6 +78,7 @@ export function useBrowseFilters() {
     const tempoParam = searchParams.get('tempo');
     const difficultyParam = searchParams.get('difficulty');
     const sortParam = searchParams.get('sort');
+    const arrFilterParam = searchParams.get('arr');
 
     return {
       themes: searchParams.get('themes')?.split(',').filter(Boolean) || [],
@@ -81,7 +88,7 @@ export function useBrowseFilters() {
       hasKey: searchParams.get('key') || null,
       tempoRange: isValidTempoRange(tempoParam) ? tempoParam : null,
       hasDifficulty: isValidDifficultyLevel(difficultyParam) ? difficultyParam : null,
-      minArrangements: parseInt(searchParams.get('minArr') || '0', 10),
+      arrangementFilter: isValidArrangementFilter(arrFilterParam) ? arrFilterParam : 'all',
       sortBy: isValidSortOption(sortParam) ? sortParam : 'popular',
     };
   }, [searchParams]);
@@ -108,7 +115,7 @@ export function useBrowseFilters() {
         if (next.hasKey) params.set('key', next.hasKey);
         if (next.tempoRange) params.set('tempo', next.tempoRange);
         if (next.hasDifficulty) params.set('difficulty', next.hasDifficulty);
-        if (next.minArrangements > 0) params.set('minArr', next.minArrangements.toString());
+        if (next.arrangementFilter !== 'all') params.set('arr', next.arrangementFilter);
         if (next.sortBy !== 'popular') params.set('sort', next.sortBy);
 
         setSearchParams(params, { replace: true });
@@ -134,7 +141,7 @@ export function useBrowseFilters() {
     if (filters.hasKey) count++;
     if (filters.tempoRange) count++;
     if (filters.hasDifficulty) count++;
-    if (filters.minArrangements > 0) count++;
+    if (filters.arrangementFilter !== 'all') count++;
     return count;
   }, [filters]);
 

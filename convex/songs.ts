@@ -368,32 +368,22 @@ export const getRecent = query({
 /**
  * Get popular songs (by arrangement count)
  * Access: Everyone
+ *
+ * Uses denormalized arrangementCount field for efficient querying.
  */
 export const getPopular = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 6;
 
-    // Get arrangement counts per song
-    const arrangements = await ctx.db.query("arrangements").collect();
-    const counts: Record<string, number> = {};
-    for (const arr of arrangements) {
-      const songId = arr.songId.toString();
-      counts[songId] = (counts[songId] || 0) + 1;
-    }
+    // Use index on arrangementCount for efficient sorting
+    const songs = await ctx.db
+      .query("songs")
+      .withIndex("by_arrangementCount")
+      .order("desc")
+      .take(limit);
 
-    // Sort by count, take top N
-    const sortedIds = Object.entries(counts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, limit)
-      .map(([id]) => id);
-
-    // Fetch songs in sorted order
-    const songs = await Promise.all(
-      sortedIds.map((id) => ctx.db.get(id as Id<"songs">))
-    );
-
-    return songs.filter(Boolean);
+    return songs;
   },
 });
 
@@ -449,24 +439,11 @@ export const getDistinctArtists = query({
 });
 
 /**
- * Arrangement summary for a song
- * Note: Frontend equivalent is in src/types/Arrangement.types.ts
- * Keep in sync if modified.
- */
-interface ArrangementSummary {
-  count: number;
-  keys: string[];
-  tempoMin: number | null;
-  tempoMax: number | null;
-  avgRating: number;
-  totalFavorites: number;
-  difficulties: Array<"simple" | "standard" | "advanced">;
-}
-
-/**
  * List songs with arrangement summary for browse page
  * Supports filtering by song-level and arrangement-level criteria
  * Access: Everyone
+ *
+ * Uses denormalized arrangement fields on songs for efficient querying.
  */
 export const listWithArrangementSummary = query({
   args: {
@@ -484,7 +461,14 @@ export const listWithArrangementSummary = query({
     hasDifficulty: v.optional(
       v.union(v.literal("simple"), v.literal("standard"), v.literal("advanced"))
     ),
-    minArrangements: v.optional(v.number()),
+    // Arrangement filter: show all, only songs with arrangements, or only songs needing arrangements
+    arrangementFilter: v.optional(
+      v.union(
+        v.literal("all"),
+        v.literal("has_arrangements"),
+        v.literal("needs_arrangements")
+      )
+    ),
     // Sort options
     sortBy: v.optional(
       v.union(
@@ -500,51 +484,8 @@ export const listWithArrangementSummary = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    // Get all songs
+    // Get all songs (still loads all, but no longer loads arrangements)
     let songs = await ctx.db.query("songs").collect();
-
-    // Get all arrangements for aggregation
-    const allArrangements = await ctx.db.query("arrangements").collect();
-
-    // Build arrangement summary per song
-    const summaryBySong: Record<string, ArrangementSummary> = {};
-    for (const arr of allArrangements) {
-      const songId = arr.songId.toString();
-      if (!summaryBySong[songId]) {
-        summaryBySong[songId] = {
-          count: 0,
-          keys: [],
-          tempoMin: null,
-          tempoMax: null,
-          avgRating: 0,
-          totalFavorites: 0,
-          difficulties: [],
-        };
-      }
-      const summary = summaryBySong[songId];
-      summary.count++;
-      if (arr.key && !summary.keys.includes(arr.key)) {
-        summary.keys.push(arr.key);
-      }
-      if (arr.tempo) {
-        summary.tempoMin =
-          summary.tempoMin === null
-            ? arr.tempo
-            : Math.min(summary.tempoMin, arr.tempo);
-        summary.tempoMax =
-          summary.tempoMax === null
-            ? arr.tempo
-            : Math.max(summary.tempoMax, arr.tempo);
-      }
-      // Rolling average for rating
-      summary.avgRating =
-        (summary.avgRating * (summary.count - 1) + (arr.rating || 0)) /
-        summary.count;
-      summary.totalFavorites += arr.favorites || 0;
-      if (arr.difficulty && !summary.difficulties.includes(arr.difficulty)) {
-        summary.difficulties.push(arr.difficulty);
-      }
-    }
 
     // Apply song-level filters
     if (args.themes && args.themes.length > 0) {
@@ -554,9 +495,8 @@ export const listWithArrangementSummary = query({
     }
 
     if (args.artist) {
-      songs = songs.filter(
-        (song) =>
-          song.artist?.toLowerCase().includes(args.artist!.toLowerCase())
+      songs = songs.filter((song) =>
+        song.artist?.toLowerCase().includes(args.artist!.toLowerCase())
       );
     }
 
@@ -578,12 +518,11 @@ export const listWithArrangementSummary = query({
       );
     }
 
-    // Apply arrangement-level filters (filter songs by their arrangements)
+    // Apply arrangement-level filters using denormalized fields
     if (args.hasKey) {
-      songs = songs.filter((song) => {
-        const summary = summaryBySong[song._id.toString()];
-        return summary?.keys.includes(args.hasKey!);
-      });
+      songs = songs.filter((song) =>
+        song.arrangementKeys?.includes(args.hasKey!)
+      );
     }
 
     if (args.tempoRange) {
@@ -594,44 +533,39 @@ export const listWithArrangementSummary = query({
       };
       const range = tempoRanges[args.tempoRange];
       songs = songs.filter((song) => {
-        const summary = summaryBySong[song._id.toString()];
-        if (!summary || summary.tempoMin === null || summary.tempoMax === null)
-          return false;
+        const tempoMin = song.arrangementTempoMin;
+        const tempoMax = song.arrangementTempoMax;
+        if (tempoMin === undefined || tempoMax === undefined) return false;
         // Song matches if any of its arrangements fall within the tempo range
-        return summary.tempoMax >= range.min && summary.tempoMin <= range.max;
+        return tempoMax >= range.min && tempoMin <= range.max;
       });
     }
 
     if (args.hasDifficulty) {
-      songs = songs.filter((song) => {
-        const summary = summaryBySong[song._id.toString()];
-        return summary?.difficulties.includes(args.hasDifficulty!);
-      });
+      songs = songs.filter((song) =>
+        song.arrangementDifficulties?.includes(args.hasDifficulty!)
+      );
     }
 
-    if (args.minArrangements && args.minArrangements > 0) {
-      songs = songs.filter((song) => {
-        const summary = summaryBySong[song._id.toString()];
-        return (summary?.count || 0) >= args.minArrangements!;
-      });
+    // Apply arrangement filter
+    if (args.arrangementFilter === "has_arrangements") {
+      songs = songs.filter((song) => (song.arrangementCount ?? 0) > 0);
+    } else if (args.arrangementFilter === "needs_arrangements") {
+      songs = songs.filter((song) => (song.arrangementCount ?? 0) === 0);
     }
 
-    // Apply sorting
+    // Apply sorting using denormalized fields
     const sortBy = args.sortBy || "popular";
     switch (sortBy) {
       case "popular":
-        songs.sort((a, b) => {
-          const countA = summaryBySong[a._id.toString()]?.count || 0;
-          const countB = summaryBySong[b._id.toString()]?.count || 0;
-          return countB - countA;
-        });
+        songs.sort(
+          (a, b) => (b.arrangementCount ?? 0) - (a.arrangementCount ?? 0)
+        );
         break;
       case "rating":
-        songs.sort((a, b) => {
-          const ratingA = summaryBySong[a._id.toString()]?.avgRating || 0;
-          const ratingB = summaryBySong[b._id.toString()]?.avgRating || 0;
-          return ratingB - ratingA;
-        });
+        songs.sort(
+          (a, b) => (b.arrangementAvgRating ?? 0) - (a.arrangementAvgRating ?? 0)
+        );
         break;
       case "newest":
         songs.sort((a, b) => b._creationTime - a._creationTime);
@@ -651,17 +585,17 @@ export const listWithArrangementSummary = query({
     const limit = args.limit || 50;
     songs = songs.slice(0, limit);
 
-    // Return songs with summaries
+    // Return songs with arrangement summary from denormalized fields
     return songs.map((song) => ({
       ...song,
-      arrangementSummary: summaryBySong[song._id.toString()] || {
-        count: 0,
-        keys: [],
-        tempoMin: null,
-        tempoMax: null,
-        avgRating: 0,
-        totalFavorites: 0,
-        difficulties: [],
+      arrangementSummary: {
+        count: song.arrangementCount ?? 0,
+        keys: song.arrangementKeys ?? [],
+        tempoMin: song.arrangementTempoMin ?? null,
+        tempoMax: song.arrangementTempoMax ?? null,
+        avgRating: song.arrangementAvgRating ?? 0,
+        totalFavorites: song.arrangementTotalFavorites ?? 0,
+        difficulties: song.arrangementDifficulties ?? [],
       },
     }));
   },

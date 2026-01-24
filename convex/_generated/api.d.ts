@@ -14,6 +14,7 @@ import type * as crons from "../crons.js";
 import type * as files from "../files.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
+import type * as migrations from "../migrations.js";
 import type * as permissions from "../permissions.js";
 import type * as seed from "../seed.js";
 import type * as setlists from "../setlists.js";
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   files: typeof files;
   groups: typeof groups;
   http: typeof http;
+  migrations: typeof migrations;
   permissions: typeof permissions;
   seed: typeof seed;
   setlists: typeof setlists;

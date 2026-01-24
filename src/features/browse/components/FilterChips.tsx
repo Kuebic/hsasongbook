@@ -78,12 +78,18 @@ export default function FilterChips({
     });
   }
 
-  // Min arrangements chip
-  if (filters.minArrangements > 0) {
+  // Arrangement filter chip
+  if (filters.arrangementFilter === 'has_arrangements') {
     chips.push({
-      key: 'minArr',
-      label: `Min. ${filters.minArrangements}+ arrangements`,
-      onRemove: () => onRemoveFilter('minArrangements', 0),
+      key: 'arrFilter',
+      label: 'Has Arrangements',
+      onRemove: () => onRemoveFilter('arrangementFilter', 'all'),
+    });
+  } else if (filters.arrangementFilter === 'needs_arrangements') {
+    chips.push({
+      key: 'arrFilter',
+      label: 'Needs Arrangements',
+      onRemove: () => onRemoveFilter('arrangementFilter', 'all'),
     });
   }
 

@@ -1,7 +1,10 @@
 /**
  * ArrangementCountFilter Component
  *
- * Dropdown for filtering by minimum arrangement count.
+ * Toggle for filtering songs by arrangement availability.
+ * - All: Show all songs
+ * - Has Arrangements: Show only songs with at least one arrangement
+ * - Needs Arrangements: Show only songs without arrangements (to encourage contributions)
  */
 
 import { Label } from '@/components/ui/label';
@@ -12,27 +15,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MIN_ARRANGEMENT_OPTIONS } from '../utils/filterConstants';
+import type { ArrangementFilter } from '../hooks/useBrowseFilters';
+
+const ARRANGEMENT_FILTER_OPTIONS: { value: ArrangementFilter; label: string }[] = [
+  { value: 'all', label: 'All Songs' },
+  { value: 'has_arrangements', label: 'Has Arrangements' },
+  { value: 'needs_arrangements', label: 'Needs Arrangements' },
+];
 
 interface ArrangementCountFilterProps {
-  value: number;
-  onChange: (count: number) => void;
+  value: ArrangementFilter;
+  onChange: (filter: ArrangementFilter) => void;
 }
 
 export default function ArrangementCountFilter({ value, onChange }: ArrangementCountFilterProps) {
   return (
     <div>
-      <Label className="text-sm font-medium mb-2 block">Min. Arrangements</Label>
+      <Label className="text-sm font-medium mb-2 block">Arrangements</Label>
       <Select
-        value={value.toString()}
-        onValueChange={(val) => onChange(parseInt(val, 10))}
+        value={value}
+        onValueChange={(val) => onChange(val as ArrangementFilter)}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Any" />
+          <SelectValue placeholder="All Songs" />
         </SelectTrigger>
         <SelectContent>
-          {MIN_ARRANGEMENT_OPTIONS.map(({ value: optValue, label }) => (
-            <SelectItem key={optValue} value={optValue.toString()}>
+          {ARRANGEMENT_FILTER_OPTIONS.map(({ value: optValue, label }) => (
+            <SelectItem key={optValue} value={optValue}>
               {label}
             </SelectItem>
           ))}

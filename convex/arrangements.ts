@@ -37,6 +37,64 @@ async function findCollaborator(
     .unique();
 }
 
+/**
+ * Recalculates and updates a song's denormalized arrangement summary.
+ * Called after arrangement create, update, or delete.
+ */
+async function updateSongArrangementSummary(
+  ctx: MutationCtx,
+  songId: Id<"songs">
+) {
+  const arrangements = await ctx.db
+    .query("arrangements")
+    .withIndex("by_song", (q) => q.eq("songId", songId))
+    .collect();
+
+  // Extract unique keys (filter out undefined/null)
+  const keys = [
+    ...new Set(
+      arrangements.map((a) => a.key).filter((k): k is string => Boolean(k))
+    ),
+  ];
+
+  // Extract tempos (filter out undefined/null)
+  const tempos = arrangements
+    .map((a) => a.tempo)
+    .filter((t): t is number => t !== undefined && t !== null);
+
+  // Extract unique difficulties
+  const difficulties = [
+    ...new Set(
+      arrangements
+        .map((a) => a.difficulty)
+        .filter(
+          (d): d is "simple" | "standard" | "advanced" => d !== undefined
+        )
+    ),
+  ];
+
+  // Calculate ratings and favorites
+  const ratings = arrangements.map((a) => a.rating || 0);
+  const totalFavorites = arrangements.reduce(
+    (sum, a) => sum + (a.favorites || 0),
+    0
+  );
+  const avgRating =
+    ratings.length > 0
+      ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+      : 0;
+
+  await ctx.db.patch(songId, {
+    arrangementCount: arrangements.length,
+    arrangementKeys: keys,
+    arrangementTempoMin: tempos.length > 0 ? Math.min(...tempos) : undefined,
+    arrangementTempoMax: tempos.length > 0 ? Math.max(...tempos) : undefined,
+    arrangementDifficulties: difficulties.length > 0 ? difficulties : undefined,
+    arrangementAvgRating: avgRating,
+    arrangementTotalFavorites: totalFavorites,
+  });
+}
+
 // ============ QUERIES ============
 
 /**
@@ -295,21 +353,30 @@ export const getMyArrangements = query({
  * Get featured arrangements WITH song data and creator info (joined)
  * This is what the frontend FeaturedArrangements widget needs
  * Access: Everyone
+ *
+ * Uses by_favorites index to efficiently get top arrangements,
+ * then applies score-based sorting for final ranking.
  */
 export const getFeaturedWithSongs = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 6;
 
-    // Get all arrangements and calculate scores
-    const arrangements = await ctx.db.query("arrangements").collect();
+    // Use index to get top arrangements by favorites (proxy for popularity)
+    // Take more than needed to allow for score-based reordering
+    const sampleSize = Math.max(limit * 5, 30);
+    const topByFavorites = await ctx.db
+      .query("arrangements")
+      .withIndex("by_favorites")
+      .order("desc")
+      .take(sampleSize);
 
-    const scored = arrangements.map((arr) => ({
+    // Score and sort the sample
+    const scored = topByFavorites.map((arr) => ({
       arrangement: arr,
       score: (arr.rating || 0) * 0.6 + (arr.favorites || 0) * 0.004,
     }));
 
-    // Sort by score descending and take top N
     scored.sort((a, b) => b.score - a.score);
     const topArrangements = scored.slice(0, limit).map((s) => s.arrangement);
 
@@ -474,6 +541,9 @@ export const create = mutation({
       });
     }
 
+    // Update song's denormalized arrangement summary
+    await updateSongArrangementSummary(ctx, args.songId);
+
     return arrangementId;
   },
 });
@@ -527,6 +597,15 @@ export const update = mutation({
     };
 
     await ctx.db.patch(args.id, cleanUpdates);
+
+    // Update song's denormalized arrangement summary if relevant fields changed
+    if (
+      args.key !== undefined ||
+      args.tempo !== undefined ||
+      args.difficulty !== undefined
+    ) {
+      await updateSongArrangementSummary(ctx, arrangement.songId);
+    }
 
     return args.id;
   },
@@ -931,6 +1010,9 @@ export const remove = mutation({
     // 4. Delete the arrangement itself
     await ctx.db.delete(args.id);
 
+    // 5. Update song's denormalized arrangement summary
+    await updateSongArrangementSummary(ctx, arrangement.songId);
+
     return { success: true };
   },
 });
@@ -988,6 +1070,9 @@ export const duplicate = mutation({
       favorites: 0,
       // ownerType and ownerId are undefined (user ownership by default)
     });
+
+    // Update song's denormalized arrangement summary
+    await updateSongArrangementSummary(ctx, source.songId);
 
     return { arrangementId: newArrangementId, slug };
   },
