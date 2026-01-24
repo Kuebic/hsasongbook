@@ -4,7 +4,7 @@ import { api } from '../../../../convex/_generated/api';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Music, User, Hash } from 'lucide-react';
-import { EmptyState } from '@/features/shared';
+import { EmptyState, FavoriteButton } from '@/features/shared';
 import type { Song } from '@/types';
 
 interface SongListProps {
@@ -38,7 +38,15 @@ export default function SongList({ songs }: SongListProps) {
           >
             <Card className="h-full hover:shadow-lg transition-shadow">
               <CardHeader>
-                <CardTitle className="line-clamp-1">{song.title}</CardTitle>
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="line-clamp-1 flex-1">{song.title}</CardTitle>
+                  <FavoriteButton
+                    targetType="song"
+                    targetId={song.id}
+                    count={song.favorites || 0}
+                    size="sm"
+                  />
+                </div>
                 <CardDescription className="flex items-center gap-2 mt-1">
                   <User className="h-3 w-3" />
                   {song.artist}
