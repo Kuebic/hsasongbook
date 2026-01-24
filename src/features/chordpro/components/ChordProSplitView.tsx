@@ -161,17 +161,10 @@ export function ChordProSplitView({
     }
   );
 
-  // Fullscreen mode handling
+  // Fullscreen mode handling (CSS-only, no browser fullscreen API)
   const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenEnabled) return;
-
-    if (!isFullscreen) {
-      containerRef.current?.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
-    setIsFullscreen(!isFullscreen);
-  }, [isFullscreen]);
+    setIsFullscreen(prev => !prev);
+  }, []);
 
   // Handle escape key for fullscreen
   useEffect(() => {

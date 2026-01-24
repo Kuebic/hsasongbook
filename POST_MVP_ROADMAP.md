@@ -13,7 +13,7 @@ Issues significantly impacting user experience.
 | Issue | Description | Effort | Status |
 |-------|-------------|--------|--------|
 | ~~**Mobile preview pane broken**~~ | ~~Preview pane doesn't work when editing chords on mobile~~ | ~~Medium~~ | ✅ Fixed |
-| **Fullscreen exit broken** | ESC exits browser fullscreen but not editor fullscreen mode | Low |
+| ~~**Fullscreen exit broken**~~ | ~~ESC exits browser fullscreen but not editor fullscreen mode~~ | ~~Low~~ | ✅ Fixed |
 | **Avatar not loading** | "Added by (username)" shows default avatar, not user's actual avatar | Low |
 | **Duplicate UI elements** | "Available Arrangements" shows twice; song title appears twice on arrangement view | Low |
 | **Printing broken** | Print functionality needs fixing | Medium |
@@ -210,6 +210,7 @@ Only implement if planning App Store release or significant iOS user base.
 
 | Date | Change |
 |------|--------|
+| 2026-01-23 | Fixed fullscreen exit - removed browser Fullscreen API, now uses CSS-only fullscreen so ESC works as expected |
 | 2026-01-23 | Fixed mobile preview pane blank issue - replaced translateX sliding with conditional rendering in ChordProSplitView |
 | 2026-01-23 | Fixed N+1 queries in groups.ts, added `getCountsBySong` query, added `isSystemGroup` index |
 | 2026-01-23 | Reorganized by priority; consolidated scattered notes; added effort estimates |
