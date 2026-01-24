@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
-import { Settings } from 'lucide-react';
+import { Settings, Users } from 'lucide-react';
 import { useAuthState } from '@/features/auth/hooks/useAuth';
 import SignInModal from '@/features/auth/components/SignInModal';
 import UserAvatar from '@/components/UserAvatar';
@@ -158,13 +158,22 @@ export function ProfilePage() {
                     Member since {formatDateString(user?.createdAt)}
                   </CardDescription>
 
-                  {/* Edit Profile link */}
-                  <Link to="/settings">
-                    <Button variant="outline">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Edit Profile
-                    </Button>
-                  </Link>
+                  {/* Navigation Links */}
+                  <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm mt-2">
+                    <Link to="/groups" className="flex-1">
+                      <Button variant="outline" className="w-full min-h-[44px]">
+                        <Users className="h-4 w-4 mr-2" />
+                        Groups
+                      </Button>
+                    </Link>
+
+                    <Link to="/settings" className="flex-1">
+                      <Button variant="outline" className="w-full min-h-[44px]">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Settings
+                      </Button>
+                    </Link>
+                  </div>
 
                   {/* Future: User's public arrangements will go here */}
                 </>
