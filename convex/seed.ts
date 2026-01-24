@@ -777,7 +777,7 @@ export const makeCommunityGroupOpen = mutation({
 
 /**
  * Add a user as admin of the Community group by user ID
- * Run with: npx convex run seed:addMeToCommunityGroup --args '{"userId": "USER_ID"}'
+ * Run with: npx convex run seed:addMeToCommunityGroup '{"userId": "USER_ID"}'
  */
 export const addMeToCommunityGroup = mutation({
   args: { userId: v.id("users") },
@@ -815,7 +815,7 @@ export const addMeToCommunityGroup = mutation({
 
 /**
  * Add a user as admin of the Community group by username
- * Run with: npx convex run seed:addUserToCommunityGroupByUsername --args '{"username": "your_username"}'
+ * Run with: npx convex run seed:addUserToCommunityGroupByUsername '{"username": "your_username"}'
  */
 export const addUserToCommunityGroupByUsername = mutation({
   args: { username: v.string() },

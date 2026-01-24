@@ -95,3 +95,39 @@ convex/
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 - `npm run typecheck` - Run TypeScript check
+
+## Seed Functions
+
+Seed functions are used to set up initial data. Use `--prod` flag for production deployment.
+
+### Database Seeding
+
+```bash
+# Seed full database (dev only)
+npx convex run seed:seedDatabase
+
+# Clear all data (dev only)
+npx convex run seed:clearDatabase
+```
+
+### Community Group Setup
+
+The Community group is a system group for shared/crowdsourced content.
+
+```bash
+# Create the Community group (required before using community features)
+npx convex run seed:seedCommunityGroup           # dev
+npx convex run seed:seedCommunityGroup --prod    # prod
+
+# Make Community group open (no approval required to join)
+npx convex run seed:makeCommunityGroupOpen           # dev
+npx convex run seed:makeCommunityGroupOpen --prod    # prod
+
+# Add a user as admin by username
+npx convex run seed:addUserToCommunityGroupByUsername '{"username": "their_username"}'           # dev
+npx convex run seed:addUserToCommunityGroupByUsername --prod '{"username": "their_username"}'    # prod
+
+# Add a user as admin by user ID
+npx convex run seed:addMeToCommunityGroup '{"userId": "USER_ID"}'           # dev
+npx convex run seed:addMeToCommunityGroup --prod '{"userId": "USER_ID"}'    # prod
+```
