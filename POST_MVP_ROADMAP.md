@@ -10,9 +10,9 @@ Features and improvements planned after MVP, organized by priority and effort.
 
 Issues significantly impacting user experience.
 
-| Issue | Description | Effort |
-|-------|-------------|--------|
-| **Mobile preview pane broken** | Preview pane doesn't work when editing chords on mobile | Medium |
+| Issue | Description | Effort | Status |
+|-------|-------------|--------|--------|
+| ~~**Mobile preview pane broken**~~ | ~~Preview pane doesn't work when editing chords on mobile~~ | ~~Medium~~ | ✅ Fixed |
 | **Fullscreen exit broken** | ESC exits browser fullscreen but not editor fullscreen mode | Low |
 | **Avatar not loading** | "Added by (username)" shows default avatar, not user's actual avatar | Low |
 | **Duplicate UI elements** | "Available Arrangements" shows twice; song title appears twice on arrangement view | Low |
@@ -91,7 +91,7 @@ New users don't understand the community nature of the app.
 |---------|-------------|--------|
 | **Debounce error alerts** | Don't show syntax errors mid-typing (e.g., unclosed `[]`) | Low |
 | **Clarify save/undo buttons** | Improve save button behavior; verify undo/redo works | Low |
-| **Chord progression parsing** | Recognize `[D / / / | A/C# / / / |]` as transposable chords | High |
+| **Chord progression parsing** | Recognize `[D / / / \| A/C# / / / |]` as transposable chords | High |
 | **Formatting customization** | Add formatting customization abilities | Medium |
 
 ---
@@ -210,6 +210,7 @@ Only implement if planning App Store release or significant iOS user base.
 
 | Date | Change |
 |------|--------|
+| 2026-01-23 | Fixed mobile preview pane blank issue - replaced translateX sliding with conditional rendering in ChordProSplitView |
 | 2026-01-23 | Fixed N+1 queries in groups.ts, added `getCountsBySong` query, added `isSystemGroup` index |
 | 2026-01-23 | Reorganized by priority; consolidated scattered notes; added effort estimates |
 | 2026-01-22 | Initial extraction from PROJECT_STATUS.md |

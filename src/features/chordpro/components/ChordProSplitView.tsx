@@ -326,32 +326,24 @@ export function ChordProSplitView({
       >
         <ToolbarHeader />
 
-        <div className="flex-1 overflow-hidden">
-          {/* Mobile tabs with gesture support */}
-          <div
-            className="flex transition-transform duration-300 ease-in-out h-full"
-            style={{
-              transform: `translateX(${-mobileTabIndex * 100}%)`,
-              width: '200%'
-            }}
-          >
-            {/* Editor tab */}
-            <div className="w-1/2 h-full overflow-auto" ref={editorScrollRef}>
+        <div className="flex-1 overflow-auto min-h-0">
+          {/* Mobile tabs - conditional rendering to fix height calculation issues */}
+          {mobileTabIndex === 0 ? (
+            <div className="h-full" ref={editorScrollRef}>
               <ChordProEditor
                 value={content}
                 onChange={handleContentChange}
                 {...enhancedEditorOptions}
               />
             </div>
-
-            {/* Preview tab */}
-            <div className="w-1/2 h-full overflow-auto" ref={viewerScrollRef}>
+          ) : (
+            <div className="h-full" ref={viewerScrollRef}>
               <ChordProViewer
                 content={debouncedContent}
                 {...enhancedViewerOptions}
               />
             </div>
-          </div>
+          )}
         </div>
 
         {/* Mobile FAB removed - users type chords directly per Phase 3.6 simplification */}
