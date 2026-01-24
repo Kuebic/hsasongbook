@@ -346,3 +346,321 @@ export const reclaimFromCommunity = mutation({
     return { success: true };
   },
 });
+
+// ============ BROWSE QUERIES ============
+
+/**
+ * Get recently added songs
+ * Access: Everyone
+ */
+export const getRecent = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 6;
+    const songs = await ctx.db
+      .query("songs")
+      .order("desc") // _creationTime descending
+      .take(limit);
+    return songs;
+  },
+});
+
+/**
+ * Get popular songs (by arrangement count)
+ * Access: Everyone
+ */
+export const getPopular = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 6;
+
+    // Get arrangement counts per song
+    const arrangements = await ctx.db.query("arrangements").collect();
+    const counts: Record<string, number> = {};
+    for (const arr of arrangements) {
+      const songId = arr.songId.toString();
+      counts[songId] = (counts[songId] || 0) + 1;
+    }
+
+    // Sort by count, take top N
+    const sortedIds = Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, limit)
+      .map(([id]) => id);
+
+    // Fetch songs in sorted order
+    const songs = await Promise.all(
+      sortedIds.map((id) => ctx.db.get(id as Id<"songs">))
+    );
+
+    return songs.filter(Boolean);
+  },
+});
+
+/**
+ * Get featured songs by slug list
+ * Access: Everyone
+ */
+export const getFeatured = query({
+  args: { slugs: v.array(v.string()) },
+  handler: async (ctx, args) => {
+    const songs = await Promise.all(
+      args.slugs.map((slug) =>
+        ctx.db
+          .query("songs")
+          .withIndex("by_slug", (q) => q.eq("slug", slug))
+          .unique()
+      )
+    );
+    return songs.filter(Boolean);
+  },
+});
+
+/**
+ * Get distinct themes for filter dropdown
+ * Access: Everyone
+ */
+export const getDistinctThemes = query({
+  args: {},
+  handler: async (ctx) => {
+    const songs = await ctx.db.query("songs").collect();
+    const themes = new Set<string>();
+    for (const song of songs) {
+      song.themes?.forEach((t) => themes.add(t));
+    }
+    return Array.from(themes).sort();
+  },
+});
+
+/**
+ * Get distinct artists for filter dropdown
+ * Access: Everyone
+ */
+export const getDistinctArtists = query({
+  args: {},
+  handler: async (ctx) => {
+    const songs = await ctx.db.query("songs").collect();
+    const artists = new Set<string>();
+    for (const song of songs) {
+      if (song.artist) artists.add(song.artist);
+    }
+    return Array.from(artists).sort();
+  },
+});
+
+/**
+ * Arrangement summary for a song
+ */
+interface ArrangementSummary {
+  count: number;
+  keys: string[];
+  tempoMin: number | null;
+  tempoMax: number | null;
+  avgRating: number;
+  totalFavorites: number;
+  difficulties: Array<"simple" | "standard" | "advanced">;
+}
+
+/**
+ * List songs with arrangement summary for browse page
+ * Supports filtering by song-level and arrangement-level criteria
+ * Access: Everyone
+ */
+export const listWithArrangementSummary = query({
+  args: {
+    // Song-level filters
+    themes: v.optional(v.array(v.string())),
+    artist: v.optional(v.string()),
+    dateFrom: v.optional(v.number()), // timestamp
+    dateTo: v.optional(v.number()),
+    searchQuery: v.optional(v.string()),
+    // Arrangement-level filters (filter songs by their arrangements)
+    hasKey: v.optional(v.string()),
+    tempoRange: v.optional(
+      v.union(v.literal("slow"), v.literal("medium"), v.literal("fast"))
+    ),
+    hasDifficulty: v.optional(
+      v.union(v.literal("simple"), v.literal("standard"), v.literal("advanced"))
+    ),
+    minArrangements: v.optional(v.number()),
+    // Sort options
+    sortBy: v.optional(
+      v.union(
+        v.literal("popular"),
+        v.literal("rating"),
+        v.literal("newest"),
+        v.literal("oldest"),
+        v.literal("alphabetical"),
+        v.literal("alphabetical_desc")
+      )
+    ),
+    // Pagination
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    // Get all songs
+    let songs = await ctx.db.query("songs").collect();
+
+    // Get all arrangements for aggregation
+    const allArrangements = await ctx.db.query("arrangements").collect();
+
+    // Build arrangement summary per song
+    const summaryBySong: Record<string, ArrangementSummary> = {};
+    for (const arr of allArrangements) {
+      const songId = arr.songId.toString();
+      if (!summaryBySong[songId]) {
+        summaryBySong[songId] = {
+          count: 0,
+          keys: [],
+          tempoMin: null,
+          tempoMax: null,
+          avgRating: 0,
+          totalFavorites: 0,
+          difficulties: [],
+        };
+      }
+      const summary = summaryBySong[songId];
+      summary.count++;
+      if (arr.key && !summary.keys.includes(arr.key)) {
+        summary.keys.push(arr.key);
+      }
+      if (arr.tempo) {
+        summary.tempoMin =
+          summary.tempoMin === null
+            ? arr.tempo
+            : Math.min(summary.tempoMin, arr.tempo);
+        summary.tempoMax =
+          summary.tempoMax === null
+            ? arr.tempo
+            : Math.max(summary.tempoMax, arr.tempo);
+      }
+      // Rolling average for rating
+      summary.avgRating =
+        (summary.avgRating * (summary.count - 1) + (arr.rating || 0)) /
+        summary.count;
+      summary.totalFavorites += arr.favorites || 0;
+      if (arr.difficulty && !summary.difficulties.includes(arr.difficulty)) {
+        summary.difficulties.push(arr.difficulty);
+      }
+    }
+
+    // Apply song-level filters
+    if (args.themes && args.themes.length > 0) {
+      songs = songs.filter((song) =>
+        args.themes!.some((theme) => song.themes?.includes(theme))
+      );
+    }
+
+    if (args.artist) {
+      songs = songs.filter(
+        (song) =>
+          song.artist?.toLowerCase().includes(args.artist!.toLowerCase())
+      );
+    }
+
+    if (args.dateFrom) {
+      songs = songs.filter((song) => song._creationTime >= args.dateFrom!);
+    }
+
+    if (args.dateTo) {
+      songs = songs.filter((song) => song._creationTime <= args.dateTo!);
+    }
+
+    if (args.searchQuery) {
+      const query = args.searchQuery.toLowerCase();
+      songs = songs.filter(
+        (song) =>
+          song.title.toLowerCase().includes(query) ||
+          song.artist?.toLowerCase().includes(query) ||
+          song.themes?.some((t) => t.toLowerCase().includes(query))
+      );
+    }
+
+    // Apply arrangement-level filters (filter songs by their arrangements)
+    if (args.hasKey) {
+      songs = songs.filter((song) => {
+        const summary = summaryBySong[song._id.toString()];
+        return summary?.keys.includes(args.hasKey!);
+      });
+    }
+
+    if (args.tempoRange) {
+      const tempoRanges = {
+        slow: { min: 0, max: 69 },
+        medium: { min: 70, max: 110 },
+        fast: { min: 111, max: 999 },
+      };
+      const range = tempoRanges[args.tempoRange];
+      songs = songs.filter((song) => {
+        const summary = summaryBySong[song._id.toString()];
+        if (!summary || summary.tempoMin === null || summary.tempoMax === null)
+          return false;
+        // Song matches if any of its arrangements fall within the tempo range
+        return summary.tempoMax >= range.min && summary.tempoMin <= range.max;
+      });
+    }
+
+    if (args.hasDifficulty) {
+      songs = songs.filter((song) => {
+        const summary = summaryBySong[song._id.toString()];
+        return summary?.difficulties.includes(args.hasDifficulty!);
+      });
+    }
+
+    if (args.minArrangements && args.minArrangements > 0) {
+      songs = songs.filter((song) => {
+        const summary = summaryBySong[song._id.toString()];
+        return (summary?.count || 0) >= args.minArrangements!;
+      });
+    }
+
+    // Apply sorting
+    const sortBy = args.sortBy || "popular";
+    switch (sortBy) {
+      case "popular":
+        songs.sort((a, b) => {
+          const countA = summaryBySong[a._id.toString()]?.count || 0;
+          const countB = summaryBySong[b._id.toString()]?.count || 0;
+          return countB - countA;
+        });
+        break;
+      case "rating":
+        songs.sort((a, b) => {
+          const ratingA = summaryBySong[a._id.toString()]?.avgRating || 0;
+          const ratingB = summaryBySong[b._id.toString()]?.avgRating || 0;
+          return ratingB - ratingA;
+        });
+        break;
+      case "newest":
+        songs.sort((a, b) => b._creationTime - a._creationTime);
+        break;
+      case "oldest":
+        songs.sort((a, b) => a._creationTime - b._creationTime);
+        break;
+      case "alphabetical":
+        songs.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case "alphabetical_desc":
+        songs.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+    }
+
+    // Apply limit
+    const limit = args.limit || 50;
+    songs = songs.slice(0, limit);
+
+    // Return songs with summaries
+    return songs.map((song) => ({
+      ...song,
+      arrangementSummary: summaryBySong[song._id.toString()] || {
+        count: 0,
+        keys: [],
+        tempoMin: null,
+        tempoMax: null,
+        avgRating: 0,
+        totalFavorites: 0,
+        difficulties: [],
+      },
+    }));
+  },
+});

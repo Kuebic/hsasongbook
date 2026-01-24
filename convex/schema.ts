@@ -54,6 +54,9 @@ export default defineSchema({
     tempo: v.optional(v.number()),
     capo: v.optional(v.number()),
     timeSignature: v.optional(v.string()),
+    difficulty: v.optional(
+      v.union(v.literal("simple"), v.literal("standard"), v.literal("advanced"))
+    ),
     chordProContent: v.string(),
     slug: v.string(),
     createdBy: v.id("users"),

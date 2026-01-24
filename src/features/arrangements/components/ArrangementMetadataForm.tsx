@@ -13,6 +13,8 @@ import KeySelector from '@/features/chordpro/components/KeySelector'
 import CapoSelector from './CapoSelector'
 import TimeSignatureSelector from './TimeSignatureSelector'
 import TempoInput from './TempoInput'
+import DifficultySelector from './DifficultySelector'
+import type { DifficultyOption } from '../validation/arrangementSchemas'
 import { validateAllMetadata } from '../utils/metadataValidation'
 import logger from '@/lib/logger'
 import type { ArrangementMetadata } from '@/types'
@@ -60,7 +62,8 @@ export default function ArrangementMetadataForm({
     key: metadata?.key || 'C',
     tempo: metadata?.tempo || 120,
     timeSignature: metadata?.timeSignature || '4/4',
-    capo: metadata?.capo || 0
+    capo: metadata?.capo || 0,
+    difficulty: metadata?.difficulty
   })
 
   const [errors, setErrors] = useState<MetadataErrors>({})
@@ -73,7 +76,8 @@ export default function ArrangementMetadataForm({
         key: metadata.key || 'C',
         tempo: metadata.tempo || 120,
         timeSignature: metadata.timeSignature || '4/4',
-        capo: metadata.capo || 0
+        capo: metadata.capo || 0,
+        difficulty: metadata.difficulty
       })
       setIsDirty(false)
     }
@@ -190,6 +194,18 @@ export default function ArrangementMetadataForm({
             {errors.timeSignature && (
               <p className="text-xs text-destructive">{errors.timeSignature}</p>
             )}
+          </div>
+
+          {/* Difficulty Selector */}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="difficulty" className="text-sm font-medium">
+              Difficulty
+            </Label>
+            <DifficultySelector
+              value={formState.difficulty as DifficultyOption | undefined}
+              onChange={(difficulty) => handleFieldChange('difficulty', difficulty)}
+              disabled={disabled}
+            />
           </div>
         </div>
 

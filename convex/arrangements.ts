@@ -356,6 +356,9 @@ export const create = mutation({
     tempo: v.optional(v.number()),
     capo: v.optional(v.number()),
     timeSignature: v.optional(v.string()),
+    difficulty: v.optional(
+      v.union(v.literal("simple"), v.literal("standard"), v.literal("advanced"))
+    ),
     chordProContent: v.string(),
     slug: v.string(),
     tags: v.optional(v.array(v.string())),
@@ -424,6 +427,7 @@ export const create = mutation({
       tempo: args.tempo,
       capo: args.capo,
       timeSignature: args.timeSignature,
+      difficulty: args.difficulty,
       chordProContent: args.chordProContent,
       slug: args.slug,
       createdBy: userId,
@@ -486,6 +490,9 @@ export const update = mutation({
     tempo: v.optional(v.number()),
     capo: v.optional(v.number()),
     timeSignature: v.optional(v.string()),
+    difficulty: v.optional(
+      v.union(v.literal("simple"), v.literal("standard"), v.literal("advanced"))
+    ),
     chordProContent: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
   },
@@ -972,6 +979,7 @@ export const duplicate = mutation({
       tempo: source.tempo,
       capo: source.capo,
       timeSignature: source.timeSignature,
+      difficulty: source.difficulty,
       chordProContent: source.chordProContent,
       tags: source.tags,
       slug,

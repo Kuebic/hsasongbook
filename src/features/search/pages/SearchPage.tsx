@@ -6,6 +6,9 @@ import SongList from '../components/SongList';
 import SearchBar from '../components/SearchBar';
 import StatsWidget from '../components/StatsWidget';
 import FeaturedArrangementsWidget from '../components/FeaturedArrangementsWidget';
+import RecentlyAddedSection from '../components/RecentlyAddedSection';
+import PopularSongsSection from '../components/PopularSongsSection';
+import FeaturedSongsSection from '../components/FeaturedSongsSection';
 import { SongListSkeleton } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -103,10 +106,13 @@ export function SearchPage() {
             <SearchBar value={searchTerm} onChange={setSearchTerm} />
           </div>
 
-          {/* Show widgets only when not searching */}
+          {/* Show discovery sections when not searching */}
           {!searchTerm && !isSearching && (
             <>
               <StatsWidget />
+              <RecentlyAddedSection limit={6} />
+              <PopularSongsSection limit={6} />
+              <FeaturedSongsSection />
               <FeaturedArrangementsWidget limit={6} />
             </>
           )}

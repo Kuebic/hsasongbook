@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 import { useEffect } from 'react'
 import { SearchPage } from '../features/search'
+import { BrowsePage } from '../features/browse'
 import { SongPage } from '../features/songs'
 import { ArrangementPage } from '../features/arrangements'
 import { SetlistsIndexPage, SetlistPage, SetlistPerformancePage } from '../features/setlists'
@@ -105,6 +106,7 @@ function AppWithFeatures() {
       <main id="main-content" tabIndex={-1} className="flex-1 pb-16 md:pb-0">
         <Routes>
           <Route path="/" element={<SearchPage />} />
+          <Route path="/songs" element={<BrowsePage />} />
           <Route path="/song/:songSlug" element={<SongPage />} />
           <Route path="/song/:songSlug/:arrangementSlug" element={<ArrangementPage />} />
           <Route path="/setlists" element={<SetlistsIndexPage />} />

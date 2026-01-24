@@ -168,7 +168,8 @@ export function ArrangementPage() {
                 key: arrangement.key,
                 tempo: arrangement.tempo,
                 timeSignature: arrangement.timeSignature,
-                capo: arrangement.capo
+                capo: arrangement.capo,
+                difficulty: arrangement.difficulty
               }}
               onChange={async (newMetadata: ArrangementMetadata) => {
                 logger.debug('Metadata changed, saving to Convex:', newMetadata);

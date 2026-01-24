@@ -63,6 +63,7 @@ function mapConvexArrangement(arr: {
   tempo?: number;
   timeSignature?: string;
   capo?: number;
+  difficulty?: 'simple' | 'standard' | 'advanced';
   tags: string[];
   rating: number;
   favorites: number;
@@ -80,6 +81,7 @@ function mapConvexArrangement(arr: {
     tempo: arr.tempo ?? 0,
     timeSignature: arr.timeSignature ?? '4/4',
     capo: arr.capo ?? 0,
+    difficulty: arr.difficulty,
     tags: arr.tags,
     rating: arr.rating,
     favorites: arr.favorites,
@@ -222,6 +224,7 @@ export function useArrangementData(arrangementId?: string | null): UseArrangemen
           tempo?: number;
           capo?: number;
           timeSignature?: string;
+          difficulty?: 'simple' | 'standard' | 'advanced';
           chordProContent?: string;
           tags?: string[];
         } = {
@@ -234,6 +237,8 @@ export function useArrangementData(arrangementId?: string | null): UseArrangemen
         if (updatedData.capo !== undefined) updatePayload.capo = updatedData.capo;
         if (updatedData.timeSignature !== undefined)
           updatePayload.timeSignature = updatedData.timeSignature;
+        if (updatedData.difficulty !== undefined)
+          updatePayload.difficulty = updatedData.difficulty;
         if (updatedData.chordProContent !== undefined)
           updatePayload.chordProContent = updatedData.chordProContent;
         if (updatedData.tags !== undefined) updatePayload.tags = updatedData.tags;

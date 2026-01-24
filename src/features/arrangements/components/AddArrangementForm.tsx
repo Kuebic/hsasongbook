@@ -20,9 +20,11 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle } from 'lucide-react';
 import KeySelector from '@/features/chordpro/components/KeySelector';
 import CapoSelector from './CapoSelector';
+import DifficultySelector from './DifficultySelector';
 import {
   addArrangementSchema,
   type AddArrangementFormData,
+  type DifficultyOption,
 } from '../validation/arrangementSchemas';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
@@ -80,6 +82,7 @@ export default function AddArrangementForm({
       name: '',
       key: 'C',
       capo: 0,
+      difficulty: undefined,
       tags: [],
     },
   });
@@ -114,6 +117,7 @@ export default function AddArrangementForm({
         name: data.name,
         key: data.key || undefined,
         capo: data.capo,
+        difficulty: data.difficulty,
         timeSignature: '4/4', // Default
         chordProContent: initialChordProContent,
         slug,
@@ -189,8 +193,8 @@ export default function AddArrangementForm({
         )}
       </div>
 
-      {/* Key and Capo row */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Key, Capo, and Difficulty row */}
+      <div className="grid grid-cols-3 gap-4">
         {/* Key field */}
         <div>
           <Label htmlFor="key">Key</Label>
@@ -217,6 +221,23 @@ export default function AddArrangementForm({
             render={({ field }) => (
               <CapoSelector
                 value={field.value || 0}
+                onChange={field.onChange}
+                disabled={isSubmitting}
+                className="w-full"
+              />
+            )}
+          />
+        </div>
+
+        {/* Difficulty field */}
+        <div>
+          <Label htmlFor="difficulty">Difficulty</Label>
+          <Controller
+            name="difficulty"
+            control={control}
+            render={({ field }) => (
+              <DifficultySelector
+                value={field.value as DifficultyOption | undefined}
                 onChange={field.onChange}
                 disabled={isSubmitting}
                 className="w-full"

@@ -119,7 +119,7 @@ New users don't understand the community nature of the app.
 
 | Feature | Description | Effort |
 |---------|-------------|--------|
-| **Ratings & favorites** | Like/rate arrangements from arrangement view | Medium |
+| **Ratings & favorites** | Like/rate arrangements from arrangement view. Should also list # of raters | Medium |
 
 ---
 

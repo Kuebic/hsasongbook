@@ -6,6 +6,12 @@
 import { z } from 'zod';
 
 /**
+ * Valid difficulty levels for arrangements
+ */
+export const difficultyOptions = ['simple', 'standard', 'advanced'] as const;
+export type DifficultyOption = typeof difficultyOptions[number];
+
+/**
  * Add Arrangement form schema
  *
  * Note: Only captures initial metadata. Tempo, timeSignature, and chordProContent
@@ -18,6 +24,7 @@ export const addArrangementSchema = z.object({
     .max(200, 'Name must be less than 200 characters'),
   key: z.string().optional().or(z.literal('')),
   capo: z.number().min(0).max(12).optional(),
+  difficulty: z.enum(difficultyOptions).optional(),
   tags: z.array(z.string()).optional(),
 });
 

@@ -5,6 +5,14 @@
  * and musical details (key, tempo, capo, etc.).
  */
 
+/**
+ * Difficulty level for arrangements
+ * - simple: Few chords, basic strumming patterns
+ * - standard: Moderate complexity, common progressions
+ * - advanced: Complex chords, intricate patterns
+ */
+export type ArrangementDifficulty = 'simple' | 'standard' | 'advanced';
+
 export interface Arrangement {
   id: string;
   slug: string; // URL-friendly slug (e.g., "gh2lk" - 6-char nanoid only)
@@ -14,6 +22,7 @@ export interface Arrangement {
   tempo: number; // BPM (beats per minute)
   timeSignature: string; // e.g., "4/4", "3/4", "6/8"
   capo: number; // Capo position (0 = no capo)
+  difficulty?: ArrangementDifficulty; // Skill level required
   tags: string[];
   rating: number; // Average rating (0-5)
   favorites: number; // Popularity count
@@ -42,6 +51,7 @@ export interface ArrangementMetadata {
   tempo: number;
   timeSignature: string;
   capo: number;
+  difficulty?: ArrangementDifficulty;
 }
 
 /**
