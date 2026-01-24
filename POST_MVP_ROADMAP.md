@@ -49,13 +49,13 @@ Features users will expect that aren't blocking MVP.
 | ~~**Edit arrangement name**~~ | ~~Owner should be able to rename (URL uses ID, won't break)~~ | ~~Low~~ | ✅ Done |
 | ~~**Delete own arrangements**~~ | ~~Allow users to delete their arrangements~~ | ~~Low~~ | ✅ Done |
 | ~~**Duplicate arrangements**~~ | ~~Copy another user's arrangement to customize~~ | ~~Medium~~ | ✅ Done |
-| **Edit song details** | Edit title, artist, themes, lyrics (by creator or community) | Medium |
+| ~~**Edit song details**~~ | ~~Edit title, artist, themes, lyrics (by creator or community)~~ | ~~Medium~~ | ✅ Done |
 
 ### Navigation & Discovery
 
 | Feature | Description | Effort | Status |
 |---------|-------------|--------|--------|
-| **Browse songs on homepage** | Currently only arrangements; need song browsing with filters | Medium | |
+| ~~**Browse songs on homepage**~~ | ~~Currently only arrangements; need song browsing with filters~~ | ~~Medium~~ | ✅ Done |
 | ~~**Remove arrangement switcher**~~ | ~~Top-right dropdown and bottom quick-nav buttons removed~~ | ~~Low~~ | ✅ Done |
 | ~~**Filter by "my arrangements"**~~ | ~~On song page, "Only mine" toggle filters to your arrangements~~ | ~~Low~~ | ✅ Done |
 | ~~**"My Arrangements" on profile**~~ | ~~Profile page now shows arrangements you created or collaborate on~~ | ~~Low~~ | ✅ Done |
@@ -120,6 +120,29 @@ New users don't understand the community nature of the app.
 | Feature | Description | Effort |
 |---------|-------------|--------|
 | **Ratings & favorites** | Like/rate arrangements from arrangement view. Should also list # of raters | Medium |
+| **Comments with threads** | Threaded comments on songs and arrangements. See details below. | High |
+
+### Comments Feature Details
+
+**Scope:** Allow authenticated users to discuss songs and arrangements via threaded comments.
+
+**What's needed:**
+- New `comments` table with `targetType` (song/arrangement), `targetId`, `parentCommentId` for threading
+- Permission helpers: author can edit/delete, content owner + moderators can delete
+- Soft-delete to preserve thread integrity (show "[deleted]" placeholder)
+- Denormalized `commentCount` on songs/arrangements for sorting by activity
+- New `src/features/comments/` module following existing patterns
+
+**Design decisions to make:**
+- Threading depth: Unlimited nesting (Reddit-style) vs flat with one reply level (GitHub-style)?
+- Notifications: How do users know someone replied to their comment?
+- Moderation: Community group admins can moderate all comments?
+
+**Builds on existing patterns:**
+- `userFavorites` table structure (`targetType` + `targetId` union pattern)
+- `permissions.ts` helpers (add `canDeleteComment()`)
+- `versions.ts` soft-delete/audit trail approach
+- Form + query/mutation hook patterns
 
 ---
 
