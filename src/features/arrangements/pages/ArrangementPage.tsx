@@ -1,7 +1,5 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useQuery } from 'convex/react';
-import { api } from '../../../../convex/_generated/api';
+import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
 import { useArrangementData } from '../hooks/useArrangementData';
 import { useArrangementPermissions } from '../hooks/useArrangementPermissions';
 import { useArrangementCoAuthors } from '../hooks/useArrangementCoAuthors';
@@ -27,7 +25,6 @@ import type { ArrangementMetadata } from '@/types/Arrangement.types';
 
 export function ArrangementPage() {
   const navigate = useNavigate();
-  const { arrangementSlug } = useParams();
   const { breadcrumbs } = useNavigation();
   const { user } = useAuth();
   const isAuthenticated = user && !user.isAnonymous;
@@ -41,11 +38,13 @@ export function ArrangementPage() {
     setTransposition(state);
   }, []);
 
-  // Use Convex hook to load arrangement data (uses URL slug automatically)
+  // Use Convex hook to load arrangement data with creator/owner info (uses URL slug automatically)
   const {
     arrangement,
     song,
     allArrangements,
+    creator,
+    owner,
     loading,
     error,
     updateArrangement
@@ -56,25 +55,9 @@ export function ArrangementPage() {
     arrangement?.id ?? null
   );
 
-  // Fetch arrangement with creator info in a single query
-  const arrangementWithCreator = useQuery(
-    api.arrangements.getBySlugWithCreator,
-    arrangementSlug ? { slug: arrangementSlug } : 'skip'
-  );
-
-  // Extract creator and owner from the combined query result
-  const creator = useMemo(() => {
-    return arrangementWithCreator?.creator ?? null;
-  }, [arrangementWithCreator]);
-
-  // Phase 2: Extract owner info from query result
-  const owner = useMemo(() => {
-    return arrangementWithCreator?.owner ?? null;
-  }, [arrangementWithCreator]);
-
   // Check if arrangement is owned by Community group (system group)
   const isCommunityOwned =
-    arrangementWithCreator?.ownerType === 'group' &&
+    arrangement?.ownerType === 'group' &&
     owner?.type === 'group' &&
     owner?.isSystemGroup === true;
 

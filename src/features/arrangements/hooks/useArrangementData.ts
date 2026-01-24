@@ -11,7 +11,7 @@ import { useParams } from 'react-router-dom';
 import { api } from '../../../../convex/_generated/api';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import logger from '@/lib/logger';
-import type { Arrangement } from '@/types/Arrangement.types';
+import type { Arrangement, CreatorInfo, OwnerInfo } from '@/types/Arrangement.types';
 import type { Song } from '@/types/Song.types';
 
 /**
@@ -33,6 +33,8 @@ export interface UseArrangementDataReturn {
   arrangement: Arrangement | null;
   song: Song | null;
   allArrangements: Arrangement[];
+  creator: CreatorInfo | null;
+  owner: OwnerInfo | null;
 
   // State
   loading: boolean;
@@ -127,20 +129,21 @@ function mapConvexSong(song: {
 export function useArrangementData(arrangementId?: string | null): UseArrangementDataReturn {
   const { arrangementSlug } = useParams();
 
-  // Get arrangement by slug (if no ID provided, use slug from URL)
-  const arrangementBySlug = useQuery(
-    api.arrangements.getBySlug,
+  // Get arrangement by slug WITH creator/owner info (if no ID provided, use slug from URL)
+  // This eliminates the need for a separate getBySlugWithCreator query in ArrangementPage
+  const arrangementBySlugWithCreator = useQuery(
+    api.arrangements.getBySlugWithCreator,
     arrangementSlug && !arrangementId ? { slug: arrangementSlug } : 'skip'
   );
 
-  // Get arrangement by ID (if ID provided)
+  // Get arrangement by ID (if ID provided) - no creator info needed for ID-based lookups
   const arrangementById = useQuery(
     api.arrangements.get,
     arrangementId ? { id: arrangementId as Id<'arrangements'> } : 'skip'
   );
 
   // Use whichever arrangement we have
-  const convexArrangement = arrangementId ? arrangementById : arrangementBySlug;
+  const convexArrangement = arrangementId ? arrangementById : arrangementBySlugWithCreator;
 
   // Get parent song
   const convexSong = useQuery(
@@ -173,10 +176,21 @@ export function useArrangementData(arrangementId?: string | null): UseArrangemen
     return convexSiblings.map(mapConvexArrangement);
   }, [convexSiblings]);
 
+  // Extract creator and owner from the slug-based query result
+  const creator: CreatorInfo | null = useMemo(() => {
+    if (!arrangementBySlugWithCreator?.creator) return null;
+    return arrangementBySlugWithCreator.creator;
+  }, [arrangementBySlugWithCreator]);
+
+  const owner: OwnerInfo | null = useMemo(() => {
+    if (!arrangementBySlugWithCreator?.owner) return null;
+    return arrangementBySlugWithCreator.owner as OwnerInfo;
+  }, [arrangementBySlugWithCreator]);
+
   // Determine loading state
   const isLoadingArrangement =
     (arrangementId !== undefined && arrangementById === undefined) ||
-    (arrangementSlug !== undefined && !arrangementId && arrangementBySlug === undefined);
+    (arrangementSlug !== undefined && !arrangementId && arrangementBySlugWithCreator === undefined);
   const isLoadingSong = convexArrangement?.songId && convexSong === undefined;
   const isLoadingSiblings = convexArrangement?.songId && convexSiblings === undefined;
   const loading = isLoadingArrangement || isLoadingSong || isLoadingSiblings;
@@ -265,6 +279,8 @@ export function useArrangementData(arrangementId?: string | null): UseArrangemen
     arrangement,
     song,
     allArrangements,
+    creator,
+    owner,
 
     // State
     loading,
