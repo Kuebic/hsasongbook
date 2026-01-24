@@ -2,13 +2,14 @@
  * SongCardEnhanced Component
  *
  * Enhanced song card showing arrangement summary for the browse page.
- * Displays: title, artist, arrangement count, available keys, difficulty range, and rating.
+ * Displays: title, artist, arrangement count, available keys, difficulty range, and favorites.
  */
 
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Music } from 'lucide-react';
+import FavoriteButton from '@/features/shared/components/FavoriteButton';
 import type { SongWithSummary } from '@/types';
 import { DIFFICULTY_OPTIONS } from '../utils/filterConstants';
 
@@ -21,11 +22,6 @@ export default function SongCardEnhanced({ song }: SongCardEnhancedProps) {
 
   // Format difficulty range display
   const difficultyDisplay = formatDifficultyRange(arrangementSummary.difficulties);
-
-  // Format rating display
-  const ratingDisplay = arrangementSummary.avgRating > 0
-    ? `★${arrangementSummary.avgRating.toFixed(1)}`
-    : null;
 
   // Format keys display (show first 3)
   const keysDisplay = arrangementSummary.keys.slice(0, 3);
@@ -64,15 +60,16 @@ export default function SongCardEnhanced({ song }: SongCardEnhancedProps) {
                 <span className="font-mono">{difficultyDisplay}</span>
               </>
             )}
+          </div>
 
-            {ratingDisplay && (
-              <>
-                <span>•</span>
-                <span className="flex items-center gap-0.5 text-yellow-600 dark:text-yellow-500">
-                  {ratingDisplay}
-                </span>
-              </>
-            )}
+          {/* Favorite Button */}
+          <div className="flex items-center justify-between mb-3">
+            <FavoriteButton
+              targetType="song"
+              targetId={song.id}
+              count={song.favorites || 0}
+              size="sm"
+            />
           </div>
 
           {/* Theme Badges */}

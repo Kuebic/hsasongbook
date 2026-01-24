@@ -18,13 +18,6 @@ export function sortArrangements(
         return bFav - aFav;
       });
 
-    case SORT_OPTIONS.RATING:
-      return sorted.sort((a, b) => {
-        const aRating = a.rating || 0;
-        const bRating = b.rating || 0;
-        return bRating - aRating;
-      });
-
     case SORT_OPTIONS.NEWEST:
       return sorted.sort((a, b) => {
         const aDate = new Date(a.createdAt || 0);

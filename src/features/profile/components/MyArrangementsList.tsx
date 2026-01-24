@@ -34,7 +34,6 @@ export function MyArrangementsList() {
         timeSignature: arr.timeSignature ?? '4/4',
         capo: arr.capo ?? 0,
         tags: arr.tags,
-        rating: arr.rating,
         favorites: arr.favorites,
         chordProContent: arr.chordProContent,
         createdAt: new Date(arr._creationTime).toISOString(),

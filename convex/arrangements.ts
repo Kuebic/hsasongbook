@@ -73,16 +73,11 @@ async function updateSongArrangementSummary(
     ),
   ];
 
-  // Calculate ratings and favorites
-  const ratings = arrangements.map((a) => a.rating || 0);
+  // Calculate total favorites from arrangements
   const totalFavorites = arrangements.reduce(
     (sum, a) => sum + (a.favorites || 0),
     0
   );
-  const avgRating =
-    ratings.length > 0
-      ? ratings.reduce((a, b) => a + b, 0) / ratings.length
-      : 0;
 
   await ctx.db.patch(songId, {
     arrangementCount: arrangements.length,
@@ -90,7 +85,6 @@ async function updateSongArrangementSummary(
     arrangementTempoMin: tempos.length > 0 ? Math.min(...tempos) : undefined,
     arrangementTempoMax: tempos.length > 0 ? Math.max(...tempos) : undefined,
     arrangementDifficulties: difficulties.length > 0 ? difficulties : undefined,
-    arrangementAvgRating: avgRating,
     arrangementTotalFavorites: totalFavorites,
   });
 }
@@ -371,14 +365,8 @@ export const getFeaturedWithSongs = query({
       .order("desc")
       .take(sampleSize);
 
-    // Score and sort the sample
-    const scored = topByFavorites.map((arr) => ({
-      arrangement: arr,
-      score: (arr.rating || 0) * 0.6 + (arr.favorites || 0) * 0.004,
-    }));
-
-    scored.sort((a, b) => b.score - a.score);
-    const topArrangements = scored.slice(0, limit).map((s) => s.arrangement);
+    // Sort by favorites (popularity)
+    const topArrangements = topByFavorites.slice(0, limit);
 
     // Join with songs and creators
     const results = await Promise.all(
@@ -498,7 +486,6 @@ export const create = mutation({
       chordProContent: args.chordProContent,
       slug: args.slug,
       createdBy: userId,
-      rating: 0,
       favorites: 0,
       tags: args.tags ?? [],
       ownerType,
@@ -1066,7 +1053,6 @@ export const duplicate = mutation({
       tags: source.tags,
       slug,
       createdBy: userId,
-      rating: 0,
       favorites: 0,
       // ownerType and ownerId are undefined (user ownership by default)
     });

@@ -142,7 +142,6 @@ const SEED_ARRANGEMENTS: Record<
     timeSignature: string;
     capo: number;
     tags: string[];
-    rating: number;
     favorites: number;
     chordProContent: string;
   }>
@@ -155,7 +154,6 @@ const SEED_ARRANGEMENTS: Record<
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 4.7,
       favorites: 342,
       chordProContent: `{comment: Play softly and reverently}
 
@@ -180,7 +178,6 @@ The [Em]hour I [D]first be[G]lieved
       timeSignature: "4/4",
       capo: 2,
       tags: ["alternative"],
-      rating: 3.8,
       favorites: 67,
       chordProContent: `{comment: Alternative arrangement with capo on 2nd fret}
 
@@ -200,7 +197,6 @@ Was [C#m]blind but [F#]now I [B]see
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 5,
       favorites: 523,
       chordProContent: `{start_of_verse: Verse 1}
 [A]O Lord my God, When I in [D]awesome wonder
@@ -223,7 +219,6 @@ How great Thou [F#m]art! [E]How great Thou [A]art!
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 4.2,
       favorites: 189,
       chordProContent: `{comment: Start softly and build}
 
@@ -250,7 +245,6 @@ For I am [G]Yours [A]and You are [D]mine
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 4.5,
       favorites: 234,
       chordProContent: `{start_of_verse}
 [E]You are here, moving in our midst
@@ -274,7 +268,6 @@ My [C#m]God, that is who You [B]are
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 4.8,
       favorites: 456,
       chordProContent: `{start_of_chorus}
 [G]Bless the Lord, O my soul, [D]O my soul
@@ -292,7 +285,6 @@ I'll [Em]worship Your [C]holy [G]name
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 3.9,
       favorites: 78,
       chordProContent: `{start_of_verse}
 [D]You were the Word at the beginning
@@ -316,7 +308,6 @@ The [A]Name of Jesus Christ my [Bm]King
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 4.4,
       favorites: 234,
       chordProContent: `{start_of_verse}
 [A]I've heard a thousand stories
@@ -341,7 +332,6 @@ You're a [A]Good Good Father
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 4.3,
       favorites: 167,
       chordProContent: `{start_of_verse}
 [Eb]Before I spoke a word, You were singing over me
@@ -365,7 +355,6 @@ Oh, it [Bb]chases me down, fights 'til I'm found
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 4.6,
       favorites: 312,
       chordProContent: `{start_of_verse}
 [C]Worthy of every song we could ever sing
@@ -390,7 +379,6 @@ Oh, it [Bb]chases me down, fights 'til I'm found
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 5,
       favorites: 678,
       chordProContent: `{start_of_verse}
 [E]Light of the world
@@ -415,7 +403,6 @@ Here I am to [A]say that You're my [E]God
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 3.7,
       favorites: 89,
       chordProContent: `{start_of_verse}
 [F]There's nothing worth more that will ever come close
@@ -439,7 +426,6 @@ Here I am to [A]say that You're my [E]God
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 4.1,
       favorites: 145,
       chordProContent: `{start_of_verse}
 [D]You give life, You are love
@@ -464,7 +450,6 @@ We [Bm]pour out our [G]praise
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 4.0,
       favorites: 145,
       chordProContent: `{start_of_verse}
 [Ab]Let the King of my heart
@@ -489,7 +474,6 @@ We [Bm]pour out our [G]praise
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 4.5,
       favorites: 267,
       chordProContent: `{start_of_verse}
 [C]My hope is built on nothing less
@@ -514,7 +498,6 @@ Through the [C]storm, He is [G]Lord
       timeSignature: "4/4",
       capo: 0,
       tags: [],
-      rating: 3.6,
       favorites: 54,
       chordProContent: `{start_of_verse}
 [F]How great the chasm that lay between us
@@ -599,7 +582,6 @@ export const seedDatabase = mutation({
           timeSignature: arr.timeSignature,
           capo: arr.capo,
           tags: arr.tags,
-          rating: arr.rating,
           favorites: arr.favorites,
           chordProContent: arr.chordProContent,
           slug,
@@ -864,5 +846,61 @@ export const addUserToCommunityGroupByUsername = mutation({
     });
 
     return { success: true, message: `Added "${args.username}" as admin to Community group` };
+  },
+});
+
+// ============ RATINGS TO FAVORITES MIGRATION ============
+
+/**
+ * Remove rating field from all arrangements by recreating them
+ * This migration is needed after switching from ratings to favorites-only system
+ * Run with: npx convex run seed:migrateRemoveRatings
+ *
+ * WARNING: This will change arrangement IDs! Run clearDatabase and seedDatabase instead
+ * if you want to reset all data.
+ */
+export const migrateRemoveRatings = mutation({
+  args: {},
+  handler: async (ctx) => {
+    let count = 0;
+
+    // Get all arrangements
+    const arrangements = await ctx.db.query("arrangements").collect();
+
+    for (const arr of arrangements) {
+      // Cast to access potential legacy rating field
+      const legacyArr = arr as typeof arr & { rating?: number };
+
+      if ("rating" in legacyArr) {
+        // Extract all fields except rating and system fields
+        const newArr = {
+          songId: arr.songId,
+          name: arr.name,
+          key: arr.key,
+          tempo: arr.tempo,
+          capo: arr.capo,
+          timeSignature: arr.timeSignature,
+          difficulty: arr.difficulty,
+          chordProContent: arr.chordProContent,
+          slug: arr.slug,
+          createdBy: arr.createdBy,
+          favorites: arr.favorites,
+          tags: arr.tags,
+          updatedAt: arr.updatedAt,
+          ownerType: arr.ownerType,
+          ownerId: arr.ownerId,
+        };
+
+        // Delete old and insert new
+        await ctx.db.delete(arr._id);
+        await ctx.db.insert("arrangements", newArr);
+        count++;
+      }
+    }
+
+    return {
+      success: true,
+      message: `Migrated ${count} arrangements (removed rating field). Note: Arrangement IDs have changed.`,
+    };
   },
 });

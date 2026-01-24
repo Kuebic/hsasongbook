@@ -21,6 +21,8 @@ export interface Song {
   // Phase 5 fields (Authentication)
   userId?: string;                     // Creator user ID (optional for backward compatibility)
   isPublic?: boolean;                  // Public vs private (default: true for songs)
+  // Favorites count (denormalized)
+  favorites?: number;
   // Future fields
   compositionYear?: number;
   source?: string;

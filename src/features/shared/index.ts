@@ -16,7 +16,7 @@ export { default as EmptyState } from './components/EmptyState';
 export { PageSpinner, SongListSkeleton } from './components/LoadingStates';
 export { SimplePageTransition } from './components/PageTransition';
 export { default as PopularityDisplay } from './components/PopularityDisplay';
-export { default as RatingDisplay } from './components/RatingDisplay';
+export { default as FavoriteButton } from './components/FavoriteButton';
 export { default as SortSelector } from './components/SortSelector';
 
 // Hooks

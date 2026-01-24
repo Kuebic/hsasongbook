@@ -28,6 +28,7 @@ import { Settings, Users } from 'lucide-react';
 import { useAuthState } from '@/features/auth/hooks/useAuth';
 import SignInModal from '@/features/auth/components/SignInModal';
 import { MyArrangementsList } from '../components/MyArrangementsList';
+import { MyFavoritesList } from '../components/MyFavoritesList';
 import UserAvatar from '@/components/UserAvatar';
 import { formatDateString } from '../../shared/utils/dateFormatter';
 import type { Id } from '../../../../convex/_generated/dataModel';
@@ -179,6 +180,14 @@ export function ProfilePage() {
               )}
             </CardContent>
           </Card>
+
+          {/* My Favorites Section - only for authenticated users */}
+          {!isAnonymous && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">My Favorites</h2>
+              <MyFavoritesList />
+            </div>
+          )}
 
           {/* My Arrangements Section - only for authenticated users */}
           {!isAnonymous && (

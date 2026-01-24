@@ -20,6 +20,7 @@ export interface ConvexSongDocument {
   copyright?: string;
   lyrics?: string;
   updatedAt?: number;
+  favorites?: number;
 }
 
 /**
@@ -37,6 +38,7 @@ export function mapConvexSongToFrontend(song: ConvexSongDocument): Song {
     themes: song.themes,
     copyright: song.copyright,
     lyrics: song.lyrics ? { en: song.lyrics } : undefined,
+    favorites: song.favorites,
     createdAt: new Date(song._creationTime).toISOString(),
     updatedAt: song.updatedAt
       ? new Date(song.updatedAt).toISOString()

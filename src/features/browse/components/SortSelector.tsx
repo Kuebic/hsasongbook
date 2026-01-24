@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowDownAZ, ArrowUpAZ, Clock, Star, TrendingUp } from 'lucide-react';
+import { ArrowDownAZ, ArrowUpAZ, Clock, Heart, TrendingUp } from 'lucide-react';
 import { SORT_OPTIONS, type SortOption } from '../utils/filterConstants';
 
 interface SortSelectorProps {
@@ -20,8 +20,7 @@ interface SortSelectorProps {
 }
 
 const SORT_ICONS: Record<SortOption, typeof TrendingUp> = {
-  popular: TrendingUp,
-  rating: Star,
+  popular: Heart,
   newest: Clock,
   oldest: Clock,
   alphabetical: ArrowDownAZ,

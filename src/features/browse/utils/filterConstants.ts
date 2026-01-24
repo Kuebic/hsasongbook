@@ -34,8 +34,7 @@ export const MUSICAL_KEYS = [
 export type MusicalKey = typeof MUSICAL_KEYS[number];
 
 export const SORT_OPTIONS = {
-  popular: { label: 'Most Popular', description: 'By arrangement count' },
-  rating: { label: 'Highest Rated', description: 'By average rating' },
+  popular: { label: 'Most Popular', description: 'By favorites count' },
   newest: { label: 'Newest First', description: 'Recently added' },
   oldest: { label: 'Oldest First', description: 'First added' },
   alphabetical: { label: 'A to Z', description: 'Alphabetical' },

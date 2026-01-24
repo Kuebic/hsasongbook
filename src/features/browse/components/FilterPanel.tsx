@@ -17,7 +17,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Filter, X } from 'lucide-react';
+import { Filter, Heart, X } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import ThemeMultiSelect from './ThemeMultiSelect';
 import ArtistCombobox from './ArtistCombobox';
 import KeyFilter from './KeyFilter';
@@ -40,6 +43,9 @@ export default function FilterPanel({
   onClearFilters,
   activeFilterCount,
 }: FilterPanelProps) {
+  const { user } = useAuth();
+  const isAuthenticated = user && !user.isAnonymous;
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -63,6 +69,26 @@ export default function FilterPanel({
 
         <ScrollArea className="flex-1 py-4 h-[calc(85vh-180px)]">
           <div className="space-y-6 px-1">
+            {/* My Favorites Filter - only for authenticated users */}
+            {isAuthenticated && (
+              <>
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-red-500" />
+                    <Label htmlFor="favorites-filter" className="font-medium">
+                      My Favorites Only
+                    </Label>
+                  </div>
+                  <Switch
+                    id="favorites-filter"
+                    checked={filters.showFavoritesOnly}
+                    onCheckedChange={(checked) => onFilterChange('showFavoritesOnly', checked)}
+                  />
+                </div>
+                <Separator />
+              </>
+            )}
+
             {/* Song-Level Filters */}
             <div>
               <h3 className="font-medium text-sm text-muted-foreground mb-3">Song Filters</h3>

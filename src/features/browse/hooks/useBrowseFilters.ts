@@ -32,6 +32,8 @@ export interface BrowseFilters {
   tempoRange: TempoRange | null;
   hasDifficulty: DifficultyLevel | null;
   arrangementFilter: ArrangementFilter;
+  // User-specific
+  showFavoritesOnly: boolean;
   // Sort
   sortBy: SortOption;
 }
@@ -45,6 +47,7 @@ const DEFAULT_FILTERS: BrowseFilters = {
   tempoRange: null,
   hasDifficulty: null,
   arrangementFilter: 'all',
+  showFavoritesOnly: false,
   sortBy: 'popular',
 };
 
@@ -89,6 +92,7 @@ export function useBrowseFilters() {
       tempoRange: isValidTempoRange(tempoParam) ? tempoParam : null,
       hasDifficulty: isValidDifficultyLevel(difficultyParam) ? difficultyParam : null,
       arrangementFilter: isValidArrangementFilter(arrFilterParam) ? arrFilterParam : 'all',
+      showFavoritesOnly: searchParams.get('favorites') === 'true',
       sortBy: isValidSortOption(sortParam) ? sortParam : 'popular',
     };
   }, [searchParams]);
@@ -116,6 +120,7 @@ export function useBrowseFilters() {
         if (next.tempoRange) params.set('tempo', next.tempoRange);
         if (next.hasDifficulty) params.set('difficulty', next.hasDifficulty);
         if (next.arrangementFilter !== 'all') params.set('arr', next.arrangementFilter);
+        if (next.showFavoritesOnly) params.set('favorites', 'true');
         if (next.sortBy !== 'popular') params.set('sort', next.sortBy);
 
         setSearchParams(params, { replace: true });
@@ -142,6 +147,7 @@ export function useBrowseFilters() {
     if (filters.tempoRange) count++;
     if (filters.hasDifficulty) count++;
     if (filters.arrangementFilter !== 'all') count++;
+    if (filters.showFavoritesOnly) count++;
     return count;
   }, [filters]);
 

@@ -49,8 +49,9 @@ export default defineSchema({
         v.union(v.literal("simple"), v.literal("standard"), v.literal("advanced"))
       )
     ),
-    arrangementAvgRating: v.optional(v.number()),
     arrangementTotalFavorites: v.optional(v.number()),
+    // Direct song favorites count
+    favorites: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
     .index("by_title", ["title"])
@@ -74,7 +75,6 @@ export default defineSchema({
     slug: v.string(),
     createdBy: v.id("users"),
     // Social fields
-    rating: v.number(),
     favorites: v.number(),
     tags: v.array(v.string()),
     // Track edits
@@ -87,8 +87,7 @@ export default defineSchema({
     .index("by_song", ["songId"])
     .index("by_createdBy", ["createdBy"])
     .index("by_owner", ["ownerType", "ownerId"])
-    .index("by_favorites", ["favorites"])
-    .index("by_rating", ["rating"]),
+    .index("by_favorites", ["favorites"]),
 
   // Setlists - Private to user
   // Read: Owner only | Write: Owner only
@@ -182,4 +181,16 @@ export default defineSchema({
   })
     .index("by_content", ["contentType", "contentId"])
     .index("by_content_and_version", ["contentType", "contentId", "version"]),
+
+  // User Favorites - Track what users have favorited (songs and arrangements)
+  userFavorites: defineTable({
+    userId: v.id("users"),
+    targetType: v.union(v.literal("song"), v.literal("arrangement")),
+    targetId: v.string(), // songId or arrangementId as string
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_type", ["userId", "targetType"])
+    .index("by_target", ["targetType", "targetId"])
+    .index("by_user_and_target", ["userId", "targetType", "targetId"]),
 });

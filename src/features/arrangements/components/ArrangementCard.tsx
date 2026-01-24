@@ -11,8 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Music, Clock, Guitar, Hash, PlayCircle, Users, Globe, MoreVertical, Copy, Trash2 } from 'lucide-react'
-import RatingDisplay from '../../shared/components/RatingDisplay'
-import PopularityDisplay from '../../shared/components/PopularityDisplay'
+import FavoriteButton from '../../shared/components/FavoriteButton'
 import { getCreatorDisplayName } from '../../shared/utils/userDisplay'
 import { DuplicateArrangementDialog } from './DuplicateArrangementDialog'
 import { DeleteArrangementDialog } from './DeleteArrangementDialog'
@@ -175,10 +174,14 @@ function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDe
             )}
           </div>
 
-          {/* Rating and Popularity */}
-          <div className="flex items-center justify-between py-2 px-1 bg-muted/30 rounded-md">
-            <RatingDisplay rating={arrangement.rating} />
-            <PopularityDisplay favorites={arrangement.favorites} />
+          {/* Favorites */}
+          <div className="flex items-center justify-center py-2 px-1 bg-muted/30 rounded-md">
+            <FavoriteButton
+              targetType="arrangement"
+              targetId={arrangement.id}
+              count={arrangement.favorites}
+              size="sm"
+            />
           </div>
 
           {/* Tags */}

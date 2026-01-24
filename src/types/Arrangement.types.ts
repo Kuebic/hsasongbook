@@ -24,7 +24,6 @@ export interface Arrangement {
   capo: number; // Capo position (0 = no capo)
   difficulty?: ArrangementDifficulty; // Skill level required
   tags: string[];
-  rating: number; // Average rating (0-5)
   favorites: number; // Popularity count
   chordProContent: string; // ChordPro formatted text
   createdAt: string;
@@ -57,7 +56,7 @@ export interface ArrangementMetadata {
 /**
  * Sort options for arrangements
  */
-export type SortOption = 'popular' | 'rating' | 'newest' | 'oldest';
+export type SortOption = 'popular' | 'newest' | 'oldest';
 
 /**
  * Creator info subset for display purposes
@@ -135,7 +134,6 @@ export interface ArrangementSummary {
   keys: string[];
   tempoMin: number | null;
   tempoMax: number | null;
-  avgRating: number;
   totalFavorites: number;
   difficulties: ArrangementDifficulty[];
 }

@@ -93,6 +93,15 @@ export default function FilterChips({
     });
   }
 
+  // Favorites filter chip
+  if (filters.showFavoritesOnly) {
+    chips.push({
+      key: 'favorites',
+      label: 'My Favorites',
+      onRemove: () => onRemoveFilter('showFavoritesOnly', false),
+    });
+  }
+
   if (chips.length === 0) return null;
 
   return (

@@ -4,6 +4,7 @@
  * Fetches songs with arrangement summary data for the browse page.
  */
 
+import { useMemo } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { mapConvexSongToFrontend } from '@/features/shared';
@@ -35,14 +36,33 @@ export function useSongsWithArrangementSummary({
     limit,
   });
 
-  const songs: SongWithSummary[] = (data ?? []).map((song) => ({
-    ...mapConvexSongToFrontend(song),
-    arrangementSummary: song.arrangementSummary,
-  }));
+  // Fetch user's favorite song IDs when favorites filter is active
+  const favoriteSongIds = useQuery(
+    api.favorites.getFavoriteIds,
+    filters.showFavoritesOnly ? { targetType: 'song' as const } : 'skip'
+  );
+
+  const songs: SongWithSummary[] = useMemo(() => {
+    const allSongs = (data ?? []).map((song) => ({
+      ...mapConvexSongToFrontend(song),
+      arrangementSummary: song.arrangementSummary,
+    }));
+
+    // Filter by favorites if enabled
+    if (filters.showFavoritesOnly && favoriteSongIds) {
+      const favoriteSet = new Set(favoriteSongIds);
+      return allSongs.filter((song) => favoriteSet.has(song.id));
+    }
+
+    return allSongs;
+  }, [data, filters.showFavoritesOnly, favoriteSongIds]);
+
+  const loading = data === undefined ||
+    (filters.showFavoritesOnly && favoriteSongIds === undefined);
 
   return {
     songs,
-    loading: data === undefined,
+    loading,
     totalCount: songs.length,
   };
 }

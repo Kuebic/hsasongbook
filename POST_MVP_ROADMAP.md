@@ -188,7 +188,7 @@ Only implement if planning App Store release or significant iOS user base.
 | ~~**N+1 query in SongList**~~ | ~~Add `arrangements.getCountsBySong` query~~ | ~~Low~~ | ✅ Done |
 | ~~**N+1 queries in groups.ts list()**~~ | ~~Batch membership & member count queries~~ | ~~Medium~~ | ✅ Done |
 | ~~**Full table scan for Community group**~~ | ~~Add `isSystemGroup` index, use `.first()`~~ | ~~Low~~ | ✅ Done |
-| **Browse queries fetch all data** | `listWithArrangementSummary` and `getPopular` in `convex/songs.ts` fetch all songs/arrangements into memory then filter. Add pagination, indexes, or denormalize arrangement counts. | High | |
+| ~~**Browse queries fetch all data**~~ | ~~`listWithArrangementSummary` and `getPopular` in `convex/songs.ts` fetch all songs/arrangements into memory then filter. Add pagination, indexes, or denormalize arrangement counts.~~ | ~~High~~ | ✅ Done |
 | **Duplicated type mappers** | Extract to `convex/mappers.ts` | Low | |
 | **Convex ID type casting** | Type IDs upstream to reduce casts | Medium | |
 | **No-op `reload()` functions** | Remove from hooks (Convex auto-syncs) | Low | |
@@ -243,8 +243,126 @@ These N+1 patterns exist but are less critical (Convex batches parallel `ctx.db.
 - **Possibly unused**: `chordsheetjs` dependency - verify if actually used
 
 ---
-# random notes to be added if not already
+
+## Future Ideas (To Be Fleshed Out)
+
+### Song Origin/Category Taxonomy
+
+Need a way to categorize songs by origin/tradition:
+- **Traditional Holy Songs** - The original 40, originally Korean, translated to English
+- **Pioneer Songs** - Traditional songs written by early pioneers, popular in US
+- **Repurposed Hymns** - Traditional hymns adapted for our use
+- **Contemporary Christian** - Modern CCM songs
+- **Original Songs** - New compositions by community members
+- **New Holy Songs** - Recently added to official holy song collection
+
+Questions to resolve:
+- Is this a single "origin" field or multiple tags?
+- Should this be curated/admin-controlled or user-contributed?
+- How does this interact with existing themes/tags?
+
+### Mashup Arrangements
+
+Arrangements that combine multiple songs should reference all parent songs and appear under each.
+
+- Arrangement links to multiple songs instead of just one
+- Shows up in arrangement lists for all referenced songs
+- UI for selecting multiple songs when creating arrangement
+- Very niche feature - low priority
+
+### Favorites vs Ratings - Do We Need Both?
+
+Current plan has both ratings and favorites. Reconsidering:
+
+- **Favorites (hearts)** already indicate popularity by count
+- **Ratings** add complexity - what are we actually measuring?
+- Simpler approach: Just use favorites/hearts, show count
+- Popular = most favorited
+
+Decision: Probably just favorites, not ratings. Simpler is better.
+
+### Media Attachments for Arrangements
+
+Allow arrangement creators to attach resources:
+- **YouTube video** - Link to a video demonstrating their arrangement
+- **Audio file** - Upload MP3 of how it sounds
+- **Lead sheet / sheet music** - PDF uploads for musicians
+
+This helps people understand how the arrangement is meant to be played.
+
+### Song-Level Demo/Reference Audio?
+
+Songs currently have: title, artist, copyright, lyrics.
+Arrangements have: key, tempo, genre, time signature, chords.
+
+**Question:** Should songs have a "demo" or reference recording?
+
+Considerations:
+- Helps people discover unfamiliar songs before looking at arrangements
+- Useful for original songs where there's no well-known recording
+- Could just link to a YouTube/Spotify reference
+- But... isn't that what arrangements are for? The arrangement with media attached serves this purpose
+- For well-known songs, people can just search YouTube themselves
+
+**For original songs specifically:**
+- The song creator's arrangement naturally becomes the "reference"
+- Their attached audio/video is the demo
+- No need for separate song-level media if arrangements handle it
+
+Tentative decision: Keep media at arrangement level only. Song page can highlight the original creator's arrangement for context.
+
+### Primary/Original Arrangement Treatment
+
+**Question:** Should "primary" or "original" arrangements get special treatment?
+
+Current thinking: **No special UI prominence in listings.**
+
+Reasoning:
+- Most users want the highest-rated or their favorited arrangements first
+- Being "original" doesn't mean it's the best for their use case
+- Someone might have a better key, simpler chords, etc.
+
+**Proposed approach:**
+- Default sort: most popular (by favorites count)
+- Let users filter/sort as they want
+- Small badge like "Original" or "Composer's Version" for context only
+- On song details page: "About this song" section showing who submitted it originally, linking to their arrangement (credit, not prominence)
+
+This gives credit without forcing the original to the top.
+
+---
+
+### Multi-Language Support (Deferred)
+
+**Scope:** Many songs have Korean origins with English translations. Some users may want Korean or Japanese lyrics.
+
+**What this would involve:**
+- Songs with Korean titles + English translations (display both? toggle?)
+- Lyrics in multiple languages per song (Korean original, English translation, Japanese)
+- Non-English text in tags and search
+- Language filter/toggle in UI
+- Font support for CJK characters
+- Search that works across languages
+
+**Complexity concerns:**
+- UI clutter: How to show dual titles without overwhelming the interface?
+- Data model: Separate lyrics fields per language? Or versioned lyrics with language attribute?
+- Search: Needs to handle romanization, hangul, kanji
+- Tags: Do we allow Korean tags? How does search/filter work?
+- Mobile: Screen real estate is already tight
+
+**Current decision: Defer until needed.**
+
+This adds significant complexity for a feature that may not have enough users to justify it yet. Revisit once:
+- There's an active Korean/Japanese-speaking user base
+- Users are actually requesting this feature
+- We have bandwidth to design it properly
+
+For now, users can add Korean titles in parentheses manually if needed, e.g., "Song of the Garden (동산의 노래)"
+
+---
+
+# Random Notes (To Be Added If Not Already)
 - Admin UI for featured songs management
 - Guitar vs Piano filter (needs instrument field or tag convention)
-- Language filter (Korean/Japanese support)
 - Scripture reference field and filter

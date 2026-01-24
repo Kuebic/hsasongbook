@@ -5,7 +5,6 @@
 
 export const SORT_OPTIONS = {
   POPULAR: 'popular',
-  RATING: 'rating',
   NEWEST: 'newest',
   OLDEST: 'oldest'
 } as const;

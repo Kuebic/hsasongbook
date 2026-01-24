@@ -473,7 +473,6 @@ export const listWithArrangementSummary = query({
     sortBy: v.optional(
       v.union(
         v.literal("popular"),
-        v.literal("rating"),
         v.literal("newest"),
         v.literal("oldest"),
         v.literal("alphabetical"),
@@ -560,11 +559,6 @@ export const listWithArrangementSummary = query({
       case "popular":
         songs.sort(
           (a, b) => (b.arrangementCount ?? 0) - (a.arrangementCount ?? 0)
-        );
-        break;
-      case "rating":
-        songs.sort(
-          (a, b) => (b.arrangementAvgRating ?? 0) - (a.arrangementAvgRating ?? 0)
         );
         break;
       case "newest":
