@@ -176,14 +176,14 @@ export const toggle = mutation({
     targetId: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuthenticatedUser(ctx);
+    const { userId } = await requireAuthenticatedUser(ctx);
 
     // Check if already favorited
     const existing = await ctx.db
       .query("userFavorites")
       .withIndex("by_user_and_target", (q) =>
         q
-          .eq("userId", user._id)
+          .eq("userId", userId)
           .eq("targetType", args.targetType)
           .eq("targetId", args.targetId)
       )
@@ -198,7 +198,7 @@ export const toggle = mutation({
     } else {
       // Add favorite
       await ctx.db.insert("userFavorites", {
-        userId: user._id,
+        userId,
         targetType: args.targetType,
         targetId: args.targetId,
         createdAt: Date.now(),

@@ -110,7 +110,14 @@ function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDe
             )}
           </CardTitle>
 
-          {/* Actions dropdown menu */}
+          {/* Favorite button and actions menu */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <FavoriteButton
+              targetType="arrangement"
+              targetId={arrangement.id}
+              count={arrangement.favorites}
+              size="sm"
+            />
           {isAuthenticated && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -143,6 +150,7 @@ function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDe
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+          </div>
         </div>
         {renderAttribution()}
         <CardDescription className="space-y-1 mt-2">
@@ -172,16 +180,6 @@ function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDe
                 {arrangement.timeSignature}
               </Badge>
             )}
-          </div>
-
-          {/* Favorites */}
-          <div className="flex items-center justify-center py-2 px-1 bg-muted/30 rounded-md">
-            <FavoriteButton
-              targetType="arrangement"
-              targetId={arrangement.id}
-              count={arrangement.favorites}
-              size="sm"
-            />
           </div>
 
           {/* Tags */}

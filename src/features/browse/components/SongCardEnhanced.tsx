@@ -31,8 +31,16 @@ export default function SongCardEnhanced({ song }: SongCardEnhancedProps) {
     <Link to={`/song/${song.slug}`}>
       <Card className="h-full transition-all hover:shadow-md hover:scale-[1.01] hover:-translate-y-0.5">
         <CardContent className="p-4">
-          {/* Title and Artist */}
-          <h3 className="font-semibold text-base line-clamp-1 mb-1">{song.title}</h3>
+          {/* Title and Favorite Button */}
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <h3 className="font-semibold text-base line-clamp-1 flex-1">{song.title}</h3>
+            <FavoriteButton
+              targetType="song"
+              targetId={song.id}
+              count={song.favorites || 0}
+              size="sm"
+            />
+          </div>
           {song.artist && (
             <p className="text-sm text-muted-foreground line-clamp-1 mb-2">{song.artist}</p>
           )}
@@ -60,16 +68,6 @@ export default function SongCardEnhanced({ song }: SongCardEnhancedProps) {
                 <span className="font-mono">{difficultyDisplay}</span>
               </>
             )}
-          </div>
-
-          {/* Favorite Button */}
-          <div className="flex items-center justify-between mb-3">
-            <FavoriteButton
-              targetType="song"
-              targetId={song.id}
-              count={song.favorites || 0}
-              size="sm"
-            />
           </div>
 
           {/* Theme Badges */}
