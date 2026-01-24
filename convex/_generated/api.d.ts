@@ -10,6 +10,7 @@
 
 import type * as arrangements from "../arrangements.js";
 import type * as auth from "../auth.js";
+import type * as crons from "../crons.js";
 import type * as files from "../files.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
@@ -29,6 +30,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   arrangements: typeof arrangements;
   auth: typeof auth;
+  crons: typeof crons;
   files: typeof files;
   groups: typeof groups;
   http: typeof http;

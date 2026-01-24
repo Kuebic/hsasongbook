@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { requireAuthenticatedUser } from "./permissions";
 
 // ============ QUERIES ============
@@ -215,5 +215,95 @@ export const updateShowRealName = mutation({
     await ctx.db.patch(userId, { showRealName: args.showRealName });
 
     return { success: true };
+  },
+});
+
+// ============ INTERNAL MUTATIONS ============
+
+/**
+ * Prune anonymous users older than 7 days
+ * Called by cron job weekly - cleans up auth tables for stale anonymous users
+ */
+export const pruneAnonymousUsers = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const cutoffTime = Date.now() - SEVEN_DAYS_MS;
+
+    // Find all anonymous users older than 7 days
+    const anonymousUsers = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("isAnonymous"), true))
+      .collect();
+
+    const staleUsers = anonymousUsers.filter(
+      (user) => user._creationTime < cutoffTime
+    );
+
+    let deletedCount = 0;
+
+    for (const user of staleUsers) {
+      // 1. Get all sessions for this user
+      const sessions = await ctx.db
+        .query("authSessions")
+        .withIndex("userId", (q) => q.eq("userId", user._id))
+        .collect();
+
+      // 2. Delete refresh tokens and verifiers for each session
+      for (const session of sessions) {
+        const refreshTokens = await ctx.db
+          .query("authRefreshTokens")
+          .withIndex("sessionId", (q) => q.eq("sessionId", session._id))
+          .collect();
+        for (const token of refreshTokens) {
+          await ctx.db.delete(token._id);
+        }
+
+        const verifiers = await ctx.db
+          .query("authVerifiers")
+          .withIndex("signature")
+          .filter((q) => q.eq(q.field("sessionId"), session._id))
+          .collect();
+        for (const verifier of verifiers) {
+          await ctx.db.delete(verifier._id);
+        }
+      }
+
+      // 3. Get all accounts for this user and delete verification codes
+      const accounts = await ctx.db
+        .query("authAccounts")
+        .withIndex("userIdAndProvider", (q) => q.eq("userId", user._id))
+        .collect();
+
+      for (const account of accounts) {
+        const verificationCodes = await ctx.db
+          .query("authVerificationCodes")
+          .withIndex("accountId", (q) => q.eq("accountId", account._id))
+          .collect();
+        for (const code of verificationCodes) {
+          await ctx.db.delete(code._id);
+        }
+      }
+
+      // 4. Delete sessions
+      for (const session of sessions) {
+        await ctx.db.delete(session._id);
+      }
+
+      // 5. Delete accounts
+      for (const account of accounts) {
+        await ctx.db.delete(account._id);
+      }
+
+      // 6. Delete the user
+      await ctx.db.delete(user._id);
+      deletedCount++;
+    }
+
+    console.log(
+      `Pruned ${deletedCount} anonymous users older than 7 days (${staleUsers.length} found)`
+    );
+
+    return { deletedCount };
   },
 });
