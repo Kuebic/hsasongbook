@@ -4,7 +4,6 @@ import { useArrangementData } from '../hooks/useArrangementData';
 import { useArrangementPermissions } from '../hooks/useArrangementPermissions';
 import { useArrangementCoAuthors } from '../hooks/useArrangementCoAuthors';
 import ChordProViewer, { type TranspositionState } from '@/features/chordpro';
-import ArrangementSwitcher from '../components/ArrangementSwitcher';
 import ArrangementHeader from '../components/ArrangementHeader';
 import ArrangementMetadataForm from '../components/ArrangementMetadataForm';
 import CollaboratorsDialog from '../components/CollaboratorsDialog';
@@ -42,7 +41,6 @@ export function ArrangementPage() {
   const {
     arrangement,
     song,
-    allArrangements,
     creator,
     owner,
     loading,
@@ -135,14 +133,6 @@ export function ArrangementPage() {
                   onDeleted={() => navigate(`/song/${song.slug}`)}
                 />
               )}
-
-              {/* Arrangement Switcher */}
-              <ArrangementSwitcher
-                currentArrangement={arrangement}
-                allArrangements={allArrangements}
-                songTitle={song.title}
-                songSlug={song.slug}
-              />
             </div>
           </div>
 
@@ -241,7 +231,7 @@ export function ArrangementPage() {
         />
 
         {/* Navigation Footer */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between no-print">
+        <div className="no-print">
           <Button
             variant="outline"
             onClick={() => navigate(`/song/${song.slug}`)}
@@ -249,25 +239,6 @@ export function ArrangementPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to {song.title}
           </Button>
-
-          {/* Quick arrangement navigation */}
-          {allArrangements.length > 1 && (
-            <div className="flex gap-2">
-              {allArrangements
-                .filter(arr => arr.id !== arrangement.id)
-                .slice(0, 2)
-                .map(arr => (
-                  <Button
-                    key={arr.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate(`/song/${song.slug}/${arr.slug}`)}
-                  >
-                    {arr.name} ({arr.key})
-                  </Button>
-                ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

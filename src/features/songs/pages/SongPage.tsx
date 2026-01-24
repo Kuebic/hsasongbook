@@ -15,6 +15,8 @@ import AddArrangementDialog from '@/features/arrangements/components/AddArrangem
 import { VersionHistoryPanel } from '@/features/versions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { ArrowLeft, Edit, Music, Plus, X } from 'lucide-react';
 import { SongOwnershipActions } from '../components/SongOwnershipActions';
 import type { Song } from '@/types/Song.types';
@@ -26,6 +28,7 @@ export function SongPage() {
   const { breadcrumbs } = useNavigation();
   const [addArrangementDialogOpen, setAddArrangementDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
   const { user } = useAuth();
   const isAuthenticated = user && !user.isAnonymous;
 
@@ -50,6 +53,12 @@ export function SongPage() {
   const convexArrangements = useQuery(
     api.arrangements.getBySongWithCreators,
     convexSong?._id ? { songId: convexSong._id } : 'skip'
+  );
+
+  // Get arrangement IDs where current user is a collaborator (for filtering)
+  const myCollaborationIds = useQuery(
+    api.arrangements.getMyCollaborationIds,
+    isAuthenticated ? {} : 'skip'
   );
 
   // Map Convex song to frontend Song type
@@ -92,6 +101,24 @@ export function SongPage() {
       owner: arr.owner,
     }));
   }, [convexArrangements]);
+
+  // Filter arrangements to "mine" (created by me OR I'm a collaborator)
+  const filteredArrangements = useMemo(() => {
+    if (!showOnlyMine || !user?.id) return arrangements;
+
+    // Convert Convex IDs to strings for comparison
+    const myCollabIdStrings = new Set(
+      (myCollaborationIds ?? []).map((id) => id.toString())
+    );
+
+    return arrangements.filter((arr) => {
+      // Check if I created it
+      const isCreator = arr.creator?._id === user.id;
+      // Check if I'm a collaborator (compare as strings)
+      const isCollaborator = myCollabIdStrings.has(arr.id.toString());
+      return isCreator || isCollaborator;
+    });
+  }, [arrangements, showOnlyMine, user?.id, myCollaborationIds]);
 
   // Loading states
   const isLoadingSong = songSlug !== undefined && convexSong === undefined;
@@ -206,10 +233,28 @@ export function SongPage() {
 
           {/* Arrangements Section */}
           <div className="mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold">
-                Available Arrangements ({arrangements.length})
-              </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-semibold">
+                  Available Arrangements ({filteredArrangements.length})
+                </h2>
+                {/* Filter toggle - only for authenticated users with arrangements */}
+                {isAuthenticated && arrangements.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="show-only-mine"
+                      checked={showOnlyMine}
+                      onCheckedChange={setShowOnlyMine}
+                    />
+                    <Label
+                      htmlFor="show-only-mine"
+                      className="text-sm text-muted-foreground cursor-pointer whitespace-nowrap"
+                    >
+                      Only mine
+                    </Label>
+                  </div>
+                )}
+              </div>
               {/* Add Arrangement button or Sign in prompt */}
               {isAuthenticated ? (
                 <Button onClick={() => setAddArrangementDialogOpen(true)}>
@@ -236,11 +281,28 @@ export function SongPage() {
               songLyrics={convexSong?.lyrics}
             />
 
-            {arrangements.length > 0 ? (
+            {filteredArrangements.length > 0 ? (
               <ArrangementList
-                arrangements={arrangements}
+                arrangements={filteredArrangements}
                 songSlug={song.slug}
               />
+            ) : arrangements.length > 0 && showOnlyMine ? (
+              // Show message when filter is active but no matches
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Music className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    No arrangements match your filter
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => setShowOnlyMine(false)}
+                  >
+                    Show all arrangements
+                  </Button>
+                </CardContent>
+              </Card>
             ) : (
               <Card>
                 <CardContent className="py-12 text-center">

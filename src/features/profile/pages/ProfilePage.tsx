@@ -8,7 +8,7 @@
  * - Avatar display
  * - Username and display name
  * - Member since date
- * - User's public arrangements (future)
+ * - User's arrangements (created + collaborating on)
  *
  * For editing profile settings, see Settings > Account section.
  */
@@ -27,6 +27,7 @@ import Breadcrumbs from '../../shared/components/Breadcrumbs';
 import { Settings, Users } from 'lucide-react';
 import { useAuthState } from '@/features/auth/hooks/useAuth';
 import SignInModal from '@/features/auth/components/SignInModal';
+import { MyArrangementsList } from '../components/MyArrangementsList';
 import UserAvatar from '@/components/UserAvatar';
 import { formatDateString } from '../../shared/utils/dateFormatter';
 import type { Id } from '../../../../convex/_generated/dataModel';
@@ -67,7 +68,7 @@ export function ProfilePage() {
   return (
     <SimplePageTransition>
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Breadcrumbs */}
           <div className="mb-6">
             <Breadcrumbs items={breadcrumbs} />
@@ -174,12 +175,18 @@ export function ProfilePage() {
                       </Button>
                     </Link>
                   </div>
-
-                  {/* Future: User's public arrangements will go here */}
                 </>
               )}
             </CardContent>
           </Card>
+
+          {/* My Arrangements Section - only for authenticated users */}
+          {!isAnonymous && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">My Arrangements</h2>
+              <MyArrangementsList />
+            </div>
+          )}
         </div>
       </div>
 

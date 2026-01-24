@@ -213,6 +213,85 @@ export const getCountsBySong = query({
 });
 
 /**
+ * Get arrangement IDs where the current user is a collaborator
+ * Used for filtering "my arrangements" on song pages
+ * Access: Authenticated users only
+ */
+export const getMyCollaborationIds = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const collaborations = await ctx.db
+      .query("arrangementCollaborators")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    return collaborations.map((c) => c.arrangementId);
+  },
+});
+
+/**
+ * Get all arrangements where current user is creator OR collaborator
+ * Used for the "My Arrangements" section on the profile page
+ * Access: Authenticated users only
+ */
+export const getMyArrangements = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    // 1. Get arrangements I created
+    const createdArrangements = await ctx.db
+      .query("arrangements")
+      .withIndex("by_createdBy", (q) => q.eq("createdBy", userId))
+      .collect();
+
+    // 2. Get arrangements I'm a collaborator on
+    const collaborations = await ctx.db
+      .query("arrangementCollaborators")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    const collaboratorArrangements = await Promise.all(
+      collaborations.map((c) => ctx.db.get(c.arrangementId))
+    );
+
+    // 3. Merge and deduplicate
+    const allArrangements = [
+      ...createdArrangements,
+      ...collaboratorArrangements.filter(
+        (arr): arr is NonNullable<typeof arr> => arr !== null
+      ),
+    ];
+
+    const uniqueArrangements = Array.from(
+      new Map(allArrangements.map((arr) => [arr._id.toString(), arr])).values()
+    );
+
+    // 4. Join with song data
+    return Promise.all(
+      uniqueArrangements.map(async (arr) => {
+        const song = await ctx.db.get(arr.songId);
+        return {
+          ...arr,
+          song: song
+            ? {
+                _id: song._id,
+                slug: song.slug,
+                title: song.title,
+                artist: song.artist,
+              }
+            : null,
+        };
+      })
+    );
+  },
+});
+
+/**
  * Get featured arrangements WITH song data and creator info (joined)
  * This is what the frontend FeaturedArrangements widget needs
  * Access: Everyone

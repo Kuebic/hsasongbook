@@ -53,19 +53,18 @@ Features users will expect that aren't blocking MVP.
 
 ### Navigation & Discovery
 
-| Feature | Description | Effort |
-|---------|-------------|--------|
-| **Browse songs on homepage** | Currently only arrangements; need song browsing with filters | Medium |
-| **Back to arrangement from editor** | Direct link instead of going through song page | Low |
-| **Remove arrangement switcher** | Bottom-right corner switcher is useless | Low |
-| **Filter by "my arrangements"** | On song page, filter to show only your arrangements | Low |
+| Feature | Description | Effort | Status |
+|---------|-------------|--------|--------|
+| **Browse songs on homepage** | Currently only arrangements; need song browsing with filters | Medium | |
+| ~~**Remove arrangement switcher**~~ | ~~Top-right dropdown and bottom quick-nav buttons removed~~ | ~~Low~~ | ✅ Done |
+| ~~**Filter by "my arrangements"**~~ | ~~On song page, "Only mine" toggle filters to your arrangements~~ | ~~Low~~ | ✅ Done |
+| ~~**"My Arrangements" on profile**~~ | ~~Profile page now shows arrangements you created or collaborate on~~ | ~~Low~~ | ✅ Done |
 
 ### Collaborator Awareness
 
-| Feature | Description | Effort |
-|---------|-------------|--------|
-| **Collaborator notifications** | Users have no way of knowing when added as collaborator | Medium |
-| **"My collaborations" view** | Show all arrangements user can edit (not just created) | Medium |
+| Feature | Description | Effort | Status |
+|---------|-------------|--------|--------|
+| **Collaborator notifications** | Users have no way of knowing when added as collaborator | Medium | |
 
 ---
 
@@ -212,6 +211,7 @@ Only implement if planning App Store release or significant iOS user base.
 
 | Date | Change |
 |------|--------|
+| 2026-01-24 | Removed arrangement switchers (dropdown + bottom nav); added "Only mine" filter on song pages; added "My Arrangements" section to profile page |
 | 2026-01-24 | Added arrangement management features: inline name editing, delete (with setlist warning), duplicate |
 | 2026-01-23 | Fixed duplicate "Available Arrangements" header - removed from ArrangementList since SongPage already provides section header |
 | 2026-01-23 | Fixed avatar not loading - SongMetadata now uses UserAvatar component; also fixed username @ prefix consistency (songs now show @username like arrangements) |
