@@ -33,7 +33,9 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}'],
           // Only use navigateFallback in production - in dev it interferes with Convex
           ...(isDev ? {} : {
-            navigateFallback: '/offline.html',
+            // For SPA: fall back to index.html for client-side routes
+            // The app handles offline state via useOnlineStatus hook
+            navigateFallback: '/index.html',
             // Don't intercept these routes with service worker
             navigateFallbackDenylist: [
               /^\/api/,  // API routes

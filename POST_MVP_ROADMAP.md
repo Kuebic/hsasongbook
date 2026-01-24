@@ -22,9 +22,19 @@ Issues significantly impacting user experience.
 
 **Problem**: Sign-in form stays on "Authenticating..." requiring page refresh.
 
-**Workaround**: `location.reload()` after sign-in (community-recommended).
+**Workaround**: `window.location.href = '/'` after sign-in (navigates instead of reload to avoid service worker issues).
 
 **References**: [GitHub #259](https://github.com/get-convex/convex-backend/issues/259), [GitHub #92](https://github.com/get-convex/convex-auth/issues/92)
+
+### PWA SPA Route Refresh Issue (Fixed)
+
+**Problem**: Refreshing on sub-routes (`/profile`, `/groups`, etc.) showed "you're offline" page in production.
+
+**Root Cause**: Service worker `navigateFallback` was set to `/offline.html`. For SPAs, client-side routes aren't cached individually—they need to fall back to `index.html` so React Router can handle routing.
+
+**Fix**: Changed `navigateFallback: '/offline.html'` → `navigateFallback: '/index.html'` in `vite.config.ts`. The app handles offline state via `useOnlineStatus` hook instead.
+
+**References**: [vite-pwa docs](https://vite-pwa-org.netlify.app/guide/development), [GitHub #653](https://github.com/vite-pwa/vite-plugin-pwa/issues/653)
 
 ---
 
