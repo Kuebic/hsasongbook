@@ -292,6 +292,7 @@ export default function ChordProViewer({
                 'chord-sheet-output',
                 'font-mono',
                 'space-y-2',
+                'p-4',
                 !showChords && 'hide-chords'
               )}
               dangerouslySetInnerHTML={{ __html: htmlOutput }}
