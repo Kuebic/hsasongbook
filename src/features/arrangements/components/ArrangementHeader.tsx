@@ -22,10 +22,13 @@ export default function ArrangementHeader({ arrangement, songTitle, artist, crea
     if (isCommunityGroup) {
       // Community group - show special badge
       return (
-        <span className="inline-flex items-center gap-1 text-primary font-medium">
-          <Globe className="h-4 w-4" />
-          Community (Crowdsourced)
-        </span>
+        <>
+          {' · '}
+          <span className="inline-flex items-center gap-1 text-primary font-medium">
+            <Globe className="h-4 w-4" />
+            Community (Crowdsourced)
+          </span>
+        </>
       );
     }
 

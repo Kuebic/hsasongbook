@@ -89,6 +89,7 @@ export function SongPage() {
         ? new Date(arr.updatedAt).toISOString()
         : new Date(arr._creationTime).toISOString(),
       creator: arr.creator ?? null,
+      owner: arr.owner,
     }));
   }, [convexArrangements]);
 

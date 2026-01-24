@@ -109,7 +109,7 @@ export const getBySong = query({
 });
 
 /**
- * Get all arrangements for a song WITH creator info
+ * Get all arrangements for a song WITH creator info and owner info
  * Access: Everyone
  */
 export const getBySongWithCreators = query({
@@ -120,13 +120,15 @@ export const getBySongWithCreators = query({
       .withIndex("by_song", (q) => q.eq("songId", args.songId))
       .collect();
 
-    // Join with user data
+    // Join with user data and owner info
     return Promise.all(
       arrangements.map(async (arr) => {
         const creator = arr.createdBy ? await ctx.db.get(arr.createdBy) : null;
+        const owner = await getContentOwnerInfo(ctx, arr);
         return {
           ...arr,
           creator: formatUserInfo(creator),
+          owner,
         };
       })
     );

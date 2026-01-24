@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Music, Clock, Guitar, Hash, PlayCircle, Users } from 'lucide-react'
+import { Music, Clock, Guitar, Hash, PlayCircle, Users, Globe } from 'lucide-react'
 import RatingDisplay from '../../shared/components/RatingDisplay'
 import PopularityDisplay from '../../shared/components/PopularityDisplay'
 import { getCreatorDisplayName } from '../../shared/utils/userDisplay'
@@ -26,6 +26,7 @@ function ArrangementCard({ arrangement, songSlug }: ArrangementCardProps) {
 
   // Determine owner display (Phase 2: Groups)
   const isGroupOwned = arrangement.owner?.type === 'group';
+  const isCommunityGroup = isGroupOwned && arrangement.owner?.isSystemGroup === true;
   const ownerName = arrangement.owner?.name;
   const ownerSlug = arrangement.owner?.slug;
 
@@ -39,6 +40,16 @@ function ArrangementCard({ arrangement, songSlug }: ArrangementCardProps) {
 
   // Render the "by" attribution
   const renderAttribution = () => {
+    // Community group - show special badge (no link)
+    if (isCommunityGroup) {
+      return (
+        <span className="text-sm text-primary font-medium mt-1 inline-flex items-center gap-1">
+          <Globe className="h-3 w-3" />
+          Community (Crowdsourced)
+        </span>
+      );
+    }
+
     // If group-owned, show group name
     if (isGroupOwned && ownerName) {
       return (

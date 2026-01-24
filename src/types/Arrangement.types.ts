@@ -113,4 +113,5 @@ export interface ArrangementWithSong extends Arrangement {
  */
 export interface ArrangementWithSongAndCreator extends ArrangementWithSong {
   creator: CreatorInfo | null;
+  owner?: OwnerInfo; // Phase 2: Optional owner info (defaults to creator)
 }
