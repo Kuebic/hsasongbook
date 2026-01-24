@@ -73,11 +73,8 @@ export default function ArrangementList({ arrangements, songSlug, isLoading = fa
 
   return (
     <div>
-      {/* Sort controls - mobile responsive */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <h3 className="text-lg font-medium">
-          Available Arrangements ({arrangements.length})
-        </h3>
+      {/* Sort controls */}
+      <div className="flex justify-end mb-4">
         <SortSelector value={sortBy} onChange={setSortBy} />
       </div>
 
