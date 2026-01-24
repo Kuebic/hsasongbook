@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Music, Clock, Guitar, Hash, PlayCircle, Users, Globe, MoreVertical, Copy, Trash2 } from 'lucide-react'
+import { Music, Clock, Guitar, Hash, Users, Globe, MoreVertical, Copy, Trash2 } from 'lucide-react'
 import FavoriteButton from '../../shared/components/FavoriteButton'
 import { getCreatorDisplayName } from '../../shared/utils/userDisplay'
 import { DuplicateArrangementDialog } from './DuplicateArrangementDialog'
@@ -95,7 +95,10 @@ function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDe
 
   return (
     <>
-    <Card className="h-full flex flex-col hover:shadow-lg transition-all duration-200 hover:scale-[1.01] hover:-translate-y-1 group">
+    <Card
+      className="h-full flex flex-col hover:shadow-lg transition-all duration-200 hover:scale-[1.01] hover:-translate-y-1 cursor-pointer"
+      onClick={handleViewArrangement}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg line-clamp-2 font-semibold flex-1">
@@ -170,7 +173,7 @@ function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDe
       <CardContent className="flex-1 flex flex-col justify-between pt-0">
         <div className="space-y-3">
           {/* Musical properties */}
-          <div className="flex flex-wrap gap-2 pb-3 border-b border-border/40">
+          <div className="flex flex-wrap gap-2">
             <Badge variant="secondary" className="text-xs font-medium">
               <Clock className="h-3 w-3 mr-1" />
               {arrangement.tempo} BPM
@@ -184,7 +187,7 @@ function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDe
 
           {/* Tags */}
           {arrangement.tags && arrangement.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 pt-2">
+            <div className="flex flex-wrap gap-1">
               {arrangement.tags.map((tag, index) => (
                 <Badge
                   key={index}
@@ -199,16 +202,6 @@ function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDe
           )}
         </div>
 
-        {/* Action button */}
-        <Button
-          onClick={handleViewArrangement}
-          className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-          size="sm"
-          variant="outline"
-        >
-          <PlayCircle className="mr-2 h-4 w-4" />
-          View Arrangement
-        </Button>
       </CardContent>
     </Card>
 
