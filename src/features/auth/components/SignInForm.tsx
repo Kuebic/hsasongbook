@@ -70,7 +70,8 @@ export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
       // Workaround for Convex Auth state race condition:
       // useConvexAuth() doesn't update reliably after signIn resolves.
       // See POST_MVP_ROADMAP.md "Convex Auth Sign-in State Race Condition"
-      location.reload();
+      // Navigate to home instead of reload to avoid service worker offline fallback on mobile
+      window.location.href = '/';
     } catch (error) {
       setSubmitError(extractErrorMessage(error));
       setIsSubmitting(false);

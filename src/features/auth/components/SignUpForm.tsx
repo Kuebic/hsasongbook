@@ -126,8 +126,9 @@ export default function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
       // Workaround for Convex Auth state race condition:
       // useConvexAuth() doesn't update reliably after signUp resolves.
       // See POST_MVP_ROADMAP.md "Convex Auth Sign-in State Race Condition"
-      // The username will be set by AuthProvider after reload
-      location.reload();
+      // Navigate to home instead of reload to avoid service worker offline fallback on mobile
+      // The username will be set by AuthProvider after navigation
+      window.location.href = '/';
     } catch (error) {
       // Clear pending username on error
       localStorage.removeItem('pendingUsername');
