@@ -72,6 +72,10 @@ export interface OwnerInfo {
   slug?: string;
   avatarKey?: string;
   isSystemGroup?: boolean;
+  // User display fields (only present for type: 'user')
+  username?: string;
+  displayName?: string;
+  showRealName?: boolean;
 }
 
 /**

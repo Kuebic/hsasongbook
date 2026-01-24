@@ -385,6 +385,10 @@ export async function getContentOwnerInfo(
   slug?: string;
   avatarKey?: string;
   isSystemGroup?: boolean;
+  // User display fields (only present for type: 'user')
+  username?: string;
+  displayName?: string;
+  showRealName?: boolean;
 }> {
   if (content.ownerType === "group" && content.ownerId) {
     const group = await ctx.db.get(content.ownerId as Id<"groups">);
@@ -403,16 +407,20 @@ export async function getContentOwnerInfo(
   // Default to user ownership
   const user = await ctx.db.get(content.createdBy);
   if (user) {
-    const displayName =
+    const formattedName =
       user.showRealName && user.displayName
         ? user.displayName
         : user.username ?? "Unknown";
     return {
       type: "user",
       id: user._id.toString(),
-      name: displayName,
+      name: formattedName,
       slug: user.username,
       avatarKey: user.avatarKey,
+      // Raw user fields for frontend display formatting
+      username: user.username,
+      displayName: user.displayName,
+      showRealName: user.showRealName,
     };
   }
 

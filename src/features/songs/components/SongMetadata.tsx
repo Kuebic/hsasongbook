@@ -2,6 +2,9 @@ import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { User, Hash, Music2, Copyright, Users, Globe } from 'lucide-react';
+import UserAvatar from '@/components/UserAvatar';
+import { getDisplayName } from '../../shared/utils/userDisplay';
+import { Id } from '../../../../convex/_generated/dataModel';
 import type { Song, OwnerInfo } from '@/types';
 
 interface SongMetadataProps {
@@ -47,8 +50,12 @@ export default function SongMetadata({ song, owner }: SongMetadataProps) {
         to={`/user/${owner.slug}`}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors mt-2"
       >
-        <User className="h-3 w-3" />
-        Added by {owner.name}
+        <UserAvatar
+          userId={owner.id as Id<'users'>}
+          displayName={owner.displayName}
+          size="sm"
+        />
+        Added by {getDisplayName(owner)}
       </Link>
     );
   };
