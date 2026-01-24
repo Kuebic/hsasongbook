@@ -14,6 +14,7 @@ export type {
   ArrangementWithCreator,
   ArrangementWithSongAndCreator,
   CreatorInfo,
+  OwnerInfo,
   SortOption,
 } from './Arrangement.types';
 export type { Setlist, SetlistSong } from './Setlist.types';

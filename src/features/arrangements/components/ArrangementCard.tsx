@@ -1,21 +1,35 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Music, Clock, Guitar, Hash, PlayCircle, Users, Globe } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Music, Clock, Guitar, Hash, PlayCircle, Users, Globe, MoreVertical, Copy, Trash2 } from 'lucide-react'
 import RatingDisplay from '../../shared/components/RatingDisplay'
 import PopularityDisplay from '../../shared/components/PopularityDisplay'
 import { getCreatorDisplayName } from '../../shared/utils/userDisplay'
+import { DuplicateArrangementDialog } from './DuplicateArrangementDialog'
+import { DeleteArrangementDialog } from './DeleteArrangementDialog'
 import type { ArrangementWithCreator, ArrangementWithSongAndCreator } from '@/types'
 
 interface ArrangementCardProps {
   arrangement: ArrangementWithCreator | ArrangementWithSongAndCreator;
   songSlug?: string; // Optional - can be inferred from arrangement.song if available
+  isOwner?: boolean; // Whether current user owns this arrangement
+  isAuthenticated?: boolean; // Whether user is logged in (non-anonymous)
+  onDeleted?: () => void; // Called after successful deletion
 }
 
-function ArrangementCard({ arrangement, songSlug }: ArrangementCardProps) {
+function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDeleted }: ArrangementCardProps) {
   const navigate = useNavigate()
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   // Type guard: Check if arrangement includes embedded song data
   const hasEmbeddedSong = 'song' in arrangement;
@@ -81,19 +95,56 @@ function ArrangementCard({ arrangement, songSlug }: ArrangementCardProps) {
   };
 
   return (
+    <>
     <Card className="h-full flex flex-col hover:shadow-lg transition-all duration-200 hover:scale-[1.01] hover:-translate-y-1 group">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg line-clamp-2 font-semibold">
-          {resolvedSongTitle ? (
-            <>
-              <span className="text-muted-foreground">{resolvedSongTitle}</span>
-              <span className="mx-2 text-muted-foreground/60">—</span>
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="text-lg line-clamp-2 font-semibold flex-1">
+            {resolvedSongTitle ? (
+              <>
+                <span className="text-muted-foreground">{resolvedSongTitle}</span>
+                <span className="mx-2 text-muted-foreground/60">—</span>
+                <span>{arrangement.name}</span>
+              </>
+            ) : (
               <span>{arrangement.name}</span>
-            </>
-          ) : (
-            <span>{arrangement.name}</span>
+            )}
+          </CardTitle>
+
+          {/* Actions dropdown menu */}
+          {isAuthenticated && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 flex-shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setShowDuplicateDialog(true)}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate
+                </DropdownMenuItem>
+                {isOwner && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setShowDeleteDialog(true)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-        </CardTitle>
+        </div>
         {renderAttribution()}
         <CardDescription className="space-y-1 mt-2">
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -159,6 +210,32 @@ function ArrangementCard({ arrangement, songSlug }: ArrangementCardProps) {
         </Button>
       </CardContent>
     </Card>
+
+    {/* Dialogs rendered outside the card */}
+    {resolvedSongSlug && (
+      <>
+        <DuplicateArrangementDialog
+          sourceArrangement={{
+            id: arrangement.id,
+            name: arrangement.name,
+          }}
+          songSlug={resolvedSongSlug}
+          open={showDuplicateDialog}
+          onOpenChange={setShowDuplicateDialog}
+          showTrigger={false}
+        />
+        <DeleteArrangementDialog
+          arrangementId={arrangement.id}
+          arrangementName={arrangement.name}
+          isOwner={!!isOwner}
+          onDeleted={onDeleted}
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          showTrigger={false}
+        />
+      </>
+    )}
+    </>
   )
 }
 

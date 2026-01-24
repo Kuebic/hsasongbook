@@ -5,16 +5,21 @@ import { sortArrangements, SORT_OPTIONS } from '../utils/arrangementSorter'
 import { Card, CardContent } from '@/components/ui/card'
 import { Music2 } from 'lucide-react'
 import logger from '@/lib/logger'
+import { useAuth } from '@/features/auth'
 import type { Arrangement, ArrangementWithCreator, SortOption } from '@/types'
 
 interface ArrangementListProps {
   arrangements: (Arrangement | ArrangementWithCreator)[];
   songSlug: string;
   isLoading?: boolean;
+  onArrangementDeleted?: () => void;
 }
 
-export default function ArrangementList({ arrangements, songSlug, isLoading = false }: ArrangementListProps) {
+export default function ArrangementList({ arrangements, songSlug, isLoading = false, onArrangementDeleted }: ArrangementListProps) {
   const [sortBy, setSortBy] = useState<SortOption>(SORT_OPTIONS.POPULAR)
+  const { user } = useAuth()
+  const isAuthenticated = user && !user.isAnonymous
+  const currentUserId = user?.id
 
   // Memoize sorted arrangements to prevent unnecessary re-sorting
   const sortedArrangements = useMemo(() => {
@@ -80,13 +85,22 @@ export default function ArrangementList({ arrangements, songSlug, isLoading = fa
 
       {/* Arrangement grid - responsive */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {sortedArrangements.map((arrangement) => (
-          <ArrangementCard
-            key={arrangement.id}
-            arrangement={arrangement}
-            songSlug={songSlug}
-          />
-        ))}
+        {sortedArrangements.map((arrangement) => {
+          // Check if current user is the owner (creator) of this arrangement
+          const creatorId = 'creator' in arrangement ? arrangement.creator?._id : arrangement.userId;
+          const isOwner = !!currentUserId && creatorId === currentUserId;
+
+          return (
+            <ArrangementCard
+              key={arrangement.id}
+              arrangement={arrangement}
+              songSlug={songSlug}
+              isOwner={isOwner}
+              isAuthenticated={!!isAuthenticated}
+              onDeleted={onArrangementDeleted}
+            />
+          );
+        })}
       </div>
     </div>
   )

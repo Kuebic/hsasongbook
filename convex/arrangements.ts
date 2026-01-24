@@ -3,6 +3,7 @@ import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
+import { nanoid } from "nanoid";
 import {
   canEditArrangement,
   filterUndefined,
@@ -762,5 +763,145 @@ export const reclaimFromCommunity = mutation({
     });
 
     return { success: true };
+  },
+});
+
+// ============ SETLIST USAGE QUERY ============
+
+/**
+ * Get setlists that contain a specific arrangement
+ * Used to warn users before deleting an arrangement
+ * Access: Everyone (for display purposes)
+ */
+export const getSetlistUsage = query({
+  args: { arrangementId: v.id("arrangements") },
+  handler: async (ctx, args) => {
+    const setlists = await ctx.db.query("setlists").collect();
+    return setlists
+      .filter((s) => s.arrangementIds.includes(args.arrangementId))
+      .map((s) => ({ _id: s._id, name: s.name, userId: s.userId }));
+  },
+});
+
+// ============ DELETE MUTATION ============
+
+/**
+ * Delete an arrangement
+ * Access: Owner only
+ *
+ * Cleans up related data:
+ * - Collaborators
+ * - Co-authors
+ * - Version history
+ *
+ * Note: Setlists referencing this arrangement will have null entries.
+ * This is handled gracefully in setlist queries.
+ */
+export const remove = mutation({
+  args: { id: v.id("arrangements") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const arrangement = await ctx.db.get(args.id);
+    if (!arrangement) {
+      throw new Error("Arrangement not found");
+    }
+
+    // Only owner can delete
+    const ownerCheck = await isArrangementOwner(ctx, args.id, userId);
+    if (!ownerCheck) {
+      throw new Error("Only the owner can delete this arrangement");
+    }
+
+    // 1. Delete collaborators
+    const collaborators = await ctx.db
+      .query("arrangementCollaborators")
+      .withIndex("by_arrangement", (q) => q.eq("arrangementId", args.id))
+      .collect();
+    for (const collab of collaborators) {
+      await ctx.db.delete(collab._id);
+    }
+
+    // 2. Delete co-authors
+    const authors = await ctx.db
+      .query("arrangementAuthors")
+      .withIndex("by_arrangement", (q) => q.eq("arrangementId", args.id))
+      .collect();
+    for (const author of authors) {
+      await ctx.db.delete(author._id);
+    }
+
+    // 3. Delete version history
+    const versions = await ctx.db
+      .query("contentVersions")
+      .withIndex("by_content", (q) =>
+        q.eq("contentType", "arrangement").eq("contentId", args.id.toString())
+      )
+      .collect();
+    for (const version of versions) {
+      await ctx.db.delete(version._id);
+    }
+
+    // 4. Delete the arrangement itself
+    await ctx.db.delete(args.id);
+
+    return { success: true };
+  },
+});
+
+// ============ DUPLICATE MUTATION ============
+
+/**
+ * Duplicate an arrangement
+ * Access: Authenticated users only (not anonymous)
+ *
+ * Creates a copy of an arrangement with the duplicator as the new owner.
+ * Copies: name, key, tempo, capo, timeSignature, chordProContent, tags
+ * Does NOT copy: collaborators, co-authors, rating, favorites, ownership
+ */
+export const duplicate = mutation({
+  args: {
+    sourceArrangementId: v.id("arrangements"),
+    newName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(ctx);
+
+    // Get source arrangement
+    const source = await ctx.db.get(args.sourceArrangementId);
+    if (!source) {
+      throw new Error("Arrangement not found");
+    }
+
+    // Generate new slug
+    const slug = nanoid(6);
+
+    // Verify slug uniqueness (should always be unique with nanoid, but check anyway)
+    const existing = await ctx.db
+      .query("arrangements")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .unique();
+    if (existing) {
+      throw new Error("Slug collision, please try again");
+    }
+
+    // Create duplicate - copy content fields, reset social/ownership fields
+    const newArrangementId = await ctx.db.insert("arrangements", {
+      songId: source.songId,
+      name: args.newName,
+      key: source.key,
+      tempo: source.tempo,
+      capo: source.capo,
+      timeSignature: source.timeSignature,
+      chordProContent: source.chordProContent,
+      tags: source.tags,
+      slug,
+      createdBy: userId,
+      rating: 0,
+      favorites: 0,
+      // ownerType and ownerId are undefined (user ownership by default)
+    });
+
+    return { arrangementId: newArrangementId, slug };
   },
 });

@@ -11,7 +11,8 @@ import ArrangementHeader from '../components/ArrangementHeader';
 import ArrangementMetadataForm from '../components/ArrangementMetadataForm';
 import CollaboratorsDialog from '../components/CollaboratorsDialog';
 import CoAuthorsList from '../components/CoAuthorsList';
-import { ArrangementOwnershipActions } from '../components/ArrangementOwnershipActions';
+import { ArrangementActionsMenu } from '../components/ArrangementActionsMenu';
+import { useAuth } from '@/features/auth';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
 import { PageSpinner } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
@@ -20,7 +21,7 @@ import { VersionHistoryPanel } from '@/features/versions';
 import { Button } from '@/components/ui/button';
 import logger from '@/lib/logger';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Music, Printer, Users } from 'lucide-react';
+import { ArrowLeft, Music, Printer } from 'lucide-react';
 import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSanitizer';
 import type { ArrangementMetadata } from '@/types/Arrangement.types';
 
@@ -28,6 +29,8 @@ export function ArrangementPage() {
   const navigate = useNavigate();
   const { arrangementSlug } = useParams();
   const { breadcrumbs } = useNavigation();
+  const { user } = useAuth();
+  const isAuthenticated = user && !user.isAnonymous;
   const [isEditMode, setIsEditMode] = useState(false);
   const [showCollaboratorsDialog, setShowCollaboratorsDialog] = useState(false);
   const [showChords, setShowChords] = useState(true);
@@ -126,25 +129,6 @@ export function ArrangementPage() {
             <Breadcrumbs items={breadcrumbs} />
 
             <div className="flex gap-2 items-center">
-              {/* Ownership transfer/reclaim (only for original creator) */}
-              <ArrangementOwnershipActions
-                arrangementId={arrangement?.id ?? ''}
-                isOwner={isOriginalCreator}
-                isCommunityOwned={isCommunityOwned}
-              />
-
-              {/* Collaborators Button (owner only) */}
-              {isOwner && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowCollaboratorsDialog(true)}
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Collaborators
-                </Button>
-              )}
-
               {/* Print Button */}
               <Button
                 variant="outline"
@@ -154,6 +138,20 @@ export function ArrangementPage() {
                 <Printer className="h-4 w-4 mr-2" />
                 Print
               </Button>
+
+              {/* Actions Menu (Duplicate, Collaborators, Transfer, Delete) */}
+              {arrangement && song && (
+                <ArrangementActionsMenu
+                  arrangement={arrangement}
+                  songSlug={song.slug}
+                  isOwner={isOwner}
+                  isOriginalCreator={isOriginalCreator}
+                  isCommunityOwned={isCommunityOwned}
+                  isAuthenticated={!!isAuthenticated}
+                  onShowCollaborators={() => setShowCollaboratorsDialog(true)}
+                  onDeleted={() => navigate(`/song/${song.slug}`)}
+                />
+              )}
 
               {/* Arrangement Switcher */}
               <ArrangementSwitcher
@@ -175,6 +173,10 @@ export function ArrangementPage() {
             owner={owner}
             transposedKey={transposition?.currentKey}
             transpositionOffset={transposition?.transpositionOffset}
+            isOwner={isOwner}
+            onNameChange={async (newName: string) => {
+              await updateArrangement({ name: newName });
+            }}
           />
         </div>
 
