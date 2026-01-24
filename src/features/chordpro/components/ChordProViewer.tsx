@@ -17,10 +17,14 @@ import { Edit3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import logger from '@/lib/logger'
 import { ArrangementMetadata } from '@/types/Arrangement.types'
+import type { TranspositionState } from '../types'
 
 // Import CSS styles
 import '../styles/chordpro.css'
 import '../styles/print.css'
+
+// Re-export for convenience
+export type { TranspositionState }
 
 interface ChordProViewerProps {
   content?: string;
@@ -35,6 +39,7 @@ interface ChordProViewerProps {
   editMode?: boolean;  // Controlled edit mode from parent
   initialEditMode?: boolean;  // DEPRECATED: Use editMode instead
   arrangementMetadata?: ArrangementMetadata | null;  // Optional metadata to inject before parsing
+  onTranspositionChange?: (state: TranspositionState) => void;  // Callback when transposition changes
 }
 
 export default function ChordProViewer({
@@ -49,7 +54,8 @@ export default function ChordProViewer({
   onEditModeChange,
   editMode,  // Controlled edit mode from parent
   initialEditMode = false,  // DEPRECATED: Use editMode instead
-  arrangementMetadata = null  // Optional metadata to inject before parsing
+  arrangementMetadata = null,  // Optional metadata to inject before parsing
+  onTranspositionChange  // Callback when transposition changes
 }: ChordProViewerProps) {
   const [showChords, setShowChords] = useState(showChordsProp)
   const [editContent, setEditContent] = useState(content)
@@ -125,6 +131,19 @@ export default function ChordProViewer({
       onLoad(metadata)
     }
   }, [metadata, onLoad])
+
+  // Notify parent of transposition state changes
+  useEffect(() => {
+    if (onTranspositionChange) {
+      onTranspositionChange({
+        currentKey,
+        originalKey,
+        semitones: transpositionOffset,
+        transpositionOffset,
+        isTransposed: transpositionOffset !== 0
+      })
+    }
+  }, [currentKey, originalKey, transpositionOffset, onTranspositionChange])
 
   // Sync with parent prop changes
   useEffect(() => {

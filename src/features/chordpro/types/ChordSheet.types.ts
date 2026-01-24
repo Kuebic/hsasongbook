@@ -37,6 +37,8 @@ export interface TranspositionState {
   currentKey: string;
   originalKey: string;
   semitones: number;
+  transpositionOffset: number;  // Alias for semitones for clarity
+  isTransposed: boolean;
 }
 
 /**

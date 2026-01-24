@@ -1,11 +1,11 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { useArrangementData } from '../hooks/useArrangementData';
 import { useArrangementPermissions } from '../hooks/useArrangementPermissions';
 import { useArrangementCoAuthors } from '../hooks/useArrangementCoAuthors';
-import ChordProViewer from '@/features/chordpro';
+import ChordProViewer, { type TranspositionState } from '@/features/chordpro';
 import ArrangementSwitcher from '../components/ArrangementSwitcher';
 import ArrangementHeader from '../components/ArrangementHeader';
 import ArrangementMetadataForm from '../components/ArrangementMetadataForm';
@@ -31,6 +31,12 @@ export function ArrangementPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showCollaboratorsDialog, setShowCollaboratorsDialog] = useState(false);
   const [showChords, setShowChords] = useState(true);
+  const [transposition, setTransposition] = useState<TranspositionState | null>(null);
+
+  // Callback to receive transposition state from ChordProViewer
+  const handleTranspositionChange = useCallback((state: TranspositionState) => {
+    setTransposition(state);
+  }, []);
 
   // Use Convex hook to load arrangement data (uses URL slug automatically)
   const {
@@ -167,6 +173,8 @@ export function ArrangementPage() {
             artist={song.artist}
             creator={creator}
             owner={owner}
+            transposedKey={transposition?.currentKey}
+            transpositionOffset={transposition?.transpositionOffset}
           />
         </div>
 
@@ -216,6 +224,7 @@ export function ArrangementPage() {
               timeSignature: arrangement.timeSignature,
               capo: arrangement.capo
             }}
+            onTranspositionChange={handleTranspositionChange}
             onContentChange={async (newContent: string) => {
               // Strip metadata directives before saving (controlled via dropdowns)
               const sanitizedContent = sanitizeChordProContent(newContent);
