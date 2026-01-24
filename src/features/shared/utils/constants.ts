@@ -11,3 +11,15 @@ export const SORT_OPTIONS = {
 } as const;
 
 export type SortOption = typeof SORT_OPTIONS[keyof typeof SORT_OPTIONS];
+
+/**
+ * Difficulty options for arrangements
+ * Used in both browse filters and arrangement forms
+ */
+export const DIFFICULTY_OPTIONS = {
+  simple: { label: 'Simple', dots: '●○○' },
+  standard: { label: 'Standard', dots: '●●○' },
+  advanced: { label: 'Advanced', dots: '●●●' },
+} as const;
+
+export type DifficultyOption = keyof typeof DIFFICULTY_OPTIONS;

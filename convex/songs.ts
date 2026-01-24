@@ -450,6 +450,8 @@ export const getDistinctArtists = query({
 
 /**
  * Arrangement summary for a song
+ * Note: Frontend equivalent is in src/types/Arrangement.types.ts
+ * Keep in sync if modified.
  */
 interface ArrangementSummary {
   count: number;

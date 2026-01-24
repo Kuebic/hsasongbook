@@ -4,6 +4,12 @@
  * Centralized constants for filtering and sorting options.
  */
 
+// Re-export shared difficulty options
+export {
+  DIFFICULTY_OPTIONS,
+  type DifficultyOption as DifficultyLevel,
+} from '@/features/shared';
+
 export const TEMPO_RANGES = {
   slow: { label: 'Slow (<70 BPM)', min: 0, max: 69 },
   medium: { label: 'Medium (70-110 BPM)', min: 70, max: 110 },
@@ -26,14 +32,6 @@ export const MUSICAL_KEYS = [
 ] as const;
 
 export type MusicalKey = typeof MUSICAL_KEYS[number];
-
-export const DIFFICULTY_OPTIONS = {
-  simple: { label: 'Simple', dots: '●○○' },
-  standard: { label: 'Standard', dots: '●●○' },
-  advanced: { label: 'Advanced', dots: '●●●' },
-} as const;
-
-export type DifficultyLevel = keyof typeof DIFFICULTY_OPTIONS;
 
 export const SORT_OPTIONS = {
   popular: { label: 'Most Popular', description: 'By arrangement count' },

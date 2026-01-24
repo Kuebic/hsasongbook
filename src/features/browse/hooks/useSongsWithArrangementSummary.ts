@@ -6,22 +6,9 @@
 
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
+import { mapConvexSongToFrontend } from '@/features/shared';
 import type { BrowseFilters } from './useBrowseFilters';
-import type { Song } from '@/types/Song.types';
-
-export interface ArrangementSummary {
-  count: number;
-  keys: string[];
-  tempoMin: number | null;
-  tempoMax: number | null;
-  avgRating: number;
-  totalFavorites: number;
-  difficulties: Array<'simple' | 'standard' | 'advanced'>;
-}
-
-export interface SongWithSummary extends Song {
-  arrangementSummary: ArrangementSummary;
-}
+import type { SongWithSummary } from '@/types';
 
 interface UseSongsWithArrangementSummaryOptions {
   filters: BrowseFilters;
@@ -49,17 +36,7 @@ export function useSongsWithArrangementSummary({
   });
 
   const songs: SongWithSummary[] = (data ?? []).map((song) => ({
-    id: song._id,
-    slug: song.slug,
-    title: song.title,
-    artist: song.artist ?? '',
-    themes: song.themes,
-    copyright: song.copyright,
-    lyrics: song.lyrics ? { en: song.lyrics } : undefined,
-    createdAt: new Date(song._creationTime).toISOString(),
-    updatedAt: song.updatedAt
-      ? new Date(song.updatedAt).toISOString()
-      : new Date(song._creationTime).toISOString(),
+    ...mapConvexSongToFrontend(song),
     arrangementSummary: song.arrangementSummary,
   }));
 

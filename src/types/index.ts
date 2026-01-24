@@ -6,10 +6,12 @@
  */
 
 // Domain models
-export type { Song } from './Song.types';
+export type { Song, SongWithSummary } from './Song.types';
 export type {
   Arrangement,
+  ArrangementDifficulty,
   ArrangementMetadata,
+  ArrangementSummary,
   ArrangementWithSong,
   ArrangementWithCreator,
   ArrangementWithSongAndCreator,

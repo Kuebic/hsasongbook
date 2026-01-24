@@ -5,7 +5,7 @@
  */
 
 // Pages
-export { default as BrowsePage } from './components/BrowsePage';
+export { default as BrowsePage } from './pages/BrowsePage';
 
 // Components
 export { default as FilterPanel } from './components/FilterPanel';

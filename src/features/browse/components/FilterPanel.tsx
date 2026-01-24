@@ -26,11 +26,6 @@ import DifficultyFilter from './DifficultyFilter';
 import ArrangementCountFilter from './ArrangementCountFilter';
 import DatePresetFilter from './DatePresetFilter';
 import type { BrowseFilters } from '../hooks/useBrowseFilters';
-import type {
-  TempoRange,
-  DifficultyLevel,
-  DatePreset,
-} from '../utils/filterConstants';
 
 interface FilterPanelProps {
   filters: BrowseFilters;

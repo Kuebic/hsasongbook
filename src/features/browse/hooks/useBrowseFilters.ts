@@ -12,7 +12,12 @@ import type {
   DifficultyLevel,
   DatePreset,
 } from '../utils/filterConstants';
-import { DATE_PRESETS } from '../utils/filterConstants';
+import {
+  DATE_PRESETS,
+  TEMPO_RANGES,
+  SORT_OPTIONS,
+  DIFFICULTY_OPTIONS,
+} from '../utils/filterConstants';
 
 export interface BrowseFilters {
   // Song-level
@@ -41,21 +46,43 @@ const DEFAULT_FILTERS: BrowseFilters = {
   sortBy: 'popular',
 };
 
+// Type guards for URL parameter validation
+function isValidDatePreset(value: string | null): value is DatePreset {
+  return value !== null && value in DATE_PRESETS;
+}
+
+function isValidTempoRange(value: string | null): value is TempoRange {
+  return value !== null && value in TEMPO_RANGES;
+}
+
+function isValidDifficultyLevel(value: string | null): value is DifficultyLevel {
+  return value !== null && value in DIFFICULTY_OPTIONS;
+}
+
+function isValidSortOption(value: string | null): value is SortOption {
+  return value !== null && value in SORT_OPTIONS;
+}
+
 export function useBrowseFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Parse filters from URL
+  // Parse filters from URL with type validation
   const filtersFromUrl = useMemo((): BrowseFilters => {
+    const dateParam = searchParams.get('date');
+    const tempoParam = searchParams.get('tempo');
+    const difficultyParam = searchParams.get('difficulty');
+    const sortParam = searchParams.get('sort');
+
     return {
       themes: searchParams.get('themes')?.split(',').filter(Boolean) || [],
       artist: searchParams.get('artist') || null,
-      datePreset: (searchParams.get('date') as DatePreset) || null,
+      datePreset: isValidDatePreset(dateParam) ? dateParam : null,
       searchQuery: searchParams.get('q') || '',
       hasKey: searchParams.get('key') || null,
-      tempoRange: (searchParams.get('tempo') as TempoRange) || null,
-      hasDifficulty: (searchParams.get('difficulty') as DifficultyLevel) || null,
+      tempoRange: isValidTempoRange(tempoParam) ? tempoParam : null,
+      hasDifficulty: isValidDifficultyLevel(difficultyParam) ? difficultyParam : null,
       minArrangements: parseInt(searchParams.get('minArr') || '0', 10),
-      sortBy: (searchParams.get('sort') as SortOption) || 'popular',
+      sortBy: isValidSortOption(sortParam) ? sortParam : 'popular',
     };
   }, [searchParams]);
 

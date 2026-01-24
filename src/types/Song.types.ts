@@ -5,6 +5,8 @@
  * Songs can have multiple Arrangements (different playable versions).
  */
 
+import type { ArrangementSummary } from './Arrangement.types';
+
 export interface Song {
   id: string;
   slug: string; // URL-friendly slug (e.g., "amazing-grace-x4k9p")
@@ -25,4 +27,12 @@ export interface Song {
   notes?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/**
+ * Song with aggregated arrangement statistics
+ * Used in browse/list views to show songs with their arrangement metadata
+ */
+export interface SongWithSummary extends Song {
+  arrangementSummary: ArrangementSummary;
 }

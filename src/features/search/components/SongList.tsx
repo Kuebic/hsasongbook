@@ -4,8 +4,8 @@ import { api } from '../../../../convex/_generated/api';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Music, User, Hash } from 'lucide-react';
+import { EmptyState } from '@/features/shared';
 import type { Song } from '@/types';
-import type { Id } from '../../../../convex/_generated/dataModel';
 
 interface SongListProps {
   songs: Song[];
@@ -17,13 +17,11 @@ export default function SongList({ songs }: SongListProps) {
 
   if (!songs || songs.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Music className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-lg text-muted-foreground">No songs found</p>
-        <p className="text-sm text-muted-foreground mt-2">
-          Try adjusting your search terms
-        </p>
-      </div>
+      <EmptyState
+        icon={Music}
+        title="No songs found"
+        description="Try adjusting your search terms"
+      />
     );
   }
 

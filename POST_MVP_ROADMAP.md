@@ -188,6 +188,7 @@ Only implement if planning App Store release or significant iOS user base.
 | ~~**N+1 query in SongList**~~ | ~~Add `arrangements.getCountsBySong` query~~ | ~~Low~~ | ✅ Done |
 | ~~**N+1 queries in groups.ts list()**~~ | ~~Batch membership & member count queries~~ | ~~Medium~~ | ✅ Done |
 | ~~**Full table scan for Community group**~~ | ~~Add `isSystemGroup` index, use `.first()`~~ | ~~Low~~ | ✅ Done |
+| **Browse queries fetch all data** | `listWithArrangementSummary` and `getPopular` in `convex/songs.ts` fetch all songs/arrangements into memory then filter. Add pagination, indexes, or denormalize arrangement counts. | High | |
 | **Duplicated type mappers** | Extract to `convex/mappers.ts` | Low | |
 | **Convex ID type casting** | Type IDs upstream to reduce casts | Medium | |
 | **No-op `reload()` functions** | Remove from hooks (Convex auto-syncs) | Low | |
@@ -240,3 +241,10 @@ These N+1 patterns exist but are less critical (Convex batches parallel `ctx.db.
 - **Form boilerplate duplication**: Each form repeats ~20 lines of useState/try-catch/error handling. Could extract to a `useFormHandler` hook.
 - **Magic numbers**: Slug length (30) and nanoid length (6) should be constants
 - **Possibly unused**: `chordsheetjs` dependency - verify if actually used
+
+---
+# random notes to be added if not already
+- Admin UI for featured songs management
+- Guitar vs Piano filter (needs instrument field or tag convention)
+- Language filter (Korean/Japanese support)
+- Scripture reference field and filter

@@ -125,3 +125,17 @@ export interface ArrangementWithSongAndCreator extends ArrangementWithSong {
   creator: CreatorInfo | null;
   owner?: OwnerInfo; // Phase 2: Optional owner info (defaults to creator)
 }
+
+/**
+ * Aggregated arrangement statistics for a song
+ * Used in browse/list views to show arrangement metadata without loading full arrangements
+ */
+export interface ArrangementSummary {
+  count: number;
+  keys: string[];
+  tempoMin: number | null;
+  tempoMax: number | null;
+  avgRating: number;
+  totalFavorites: number;
+  difficulties: ArrangementDifficulty[];
+}

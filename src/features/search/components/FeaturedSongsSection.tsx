@@ -6,7 +6,7 @@
  */
 
 import SuggestionSection from './SuggestionSection';
-import { useFeaturedSongs, FEATURED_SONG_SLUGS } from '../hooks/useFeaturedSongs';
+import { useFeaturedSongs } from '../hooks/useFeaturedSongs';
 
 export default function FeaturedSongsSection() {
   const { songs, loading, hasFeatured } = useFeaturedSongs();
@@ -26,6 +26,3 @@ export default function FeaturedSongsSection() {
     />
   );
 }
-
-// Re-export for convenience
-export { FEATURED_SONG_SLUGS };

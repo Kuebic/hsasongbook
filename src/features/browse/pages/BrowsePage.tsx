@@ -4,15 +4,14 @@
  * Full song browsing page with filtering and sorting.
  */
 
-import { SimplePageTransition } from '@/features/shared/components/PageTransition';
-import Breadcrumbs from '@/features/shared/components/Breadcrumbs';
+import { SimplePageTransition, Breadcrumbs, EmptyState } from '@/features/shared';
 import SearchBar from '@/features/search/components/SearchBar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Music } from 'lucide-react';
-import FilterPanel from './FilterPanel';
-import SortSelector from './SortSelector';
-import SongCardEnhanced from './SongCardEnhanced';
-import FilterChips from './FilterChips';
+import FilterPanel from '../components/FilterPanel';
+import SortSelector from '../components/SortSelector';
+import SongCardEnhanced from '../components/SongCardEnhanced';
+import FilterChips from '../components/FilterChips';
 import { useBrowseFilters } from '../hooks/useBrowseFilters';
 import { useSongsWithArrangementSummary } from '../hooks/useSongsWithArrangementSummary';
 
@@ -99,7 +98,11 @@ export default function BrowsePage() {
               ))}
             </div>
           ) : (
-            <EmptyState />
+            <EmptyState
+              icon={Music}
+              title="No songs found"
+              description="Try adjusting your filters or search terms"
+            />
           )}
         </div>
       </div>
@@ -121,18 +124,6 @@ function BrowsePageSkeleton() {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="text-center py-12">
-      <Music className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-      <h3 className="text-lg font-medium mb-2">No songs found</h3>
-      <p className="text-muted-foreground text-sm">
-        Try adjusting your filters or search terms
-      </p>
     </div>
   );
 }
