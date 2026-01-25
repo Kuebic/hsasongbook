@@ -29,6 +29,7 @@ export { DraftRepository } from './db/DraftRepository'
 
 // Utilities
 export * from './utils/editorHelpers'
+export { transposeRhythmBrackets, isRhythmBracket } from './utils/rhythmBrackets'
 
 // Language support
 export { chordProLanguage } from './language/chordProLanguage'

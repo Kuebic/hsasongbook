@@ -71,6 +71,12 @@ export const chordProHighlight = HighlightStyle.define([
   {
     tag: t.special(t.variableName),
     class: 'cm-chord-partial'
+  },
+
+  // Rhythm brackets - chord notation with rhythm markers
+  {
+    tag: t.special(t.emphasis),
+    class: 'cm-rhythm-bracket'
   }
 ]);
 
@@ -183,6 +189,16 @@ export const chordProStyles = `
   border-radius: 3px;
   padding: 1px 3px;
   border: 1px dashed var(--chord-color);
+}
+
+/* Rhythm bracket styles - [D / / / | A/C# / / / |] */
+.cm-rhythm-bracket {
+  color: var(--chord-color);
+  font-weight: bold;
+  background-color: var(--chord-bg);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
 /* Additional editor optimizations */

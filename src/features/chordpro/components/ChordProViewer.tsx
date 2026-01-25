@@ -5,10 +5,10 @@
  * Mobile-first design with responsive layout and real-time transposition
  */
 
-import { useEffect, useRef, useState, useMemo, ComponentType } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback, ComponentType } from 'react'
 import ChordSheetJS from 'chordsheetjs'
 import { useChordSheet } from '../hooks/useChordSheet'
-import { useTransposition } from '../hooks/useTransposition'
+import { transposeRhythmBrackets } from '../utils/rhythmBrackets'
 import ChordToggle from './ChordToggle'
 import TransposeControl from './TransposeControl'
 import { Card, CardContent } from '@/components/ui/card'
@@ -25,6 +25,25 @@ import '../styles/print.css'
 
 // Re-export for convenience
 export type { TranspositionState }
+
+// Musical constants for transposition
+const CHROMATIC_SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const
+const CHROMATIC_FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'] as const
+
+/**
+ * Get key at specified semitone offset
+ */
+function transposeKey(key: string, semitones: number, preferFlats: boolean = false): string {
+  let keyIndex = CHROMATIC_SHARPS.indexOf(key)
+  if (keyIndex === -1) {
+    keyIndex = CHROMATIC_FLATS.indexOf(key)
+    if (keyIndex === -1) {
+      return key
+    }
+  }
+  const newIndex = (keyIndex + semitones + 12) % 12
+  return preferFlats ? CHROMATIC_FLATS[newIndex] : CHROMATIC_SHARPS[newIndex]
+}
 
 interface ChordProViewerProps {
   content?: string;
@@ -77,29 +96,75 @@ export default function ChordProViewer({
     return JSON.stringify(arrangementMetadata)
   }, [arrangementMetadata])
 
+  // Transposition state - managed here so we can preprocess rhythm brackets
+  const [transpositionOffset, setTranspositionOffset] = useState<number>(0)
+  const [preferFlats, setPreferFlats] = useState<boolean>(false)
+
+  // Preprocess content: transpose rhythm brackets BEFORE ChordSheetJS parsing
+  const preprocessedContent = useMemo(() => {
+    if (!content) return content
+    return transposeRhythmBrackets(content, transpositionOffset, preferFlats)
+  }, [content, transpositionOffset, preferFlats])
+
   // Parse and format ChordPro content with metadata injection
   const {
     parsedSong,
     metadata,
     hasChords,
     error
-  } = useChordSheet(content, showChords, arrangementMetadata, metadataKey)
+  } = useChordSheet(preprocessedContent, showChords, arrangementMetadata, metadataKey)
 
   // Determine original key (from metadata or default)
   const originalKey = useMemo(() => {
     return metadata.key || 'C' // Default to C if no key specified
   }, [metadata.key])
 
-  // Transposition logic
-  const {
-    transposedSong,
-    currentKey,
-    transpositionOffset,
-    transposeBy,
-    reset,
-    preferFlats,
-    toggleEnharmonic
-  } = useTransposition(parsedSong, originalKey)
+  // Sync preferFlats when originalKey changes
+  useEffect(() => {
+    setPreferFlats(originalKey.includes('b'))
+  }, [originalKey])
+
+  // Calculate current key based on offset
+  const currentKey = useMemo(() => {
+    return transposeKey(originalKey, transpositionOffset, preferFlats)
+  }, [originalKey, transpositionOffset, preferFlats])
+
+  // Transpose the ChordSheetJS song object (for regular [chord] markers)
+  const transposedSong = useMemo(() => {
+    if (!parsedSong) return parsedSong
+
+    try {
+      let processedSong = parsedSong
+
+      if (transpositionOffset !== 0) {
+        processedSong = processedSong.transpose(transpositionOffset)
+      }
+
+      const modifier = preferFlats ? 'b' : '#'
+      processedSong = processedSong.useModifier(modifier)
+
+      return processedSong
+    } catch (err) {
+      logger.error('Chord processing failed:', err)
+      return parsedSong
+    }
+  }, [parsedSong, transpositionOffset, preferFlats])
+
+  // Transposition control functions
+  const transposeBy = useCallback((semitones: number) => {
+    const newOffset = transpositionOffset + semitones
+    if (newOffset >= -11 && newOffset <= 11) {
+      setTranspositionOffset(newOffset)
+    }
+  }, [transpositionOffset])
+
+  const reset = useCallback(() => {
+    setTranspositionOffset(0)
+  }, [])
+
+  const toggleEnharmonic = useCallback(() => {
+    setPreferFlats(prev => !prev)
+  }, [])
 
   // Generate HTML from the transposed/processed song
   const htmlOutput = useMemo(() => {

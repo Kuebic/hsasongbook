@@ -100,6 +100,14 @@ const chordProParser: StreamParser<ChordProState> = {
       return 'directive-content';
     }
 
+    // Rhythm bracket notation - [D / / / | A/C# / / / |]
+    // Brackets containing rhythm markers (/ followed by non-note or |)
+    // Must check BEFORE regular chord match since rhythm brackets also start with [
+    const rhythmMatch = stream.match(/\[([^\]]*(?:\/(?:[^A-Ga-g]|$)|[|])[^\]]*)\]/);
+    if (rhythmMatch) {
+      return 'rhythm-bracket';
+    }
+
     // Chord notation - [chord] format
     // Comprehensive regex for chord recognition
     const chordMatch = stream.match(/\[([A-G][#b]?(?:m|maj|min|dim|aug|sus[24]?|add\d+|\d+)*(?:\/[A-G][#b]?)?)\]/);
@@ -147,6 +155,7 @@ const chordProParser: StreamParser<ChordProState> = {
   tokenTable: {
     'lyrics': t.content,
     'chord': t.special(t.string),
+    'rhythm-bracket': t.special(t.emphasis),
     'directive-name': t.keyword,
     'directive-arg': t.string,
     'directive-bracket': t.bracket,
