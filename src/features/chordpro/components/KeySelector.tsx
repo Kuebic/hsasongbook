@@ -141,7 +141,7 @@ export default function KeySelector({
   className,
   disabled = false,
   size = 'default',
-  includeMinorKeys = false,
+  includeMinorKeys = true,
   id,
 }: KeySelectorProps) {
   const [open, setOpen] = useState(false)
