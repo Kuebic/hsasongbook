@@ -18,6 +18,7 @@ import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
 import type * as permissions from "../permissions.js";
 import type * as seed from "../seed.js";
+import type * as seedCarpSongs from "../seedCarpSongs.js";
 import type * as setlists from "../setlists.js";
 import type * as songs from "../songs.js";
 import type * as users from "../users.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   migrations: typeof migrations;
   permissions: typeof permissions;
   seed: typeof seed;
+  seedCarpSongs: typeof seedCarpSongs;
   setlists: typeof setlists;
   songs: typeof songs;
   users: typeof users;
