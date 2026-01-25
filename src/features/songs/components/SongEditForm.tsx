@@ -12,8 +12,18 @@ import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { z } from 'zod';
+import { SONG_ORIGIN_GROUPS } from '../validation/songSchemas';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
 import { extractErrorMessage } from '@/lib/utils';
@@ -25,6 +35,7 @@ const editSongSchema = z.object({
   themes: z.string().optional(),
   copyright: z.string().max(500).optional(),
   lyrics: z.string().optional(),
+  origin: z.string().optional(),
 });
 
 type EditSongFormData = z.infer<typeof editSongSchema>;
@@ -37,6 +48,7 @@ interface SongEditFormProps {
     themes?: string[];
     copyright?: string;
     lyrics?: string;
+    origin?: string;
   };
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -51,6 +63,8 @@ export default function SongEditForm({
   const updateSong = useMutation(api.songs.update);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Origin state (managed separately for Select component)
+  const [origin, setOrigin] = useState<string>(initialData.origin || '');
 
   const {
     register,
@@ -66,6 +80,7 @@ export default function SongEditForm({
       themes: initialData.themes?.join(', ') || '',
       copyright: initialData.copyright || '',
       lyrics: initialData.lyrics || '',
+      origin: initialData.origin || '',
     },
   });
 
@@ -77,7 +92,9 @@ export default function SongEditForm({
       themes: initialData.themes?.join(', ') || '',
       copyright: initialData.copyright || '',
       lyrics: initialData.lyrics || '',
+      origin: initialData.origin || '',
     });
+    setOrigin(initialData.origin || '');
   }, [initialData, reset]);
 
   const onSubmit = async (data: EditSongFormData) => {
@@ -98,6 +115,7 @@ export default function SongEditForm({
         themes,
         copyright: data.copyright || undefined,
         lyrics: data.lyrics || undefined,
+        origin: origin || undefined,
       });
 
       onSuccess?.();
@@ -159,6 +177,28 @@ export default function SongEditForm({
         )}
       </div>
 
+      {/* Origin field (optional dropdown) */}
+      <div>
+        <Label htmlFor="origin">Origin</Label>
+        <Select value={origin} onValueChange={setOrigin} disabled={isSubmitting}>
+          <SelectTrigger id="origin">
+            <SelectValue placeholder="Select origin..." />
+          </SelectTrigger>
+          <SelectContent>
+            {SONG_ORIGIN_GROUPS.map((group) => (
+              <SelectGroup key={group.label}>
+                <SelectLabel>{group.label}</SelectLabel>
+                {group.origins.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Themes field (comma-separated) */}
       <div>
         <Label htmlFor="themes">Themes</Label>
@@ -215,7 +255,7 @@ export default function SongEditForm({
             Cancel
           </Button>
         )}
-        <Button type="submit" disabled={isSubmitting || !isDirty}>
+        <Button type="submit" disabled={isSubmitting || (!isDirty && origin === (initialData.origin || ''))}>
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

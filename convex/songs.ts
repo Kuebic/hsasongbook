@@ -138,6 +138,7 @@ export const create = mutation({
     themes: v.array(v.string()),
     copyright: v.optional(v.string()),
     lyrics: v.optional(v.string()),
+    origin: v.optional(v.string()),
     slug: v.string(),
     // Phase 2: Group ownership
     ownerType: v.optional(v.union(v.literal("user"), v.literal("group"))),
@@ -188,6 +189,7 @@ export const create = mutation({
       themes: args.themes,
       copyright: args.copyright,
       lyrics: args.lyrics,
+      origin: args.origin,
       slug: args.slug,
       createdBy: userId,
       ownerType,
@@ -210,6 +212,7 @@ export const update = mutation({
     themes: v.optional(v.array(v.string())),
     copyright: v.optional(v.string()),
     lyrics: v.optional(v.string()),
+    origin: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
@@ -439,6 +442,22 @@ export const getDistinctArtists = query({
 });
 
 /**
+ * Get distinct origins for filter dropdown
+ * Access: Everyone
+ */
+export const getDistinctOrigins = query({
+  args: {},
+  handler: async (ctx) => {
+    const songs = await ctx.db.query("songs").collect();
+    const origins = new Set<string>();
+    for (const song of songs) {
+      if (song.origin) origins.add(song.origin);
+    }
+    return Array.from(origins).sort();
+  },
+});
+
+/**
  * List songs with arrangement summary for browse page
  * Supports filtering by song-level and arrangement-level criteria
  * Access: Everyone
@@ -450,6 +469,7 @@ export const listWithArrangementSummary = query({
     // Song-level filters
     themes: v.optional(v.array(v.string())),
     artist: v.optional(v.string()),
+    origin: v.optional(v.string()),
     dateFrom: v.optional(v.number()), // timestamp
     dateTo: v.optional(v.number()),
     searchQuery: v.optional(v.string()),
@@ -497,6 +517,10 @@ export const listWithArrangementSummary = query({
       songs = songs.filter((song) =>
         song.artist?.toLowerCase().includes(args.artist!.toLowerCase())
       );
+    }
+
+    if (args.origin) {
+      songs = songs.filter((song) => song.origin === args.origin);
     }
 
     if (args.dateFrom) {

@@ -15,8 +15,17 @@ import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { AlertCircle } from 'lucide-react';
-import { addSongSchema, type AddSongFormData } from '../validation/songSchemas';
+import { addSongSchema, type AddSongFormData, SONG_ORIGIN_GROUPS } from '../validation/songSchemas';
 import { generateSlug } from '@/features/shared/utils/slugGenerator';
 import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
 import { extractErrorMessage } from '@/lib/utils';
@@ -45,6 +54,8 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   // Phase 2: Owner selection state
   const [owner, setOwner] = useState<OwnerSelection>({ ownerType: 'user' });
+  // Origin selection state
+  const [origin, setOrigin] = useState<string>('');
 
   const {
     register,
@@ -80,6 +91,7 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
         themes,
         copyright: undefined,
         lyrics: data.lyrics || undefined,
+        origin: origin || undefined,
         slug,
         // Phase 2: Pass ownership info
         ownerType: owner.ownerType,
@@ -152,6 +164,28 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
             {errors.artist.message}
           </p>
         )}
+      </div>
+
+      {/* Origin field (optional dropdown) */}
+      <div>
+        <Label htmlFor="origin">Origin</Label>
+        <Select value={origin} onValueChange={setOrigin} disabled={isSubmitting}>
+          <SelectTrigger id="origin">
+            <SelectValue placeholder="Select origin..." />
+          </SelectTrigger>
+          <SelectContent>
+            {SONG_ORIGIN_GROUPS.map((group) => (
+              <SelectGroup key={group.label}>
+                <SelectLabel>{group.label}</SelectLabel>
+                {group.origins.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Themes field (comma-separated) */}

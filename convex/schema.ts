@@ -32,6 +32,7 @@ export default defineSchema({
     themes: v.array(v.string()),
     copyright: v.optional(v.string()),
     lyrics: v.optional(v.string()),
+    origin: v.optional(v.string()), // Song origin category (e.g., traditional-holy-songs, new-holy-songs)
     slug: v.string(),
     createdBy: v.id("users"),
     // Ownership (Phase 2) - defaults to user ownership

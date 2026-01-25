@@ -25,6 +25,7 @@ export interface BrowseFilters {
   // Song-level
   themes: string[];
   artist: string | null;
+  origin: string | null;
   datePreset: DatePreset | null;
   searchQuery: string;
   // Arrangement-level
@@ -41,6 +42,7 @@ export interface BrowseFilters {
 const DEFAULT_FILTERS: BrowseFilters = {
   themes: [],
   artist: null,
+  origin: null,
   datePreset: null,
   searchQuery: '',
   hasKey: null,
@@ -86,6 +88,7 @@ export function useBrowseFilters() {
     return {
       themes: searchParams.get('themes')?.split(',').filter(Boolean) || [],
       artist: searchParams.get('artist') || null,
+      origin: searchParams.get('origin') || null,
       datePreset: isValidDatePreset(dateParam) ? dateParam : null,
       searchQuery: searchParams.get('q') || '',
       hasKey: searchParams.get('key') || null,
@@ -114,6 +117,7 @@ export function useBrowseFilters() {
         const params = new URLSearchParams();
         if (next.themes.length > 0) params.set('themes', next.themes.join(','));
         if (next.artist) params.set('artist', next.artist);
+        if (next.origin) params.set('origin', next.origin);
         if (next.datePreset) params.set('date', next.datePreset);
         if (next.searchQuery) params.set('q', next.searchQuery);
         if (next.hasKey) params.set('key', next.hasKey);
@@ -142,6 +146,7 @@ export function useBrowseFilters() {
     let count = 0;
     if (filters.themes.length > 0) count++;
     if (filters.artist) count++;
+    if (filters.origin) count++;
     if (filters.datePreset) count++;
     if (filters.hasKey) count++;
     if (filters.tempoRange) count++;

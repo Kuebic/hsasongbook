@@ -13,6 +13,7 @@ const SEED_SONGS = [
     artist: "John Newton",
     themes: ["grace", "salvation", "redemption"],
     copyright: "Public Domain",
+    origin: "traditional-hymns",
     lyrics:
       "Amazing grace, how sweet the sound\nThat saved a wretch like me\nI once was lost, but now am found\nWas blind but now I see",
   },
@@ -21,6 +22,7 @@ const SEED_SONGS = [
     artist: "Carl Boberg",
     themes: ["worship", "creation", "majesty"],
     copyright: "Public Domain",
+    origin: "traditional-hymns",
     lyrics:
       "O Lord my God, When I in awesome wonder\nConsider all the worlds Thy Hands have made\nI see the stars, I hear the rolling thunder\nThy power throughout the universe displayed",
   },
@@ -29,6 +31,7 @@ const SEED_SONGS = [
     artist: "Hillsong United",
     themes: ["faith", "trust", "courage"],
     copyright: "Hillsong Music Publishing",
+    origin: "contemporary-christian",
     lyrics:
       "You call me out upon the waters\nThe great unknown where feet may fail\nAnd there I find You in the mystery\nIn oceans deep, my faith will stand",
   },
@@ -37,6 +40,7 @@ const SEED_SONGS = [
     artist: "Sinach",
     themes: ["miracle", "promise", "worship"],
     copyright: "Integrity Music",
+    origin: "contemporary-christian",
     lyrics:
       "You are here, moving in our midst\nI worship You, I worship You\nYou are here, working in this place\nI worship You, I worship You",
   },
@@ -45,6 +49,7 @@ const SEED_SONGS = [
     artist: "Matt Redman",
     themes: ["blessing", "praise", "worship"],
     copyright: "Thankyou Music",
+    origin: "contemporary-christian",
     lyrics:
       "Bless the Lord, O my soul, O my soul\nWorship His holy name\nSing like never before, O my soul\nI'll worship Your holy name",
   },
@@ -53,6 +58,7 @@ const SEED_SONGS = [
     artist: "Hillsong Worship",
     themes: ["Jesus", "name", "power"],
     copyright: "Hillsong Music Publishing",
+    origin: "contemporary-christian",
     lyrics:
       "You were the Word at the beginning\nOne with God the Lord Most High\nYour hidden glory in creation\nNow revealed in You our Christ",
   },
@@ -61,6 +67,7 @@ const SEED_SONGS = [
     artist: "Chris Tomlin",
     themes: ["father", "love", "identity"],
     copyright: "Capitol CMG Publishing",
+    origin: "contemporary-christian",
     lyrics:
       "I've heard a thousand stories\nOf what they think You're like\nBut I've heard the tender whisper\nOf love in the dead of night",
   },
@@ -69,6 +76,7 @@ const SEED_SONGS = [
     artist: "Cory Asbury",
     themes: ["love", "grace", "pursuit"],
     copyright: "Bethel Music Publishing",
+    origin: "contemporary-christian",
     lyrics:
       "Before I spoke a word, You were singing over me\nYou have been so, so good to me\nBefore I took a breath, You breathed Your life in me",
   },
@@ -77,6 +85,7 @@ const SEED_SONGS = [
     artist: "Housefires",
     themes: ["foundation", "worship", "devotion"],
     copyright: "Capitol CMG Publishing",
+    origin: "contemporary-christian",
     lyrics:
       "Worthy of every song we could ever sing\nWorthy of all the praise we could ever bring\nWorthy of every breath we could ever breathe\nWe live for You",
   },
@@ -85,6 +94,7 @@ const SEED_SONGS = [
     artist: "Tim Hughes",
     themes: ["worship", "humility", "light"],
     copyright: "Thankyou Music",
+    origin: "contemporary-christian",
     lyrics:
       "Light of the world\nYou stepped down into darkness\nOpened my eyes, let me see\nBeauty that made this heart adore You",
   },
@@ -93,6 +103,7 @@ const SEED_SONGS = [
     artist: "Bryan & Katie Torwalt",
     themes: ["spirit", "presence", "welcome"],
     copyright: "Capitol CMG Publishing",
+    origin: "contemporary-christian",
     lyrics:
       "There's nothing worth more that will ever come close\nNo thing can compare You're our living hope\nYour Presence Lord",
   },
@@ -101,6 +112,7 @@ const SEED_SONGS = [
     artist: "All Sons & Daughters",
     themes: ["praise", "breath", "creation"],
     copyright: "Integrity Music",
+    origin: "contemporary-christian",
     lyrics:
       "You give life, You are love\nYou bring light to the darkness\nYou give hope, You restore\nEvery heart that is broken",
   },
@@ -109,6 +121,7 @@ const SEED_SONGS = [
     artist: "Bethel Music",
     themes: ["kingship", "goodness", "forever"],
     copyright: "Bethel Music Publishing",
+    origin: "contemporary-christian",
     lyrics:
       "Let the King of my heart\nBe the mountain where I run\nThe fountain I drink from\nOh He is my song",
   },
@@ -117,6 +130,7 @@ const SEED_SONGS = [
     artist: "Hillsong Worship",
     themes: ["foundation", "Christ", "hope"],
     copyright: "Hillsong Music Publishing",
+    origin: "contemporary-christian",
     lyrics:
       "My hope is built on nothing less\nThan Jesus' blood and righteousness\nI dare not trust the sweetest frame\nBut wholly trust in Jesus' name",
   },
@@ -125,6 +139,7 @@ const SEED_SONGS = [
     artist: "Phil Wickham",
     themes: ["hope", "resurrection", "hallelujah"],
     copyright: "Phil Wickham Music",
+    origin: "contemporary-christian",
     lyrics:
       "How great the chasm that lay between us\nHow high the mountain I could not climb\nIn desperation I turned to heaven\nAnd spoke Your name into the night",
   },
@@ -557,6 +572,7 @@ export const seedDatabase = mutation({
         themes: song.themes,
         copyright: song.copyright,
         lyrics: song.lyrics,
+        origin: song.origin,
         slug: slugify(song.title),
         createdBy: systemUserId,
       });

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import type { BrowseFilters } from '../hooks/useBrowseFilters';
 import { TEMPO_RANGES, DATE_PRESETS, DIFFICULTY_OPTIONS } from '../utils/filterConstants';
+import { getOriginLabel } from '@/features/songs/validation/songSchemas';
 
 interface FilterChipsProps {
   filters: BrowseFilters;
@@ -39,6 +40,15 @@ export default function FilterChips({
       key: 'artist',
       label: `Artist: ${filters.artist}`,
       onRemove: () => onRemoveFilter('artist', null),
+    });
+  }
+
+  // Origin chip
+  if (filters.origin) {
+    chips.push({
+      key: 'origin',
+      label: `Origin: ${getOriginLabel(filters.origin) || filters.origin}`,
+      onRemove: () => onRemoveFilter('origin', null),
     });
   }
 

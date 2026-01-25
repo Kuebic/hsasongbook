@@ -14,6 +14,7 @@ export interface Song {
   artist: string;
   themes?: string[];
   copyright?: string;
+  origin?: string; // Song origin category (e.g., traditional-holy-songs, new-holy-songs)
   lyrics?: {
     en?: string;
     [language: string]: string | undefined;

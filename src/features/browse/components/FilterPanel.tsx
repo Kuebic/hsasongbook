@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import ThemeMultiSelect from './ThemeMultiSelect';
 import ArtistCombobox from './ArtistCombobox';
+import OriginFilter from './OriginFilter';
 import KeyFilter from './KeyFilter';
 import TempoRangeFilter from './TempoRangeFilter';
 import DifficultyFilter from './DifficultyFilter';
@@ -100,6 +101,10 @@ export default function FilterPanel({
                 <ArtistCombobox
                   value={filters.artist}
                   onChange={(artist) => onFilterChange('artist', artist)}
+                />
+                <OriginFilter
+                  value={filters.origin}
+                  onChange={(origin) => onFilterChange('origin', origin)}
                 />
                 <DatePresetFilter
                   value={filters.datePreset}

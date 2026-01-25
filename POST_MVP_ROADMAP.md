@@ -91,7 +91,7 @@ New users don't understand the community nature of the app.
 |---------|-------------|--------|
 | **Debounce error alerts** | Don't show syntax errors mid-typing (e.g., unclosed `[]`) | Low |
 | **Clarify save/undo buttons** | Improve save button behavior; verify undo/redo works | Low |
-| **Chord progression parsing** | Recognize `[D / / / \| A/C# / / / |]` as transposable chords | High |
+| ~~**Chord progression parsing**~~ | ~~Recognize `[D / / / \| A/C# / / / \|]` as transposable chords~~ | ~~High~~ | ✅ Done |
 | **Formatting customization** | Add formatting customization abilities | Medium |
 
 ---
@@ -100,8 +100,8 @@ New users don't understand the community nature of the app.
 
 | Issue | Fix | Effort |
 |-------|-----|--------|
-| **Key dropdown overflow** | "All keys" section gets cut off | Low |
-| **Enharmonic handling** | Show both sharp/flat variants (C#/Db) or Planning Center-style picker | Medium |
+| ~~**Key dropdown overflow**~~ | ~~"All keys" section gets cut off~~ | ~~Low~~ | ✅ Done |
+| ~~**Enharmonic handling**~~ | ~~Show both sharp/flat variants (C#/Db) or Planning Center-style picker~~ | ~~Medium~~ | ✅ Done |
 
 ---
 

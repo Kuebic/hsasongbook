@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Hash, Music2, Copyright, Users, Globe } from 'lucide-react';
+import { User, Hash, Music2, Copyright, Users, Globe, Bookmark } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { getDisplayName } from '../../shared/utils/userDisplay';
 import { Id } from '../../../../convex/_generated/dataModel';
 import type { Song, OwnerInfo } from '@/types';
+import { getOriginLabel } from '../validation/songSchemas';
 
 interface SongMetadataProps {
   song: Song | null;
@@ -71,6 +72,16 @@ export default function SongMetadata({ song, owner }: SongMetadataProps) {
           <User className="h-4 w-4" />
           {song.artist}
         </CardDescription>
+
+        {/* Origin badge if available */}
+        {song.origin && (
+          <div className="flex items-center gap-2 mt-2">
+            <Badge variant="outline" className="text-sm">
+              <Bookmark className="h-3 w-3 mr-1" />
+              {getOriginLabel(song.origin)}
+            </Badge>
+          </div>
+        )}
 
         {/* Copyright info if available */}
         {song.copyright && (

@@ -25,6 +25,7 @@ export function useSongsWithArrangementSummary({
   const data = useQuery(api.songs.listWithArrangementSummary, {
     themes: filters.themes.length > 0 ? filters.themes : undefined,
     artist: filters.artist || undefined,
+    origin: filters.origin || undefined,
     dateFrom: dateRange.from || undefined,
     dateTo: dateRange.to || undefined,
     searchQuery: filters.searchQuery || undefined,
