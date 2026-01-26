@@ -1,15 +1,19 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import { useArrangementData } from '../hooks/useArrangementData';
 import { useArrangementPermissions } from '../hooks/useArrangementPermissions';
 import { useArrangementCoAuthors } from '../hooks/useArrangementCoAuthors';
+import { useArrangementAudio } from '../hooks/useArrangementAudio';
 import ChordProViewer, { type TranspositionState } from '@/features/chordpro';
 import ArrangementHeader from '../components/ArrangementHeader';
 import ArrangementMetadataForm from '../components/ArrangementMetadataForm';
+import AudioReferencesForm from '../components/AudioReferencesForm';
+import YouTubePlayer from '../components/YouTubePlayer';
 import CollaboratorsDialog from '../components/CollaboratorsDialog';
 import CoAuthorsList from '../components/CoAuthorsList';
 import { ArrangementActionsMenu } from '../components/ArrangementActionsMenu';
 import { useAuth } from '@/features/auth';
+import { useAudioPlayer } from '@/features/audio';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
 import { PageSpinner } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
@@ -18,12 +22,13 @@ import { VersionHistoryPanel } from '@/features/versions';
 import { Button } from '@/components/ui/button';
 import logger from '@/lib/logger';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Music, Printer } from 'lucide-react';
+import { ArrowLeft, Music, Printer, Play, Youtube } from 'lucide-react';
 import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSanitizer';
 import type { ArrangementMetadata } from '@/types/Arrangement.types';
 
 export function ArrangementPage() {
   const navigate = useNavigate();
+  const { songSlug, arrangementSlug } = useParams();
   const { breadcrumbs } = useNavigation();
   const { user } = useAuth();
   const isAuthenticated = user && !user.isAnonymous;
@@ -31,6 +36,10 @@ export function ArrangementPage() {
   const [showCollaboratorsDialog, setShowCollaboratorsDialog] = useState(false);
   const [showChords, setShowChords] = useState(true);
   const [transposition, setTransposition] = useState<TranspositionState | null>(null);
+  const [showYouTubePlayer, setShowYouTubePlayer] = useState(false);
+
+  // Global audio player for MP3 playback
+  const { playTrack, track: currentTrack, isPlaying } = useAudioPlayer();
 
   // Callback to receive transposition state from ChordProViewer
   const handleTranspositionChange = useCallback((state: TranspositionState) => {
@@ -63,6 +72,27 @@ export function ArrangementPage() {
   const { coAuthors, loading: coAuthorsLoading } = useArrangementCoAuthors(
     arrangement?.id ?? null
   );
+
+  // Audio references
+  const { audioUrl } = useArrangementAudio(arrangement?.id ?? null);
+  const hasAudio = !!audioUrl;
+  const hasYoutube = !!arrangement?.youtubeUrl;
+
+  // Check if this arrangement's audio is currently playing in the global player
+  const isThisTrackPlaying =
+    currentTrack?.arrangementSlug === arrangementSlug && isPlaying;
+
+  // Handle playing MP3 in global player
+  const handlePlayAudio = useCallback(() => {
+    if (!audioUrl || !song || !arrangement || !songSlug || !arrangementSlug) return;
+    playTrack({
+      audioUrl,
+      songTitle: song.title,
+      arrangementName: arrangement.name,
+      arrangementSlug,
+      songSlug,
+    });
+  }, [audioUrl, song, arrangement, songSlug, arrangementSlug, playTrack]);
 
   // Auto-enable edit mode when arrangement has no content AND user can edit
   useEffect(() => {
@@ -110,6 +140,30 @@ export function ArrangementPage() {
             <Breadcrumbs items={breadcrumbs} />
 
             <div className="flex gap-2 items-center">
+              {/* Play Audio Button - only show if MP3 available */}
+              {hasAudio && (
+                <Button
+                  variant={isThisTrackPlaying ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={handlePlayAudio}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  {isThisTrackPlaying ? 'Playing' : 'Play Audio'}
+                </Button>
+              )}
+
+              {/* Play YouTube Button - only show if YouTube URL available */}
+              {hasYoutube && (
+                <Button
+                  variant={showYouTubePlayer ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setShowYouTubePlayer(true)}
+                >
+                  <Youtube className="h-4 w-4 mr-2" />
+                  {showYouTubePlayer ? 'YouTube' : 'Play YouTube'}
+                </Button>
+              )}
+
               {/* Print Button */}
               <Button
                 variant="outline"
@@ -185,6 +239,17 @@ export function ArrangementPage() {
           </div>
         )}
 
+        {/* Audio References Form - Only show in edit mode when user can edit */}
+        {isEditMode && canEdit && (
+          <div className="mb-6 no-print">
+            <AudioReferencesForm
+              arrangementId={arrangement.id}
+              youtubeUrl={arrangement.youtubeUrl}
+              hasAudio={!!arrangement.audioFileKey}
+            />
+          </div>
+        )}
+
         {/* ChordPro Content */}
         <div className="mb-8">
           <ChordProViewer
@@ -251,6 +316,16 @@ export function ArrangementPage() {
         onOpenChange={setShowCollaboratorsDialog}
         arrangementId={arrangement.id}
         arrangementName={arrangement.name}
+      />
+    )}
+
+    {/* Inline YouTube Player - must be visible for playback */}
+    {hasYoutube && showYouTubePlayer && (
+      <YouTubePlayer
+        youtubeUrl={arrangement.youtubeUrl!}
+        songTitle={song.title}
+        arrangementName={arrangement.name}
+        onClose={() => setShowYouTubePlayer(false)}
       />
     )}
     </SimplePageTransition>

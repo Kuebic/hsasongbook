@@ -83,6 +83,9 @@ export default defineSchema({
     // Ownership (Phase 2) - defaults to user ownership
     ownerType: v.optional(v.union(v.literal("user"), v.literal("group"))),
     ownerId: v.optional(v.string()), // userId or groupId as string
+    // Audio references
+    audioFileKey: v.optional(v.string()), // R2 object key for MP3 file
+    youtubeUrl: v.optional(v.string()), // YouTube video URL or ID
   })
     .index("by_slug", ["slug"])
     .index("by_song", ["songId"])

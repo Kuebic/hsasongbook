@@ -4,7 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { R2 } from "@convex-dev/r2";
 import { components } from "./_generated/api";
 import { DataModel } from "./_generated/dataModel";
-import { requireAuthenticatedUser } from "./permissions";
+import { requireAuthenticatedUser, requireAuth, canEditArrangement } from "./permissions";
 
 const r2 = new R2(components.r2);
 
@@ -138,5 +138,109 @@ export const getAvatarUrls = query({
     );
 
     return results;
+  },
+});
+
+// ============ ARRANGEMENT AUDIO MUTATIONS ============
+
+/**
+ * Save audio file key to arrangement after successful upload
+ * Deletes old audio file if one exists
+ * Access: Arrangement owner or collaborators
+ */
+export const saveArrangementAudio = mutation({
+  args: {
+    arrangementId: v.id("arrangements"),
+    key: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    // Check edit permission
+    const hasPermission = await canEditArrangement(ctx, args.arrangementId, userId);
+    if (!hasPermission) {
+      throw new Error("You don't have permission to edit this arrangement");
+    }
+
+    const arrangement = await ctx.db.get(args.arrangementId);
+    if (!arrangement) {
+      throw new Error("Arrangement not found");
+    }
+
+    // Delete old audio from R2 if exists
+    if (arrangement.audioFileKey) {
+      try {
+        await r2.deleteObject(ctx, arrangement.audioFileKey);
+      } catch {
+        console.warn("Failed to delete old audio:", arrangement.audioFileKey);
+      }
+    }
+
+    // Save new audio key to arrangement
+    await ctx.db.patch(args.arrangementId, {
+      audioFileKey: args.key,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Remove audio file from arrangement
+ * Access: Arrangement owner or collaborators
+ */
+export const removeArrangementAudio = mutation({
+  args: { arrangementId: v.id("arrangements") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    // Check edit permission
+    const hasPermission = await canEditArrangement(ctx, args.arrangementId, userId);
+    if (!hasPermission) {
+      throw new Error("You don't have permission to edit this arrangement");
+    }
+
+    const arrangement = await ctx.db.get(args.arrangementId);
+    if (!arrangement?.audioFileKey) {
+      return { success: true };
+    }
+
+    // Delete from R2
+    try {
+      await r2.deleteObject(ctx, arrangement.audioFileKey);
+    } catch {
+      console.warn("Failed to delete audio from R2:", arrangement.audioFileKey);
+    }
+
+    // Clear audio key from arrangement
+    await ctx.db.patch(args.arrangementId, {
+      audioFileKey: undefined,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+// ============ ARRANGEMENT AUDIO QUERIES ============
+
+/**
+ * Get a signed URL for arrangement audio
+ * Returns null if arrangement has no audio
+ * Access: Everyone
+ */
+export const getArrangementAudioUrl = query({
+  args: { arrangementId: v.id("arrangements") },
+  handler: async (ctx, args) => {
+    const arrangement = await ctx.db.get(args.arrangementId);
+    if (!arrangement?.audioFileKey) {
+      return null;
+    }
+
+    // Generate signed URL valid for 24 hours
+    return await r2.getUrl(arrangement.audioFileKey, {
+      expiresIn: 60 * 60 * 24,
+    });
   },
 });

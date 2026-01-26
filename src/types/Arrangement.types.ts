@@ -38,6 +38,9 @@ export interface Arrangement {
   // Phase 2 fields (Groups & Ownership)
   ownerType?: 'user' | 'group';        // Type of owner
   ownerId?: string;                    // userId or groupId as string
+  // Audio references
+  audioFileKey?: string;               // R2 object key for MP3 file
+  youtubeUrl?: string;                 // YouTube video URL or ID
 }
 
 /**

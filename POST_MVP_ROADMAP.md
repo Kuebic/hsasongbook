@@ -266,6 +266,7 @@ Only implement if planning App Store release or significant iOS user base.
 
 | Date | Change |
 |------|--------|
+| 2026-01-26 | **Audio references feature**: MP3 uploads (10 MB max) and YouTube links on arrangements with floating mini-player |
 | 2026-01-26 | Added theme customization roadmap (Priority 4); implemented earth-tone color palette; added theme suggestions for songs; added origin field and filtering |
 | 2026-01-26 | Redesigned search/home page with hero section, browse-by-theme, and quick access bar |
 | 2026-01-26 | Implemented favorites system for arrangements |
@@ -339,14 +340,20 @@ Current plan has both ratings and favorites. Reconsidering:
 
 Decision: Probably just favorites, not ratings. Simpler is better.
 
-### Media Attachments for Arrangements
+### Media Attachments for Arrangements ✅ IMPLEMENTED (Partial)
 
-Allow arrangement creators to attach resources:
-- **YouTube video** - Link to a video demonstrating their arrangement
-- **Audio file** - Upload MP3 of how it sounds
-- **Lead sheet / sheet music** - PDF uploads for musicians
+~~Allow arrangement creators to attach resources:~~
+- ~~**YouTube video** - Link to a video demonstrating their arrangement~~ ✅
+- ~~**Audio file** - Upload MP3 of how it sounds~~ ✅
+- **Lead sheet / sheet music** - PDF uploads for musicians (future)
 
-This helps people understand how the arrangement is meant to be played.
+**Implemented features:**
+- MP3 uploads (10 MB max) stored in Cloudflare R2
+- YouTube video links with thumbnail preview
+- Floating mini-player with play/pause, seek, volume controls
+- Source toggle when both MP3 and YouTube are available
+- Edit mode form for managing audio references
+- Automatic cleanup when arrangements are deleted or audio is replaced
 
 ### Song-Level Demo/Reference Audio?
 

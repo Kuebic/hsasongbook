@@ -71,6 +71,8 @@ function mapConvexArrangement(arr: {
   updatedAt?: number;
   ownerType?: 'user' | 'group';
   ownerId?: string;
+  audioFileKey?: string;
+  youtubeUrl?: string;
 }): Arrangement {
   return {
     id: arr._id,
@@ -92,6 +94,8 @@ function mapConvexArrangement(arr: {
       : new Date(arr._creationTime).toISOString(),
     ownerType: arr.ownerType,
     ownerId: arr.ownerId,
+    audioFileKey: arr.audioFileKey,
+    youtubeUrl: arr.youtubeUrl,
   };
 }
 

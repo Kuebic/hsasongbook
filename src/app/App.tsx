@@ -32,6 +32,9 @@ import { ThemeProvider } from '@/lib/theme/ThemeProvider'
 // Auth imports
 import { AuthProvider } from '../features/auth/context/AuthProvider'
 
+// Audio imports
+import { AudioPlayerProvider, GlobalAudioPlayer } from '../features/audio'
+
 // PWA imports
 import { usePWA, UpdateNotification, OfflineIndicator } from '../features/pwa'
 import { initDatabase } from '../features/pwa/db/database'
@@ -129,6 +132,9 @@ function AppWithFeatures() {
       {/* Mobile Navigation (hidden on desktop) */}
       <MobileNav className="md:hidden" />
 
+      {/* Global Audio Player - persists across page navigation */}
+      <GlobalAudioPlayer />
+
       {/* PWA UI Components */}
       <OfflineIndicator />
       {needRefresh && (
@@ -145,17 +151,19 @@ function App() {
     <ConvexAuthProvider client={convex}>
       <ThemeProvider defaultTheme="system" storageKey="hsasongbook-theme">
         <AuthProvider>
-          <ErrorBoundary
-            FallbackComponent={ErrorFallback}
-            onReset={() => {
-              // Reset app state if needed
-              window.location.href = '/'
-            }}
-          >
-            <BrowserRouter>
-              <AppWithFeatures />
-            </BrowserRouter>
-          </ErrorBoundary>
+          <AudioPlayerProvider>
+            <ErrorBoundary
+              FallbackComponent={ErrorFallback}
+              onReset={() => {
+                // Reset app state if needed
+                window.location.href = '/'
+              }}
+            >
+              <BrowserRouter>
+                <AppWithFeatures />
+              </BrowserRouter>
+            </ErrorBoundary>
+          </AudioPlayerProvider>
         </AuthProvider>
       </ThemeProvider>
     </ConvexAuthProvider>

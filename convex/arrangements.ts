@@ -4,6 +4,8 @@ import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
 import { nanoid } from "nanoid";
+import { R2 } from "@convex-dev/r2";
+import { components } from "./_generated/api";
 import {
   canEditArrangement,
   filterUndefined,
@@ -18,6 +20,9 @@ import {
   getContentOwnerInfo,
 } from "./permissions";
 import { maybeCreateVersionSnapshot } from "./versions";
+
+// R2 client for audio file cleanup
+const r2 = new R2(components.r2);
 
 // ============ HELPER FUNCTIONS ============
 
@@ -598,6 +603,78 @@ export const update = mutation({
   },
 });
 
+/**
+ * Update YouTube URL for an arrangement
+ * Access: Owner or collaborator
+ */
+export const updateYoutubeUrl = mutation({
+  args: {
+    id: v.id("arrangements"),
+    youtubeUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const arrangement = await ctx.db.get(args.id);
+    if (!arrangement) {
+      throw new Error("Arrangement not found");
+    }
+
+    // Check edit permission
+    const canEdit = await canEditArrangement(ctx, args.id, userId);
+    if (!canEdit) {
+      throw new Error("You don't have permission to edit this arrangement");
+    }
+
+    // Validate YouTube URL format if provided
+    if (args.youtubeUrl) {
+      const videoId = extractYoutubeVideoId(args.youtubeUrl);
+      if (!videoId) {
+        throw new Error("Invalid YouTube URL. Please enter a valid YouTube video URL or video ID.");
+      }
+    }
+
+    await ctx.db.patch(args.id, {
+      youtubeUrl: args.youtubeUrl || undefined,
+      updatedAt: Date.now(),
+    });
+
+    return args.id;
+  },
+});
+
+/**
+ * Extract YouTube video ID from various URL formats
+ * Supports:
+ * - https://www.youtube.com/watch?v=VIDEO_ID
+ * - https://youtu.be/VIDEO_ID
+ * - https://www.youtube.com/embed/VIDEO_ID
+ * - Just the VIDEO_ID (11 characters)
+ */
+function extractYoutubeVideoId(url: string): string | null {
+  // Handle direct video IDs (11 alphanumeric characters with - and _)
+  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) {
+    return url;
+  }
+
+  // Handle various YouTube URL formats
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([^&\n?#]+)/,
+    /(?:youtu\.be\/)([^&\n?#]+)/,
+    /(?:youtube\.com\/embed\/)([^&\n?#]+)/,
+    /(?:youtube\.com\/v\/)([^&\n?#]+)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
+
 // ============ PERMISSION QUERIES ============
 
 /**
@@ -994,10 +1071,19 @@ export const remove = mutation({
       await ctx.db.delete(version._id);
     }
 
-    // 4. Delete the arrangement itself
+    // 4. Delete audio file from R2 if exists
+    if (arrangement.audioFileKey) {
+      try {
+        await r2.deleteObject(ctx, arrangement.audioFileKey);
+      } catch {
+        console.warn("Failed to delete audio from R2:", arrangement.audioFileKey);
+      }
+    }
+
+    // 5. Delete the arrangement itself
     await ctx.db.delete(args.id);
 
-    // 5. Update song's denormalized arrangement summary
+    // 6. Update song's denormalized arrangement summary
     await updateSongArrangementSummary(ctx, arrangement.songId);
 
     return { success: true };
