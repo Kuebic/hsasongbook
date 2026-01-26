@@ -29,8 +29,12 @@ export function isRhythmBracket(bracketContent: string): boolean {
  * - Quality modifiers: m, maj, min, dim, aug, sus2, sus4
  * - Extensions: add9, 7, 9, 11, 13, M7 (major 7)
  * - Bass note: /A-G with optional # or b
+ *
+ * Note: Uses negative lookahead (?![#b\w]) instead of \b at the end because
+ * word boundaries don't work correctly with accidentals (# and b are non-word
+ * characters, so \b would match between G and # in "E/G#", capturing only "E/G")
  */
-const CHORD_PATTERN = /\b([A-G][#b]?(?:m|maj|min|dim|aug|sus[24]?|add\d+|M?\d+)*(?:\/[A-G][#b]?)?)\b/g
+const CHORD_PATTERN = /\b([A-G][#b]?(?:m|maj|min|dim|aug|sus[24]?|add\d+|M?\d+)*(?:\/[A-G][#b]?)?)(?![#b\w])/g
 
 /**
  * Transposes a single chord by the given number of semitones
@@ -53,7 +57,8 @@ function transposeChord(
 
     const transposed = chord.transpose(semitones)
     const modifier = preferFlats ? 'b' : '#'
-    return transposed.useModifier(modifier).toString()
+    // Apply modifier first, then normalize to fix B#->C, Fb->E, etc.
+    return transposed.useModifier(modifier).normalize().toString()
   } catch {
     // Return unchanged if parsing fails (e.g., invalid chord name)
     return chordName

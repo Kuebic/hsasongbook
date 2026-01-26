@@ -30,6 +30,16 @@ export type { TranspositionState }
 const CHROMATIC_SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const
 const CHROMATIC_FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'] as const
 
+// Theoretical sharp keys that should prefer their flat enharmonic equivalents
+// G# major = 8 sharps (theoretical) → prefer Ab major = 4 flats
+// D# major = 9 sharps (theoretical) → prefer Eb major = 3 flats
+// A# major = 10 sharps (theoretical) → prefer Bb major = 2 flats
+const UNUSUAL_SHARP_KEYS = new Set(['G#', 'D#', 'A#'])
+
+// Theoretical flat keys that should prefer their sharp enharmonic equivalents
+// Cb major = 7 flats → prefer B major = 5 sharps
+const UNUSUAL_FLAT_KEYS = new Set(['Cb'])
+
 /**
  * Get key at specified semitone offset
  */
@@ -98,7 +108,52 @@ export default function ChordProViewer({
 
   // Transposition state - managed here so we can preprocess rhythm brackets
   const [transpositionOffset, setTranspositionOffset] = useState<number>(0)
-  const [preferFlats, setPreferFlats] = useState<boolean>(false)
+
+  // Extract key early (before preprocessing) to compute preferFlats synchronously
+  // This avoids the "flash" of wrong enharmonic spelling on first render
+  const earlyKey = useMemo(() => {
+    // First check arrangementMetadata (prop takes precedence)
+    if (arrangementMetadata?.key) {
+      return arrangementMetadata.key
+    }
+    // Otherwise try to extract from raw content
+    if (content) {
+      const keyMatch = content.match(/\{key:\s*([A-Ga-g][#b]?m?)\}/i)
+      if (keyMatch) {
+        return keyMatch[1]
+      }
+    }
+    return 'C' // Default
+  }, [content, arrangementMetadata?.key])
+
+  // Compute ideal preferFlats synchronously (no flash!)
+  // This avoids unusual/theoretical keys like G#, D#, A# (prefer Ab, Eb, Bb)
+  const computedPreferFlats = useMemo(() => {
+    const keyWithSharps = transposeKey(earlyKey, transpositionOffset, false)
+    const keyWithFlats = transposeKey(earlyKey, transpositionOffset, true)
+
+    // If the sharp spelling is unusual (G#, D#, A#), prefer flats (Ab, Eb, Bb)
+    if (UNUSUAL_SHARP_KEYS.has(keyWithSharps)) {
+      return true
+    }
+    // If the flat spelling is unusual (Cb), prefer sharps (B)
+    if (UNUSUAL_FLAT_KEYS.has(keyWithFlats)) {
+      return false
+    }
+    // Otherwise, use the original key's preference (flat keys stay flat, sharp keys stay sharp)
+    return earlyKey.includes('b')
+  }, [earlyKey, transpositionOffset])
+
+  // User override: null = use computed, boolean = user explicitly chose
+  const [userPreferFlatsOverride, setUserPreferFlatsOverride] = useState<boolean | null>(null)
+
+  // Reset override when key/offset changes (so auto-calculation takes over again)
+  useEffect(() => {
+    setUserPreferFlatsOverride(null)
+  }, [earlyKey, transpositionOffset])
+
+  // Final value: user wins if they toggled, otherwise use computed
+  const preferFlats = userPreferFlatsOverride ?? computedPreferFlats
 
   // Preprocess content: transpose rhythm brackets BEFORE ChordSheetJS parsing
   const preprocessedContent = useMemo(() => {
@@ -119,11 +174,6 @@ export default function ChordProViewer({
     return metadata.key || 'C' // Default to C if no key specified
   }, [metadata.key])
 
-  // Sync preferFlats when originalKey changes
-  useEffect(() => {
-    setPreferFlats(originalKey.includes('b'))
-  }, [originalKey])
-
   // Calculate current key based on offset
   const currentKey = useMemo(() => {
     return transposeKey(originalKey, transpositionOffset, preferFlats)
@@ -140,8 +190,14 @@ export default function ChordProViewer({
         processedSong = processedSong.transpose(transpositionOffset)
       }
 
+      // Apply enharmonic preference (flats vs sharps)
+      // Note: useModifier('#') may produce B# for C, or useModifier('b') may produce Fb for E
       const modifier = preferFlats ? 'b' : '#'
       processedSong = processedSong.useModifier(modifier)
+
+      // Normalize enharmonic spellings AFTER applying modifier preference
+      // This converts B# -> C, E# -> F, Cb -> B, Fb -> E (the problematic over-conversions)
+      processedSong = processedSong.normalizeChords()
 
       return processedSong
     } catch (err) {
@@ -163,8 +219,8 @@ export default function ChordProViewer({
   }, [])
 
   const toggleEnharmonic = useCallback(() => {
-    setPreferFlats(prev => !prev)
-  }, [])
+    setUserPreferFlatsOverride(prev => !(prev ?? computedPreferFlats))
+  }, [computedPreferFlats])
 
   // Generate HTML from the transposed/processed song
   const htmlOutput = useMemo(() => {
