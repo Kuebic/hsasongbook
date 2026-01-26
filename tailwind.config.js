@@ -17,6 +17,11 @@ export default {
     },
     extend: {
       zIndex: Z_INDEX,
+      fontSize: {
+        'display': ['3rem', { lineHeight: '1.1', fontWeight: '700', letterSpacing: '-0.02em' }],
+        'headline': ['1.75rem', { lineHeight: '1.2', fontWeight: '600', letterSpacing: '-0.01em' }],
+        'title': ['1.25rem', { lineHeight: '1.3', fontWeight: '600' }],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

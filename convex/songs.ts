@@ -426,6 +426,29 @@ export const getDistinctThemes = query({
 });
 
 /**
+ * Get themes with song counts for homepage browsing
+ * Access: Everyone
+ */
+export const getThemesWithCounts = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const songs = await ctx.db.query("songs").collect();
+    const themeCounts: Record<string, number> = {};
+
+    for (const song of songs) {
+      song.themes?.forEach((theme) => {
+        themeCounts[theme] = (themeCounts[theme] || 0) + 1;
+      });
+    }
+
+    return Object.entries(themeCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, args.limit || 6)
+      .map(([theme, count]) => ({ theme, count }));
+  },
+});
+
+/**
  * Get distinct artists for filter dropdown
  * Access: Everyone
  */
