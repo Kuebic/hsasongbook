@@ -10,9 +10,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { useUploadFile } from '@convex-dev/r2/react';
 import { api } from '../../../../convex/_generated/api';
 import type { Id } from '../../../../convex/_generated/dataModel';
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const ALLOWED_TYPES = ['audio/mpeg', 'audio/mp3'];
+import { validateAudioFile } from '../validation/audioSchemas';
 
 interface UseArrangementAudioReturn {
   // Audio URL (signed, 24h expiry)
@@ -50,22 +48,10 @@ export function useArrangementAudio(
   const uploadFile = useUploadFile(api.files);
 
   /**
-   * Validate file before upload
+   * Validate file before upload (wraps shared validation for hook interface)
    */
   const validateFile = useCallback((file: File): { valid: boolean; error?: string } => {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return {
-        valid: false,
-        error: 'Please select an MP3 file',
-      };
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return {
-        valid: false,
-        error: 'File size must be less than 10 MB',
-      };
-    }
-    return { valid: true };
+    return validateAudioFile(file);
   }, []);
 
   /**

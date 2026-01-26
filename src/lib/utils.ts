@@ -6,6 +6,24 @@ export function cn(...inputs: ClassValue[]): string {
 }
 
 /**
+ * Format seconds into a human-readable time string (e.g., "3:45").
+ */
+export function formatTime(seconds: number): string {
+  if (!isFinite(seconds) || isNaN(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Capitalize the first letter of a string.
+ */
+export function capitalize(str: string): string {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
  * Map of known error patterns to user-friendly messages.
  * Keys are substrings to search for in error messages.
  */

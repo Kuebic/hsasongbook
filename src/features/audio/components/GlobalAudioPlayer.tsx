@@ -26,16 +26,9 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { Youtube } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatTime } from '@/lib/utils';
 import { useAudioPlayer } from '../context/AudioPlayerContext';
 import YouTubePip from './YouTubePip';
-
-function formatTime(seconds: number): string {
-  if (!isFinite(seconds) || isNaN(seconds)) return '0:00';
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
 
 export default function GlobalAudioPlayer() {
   const {

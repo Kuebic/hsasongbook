@@ -200,8 +200,8 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
       if (player) {
         try {
           setCurrentTime(player.getCurrentTime());
-        } catch {
-          // Player might be destroyed
+        } catch (e) {
+          console.debug('[AudioPlayer] YouTube time update failed:', e);
         }
       }
     }, 500);
@@ -325,8 +325,8 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
         } else {
           youtubePlayerRef.current.unMute();
         }
-      } catch {
-        // Player might not be ready
+      } catch (e) {
+        console.debug('[AudioPlayer] YouTube volume change failed:', e);
       }
     }
   }, []);
@@ -342,8 +342,8 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
           } else {
             youtubePlayerRef.current.unMute();
           }
-        } catch {
-          // Player might not be ready
+        } catch (e) {
+          console.debug('[AudioPlayer] YouTube mute toggle failed:', e);
         }
       }
       return newMuted;

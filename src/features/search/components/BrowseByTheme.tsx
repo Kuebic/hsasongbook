@@ -1,9 +1,8 @@
-import { Link } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
-import { ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import ThemeCard from './ThemeCard';
+import SectionHeader from './SectionHeader';
 
 interface BrowseByThemeProps {
   limit?: number;
@@ -20,21 +19,7 @@ export default function BrowseByTheme({ limit = 6 }: BrowseByThemeProps) {
 
   return (
     <section className="mb-12">
-      {/* Section header with editorial styling */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <h2 className="text-headline text-foreground">
-            Browse by Theme
-          </h2>
-        </div>
-        <Link
-          to="/songs"
-          className="group flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
-        >
-          <span>View all</span>
-          <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-        </Link>
-      </div>
+      <SectionHeader title="Browse by Theme" viewAllLink="/songs" />
 
       {/* Theme cards grid */}
       {isLoading ? (

@@ -651,22 +651,24 @@ export const updateYoutubeUrl = mutation({
  * - https://www.youtube.com/embed/VIDEO_ID
  * - Just the VIDEO_ID (11 characters)
  */
-function extractYoutubeVideoId(url: string): string | null {
+function extractYoutubeVideoId(input: string): string | null {
+  const trimmed = input.trim();
+
   // Handle direct video IDs (11 alphanumeric characters with - and _)
-  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) {
-    return url;
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
   }
 
   // Handle various YouTube URL formats
   const patterns = [
-    /(?:youtube\.com\/watch\?v=)([^&\n?#]+)/,
-    /(?:youtu\.be\/)([^&\n?#]+)/,
-    /(?:youtube\.com\/embed\/)([^&\n?#]+)/,
-    /(?:youtube\.com\/v\/)([^&\n?#]+)/,
+    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
   ];
 
   for (const pattern of patterns) {
-    const match = url.match(pattern);
+    const match = trimmed.match(pattern);
     if (match && match[1]) {
       return match[1];
     }

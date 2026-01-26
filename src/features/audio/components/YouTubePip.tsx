@@ -67,8 +67,8 @@ export default function YouTubePip() {
       if (playerRef.current) {
         try {
           playerRef.current.destroy();
-        } catch {
-          // Ignore errors during cleanup
+        } catch (e) {
+          console.debug('[YouTubePip] Player destroy during init failed:', e);
         }
         playerRef.current = null;
       }
@@ -124,8 +124,8 @@ export default function YouTubePip() {
       if (playerRef.current) {
         try {
           playerRef.current.destroy();
-        } catch {
-          // Ignore errors during cleanup
+        } catch (e) {
+          console.debug('[YouTubePip] Player destroy on cleanup failed:', e);
         }
         playerRef.current = null;
         unregisterYouTubePlayer();

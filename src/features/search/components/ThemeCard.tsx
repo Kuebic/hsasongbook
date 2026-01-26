@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { capitalize } from '@/lib/utils';
 
 interface ThemeCardProps {
   theme: string;
@@ -6,7 +7,7 @@ interface ThemeCardProps {
 }
 
 export default function ThemeCard({ theme, count }: ThemeCardProps) {
-  const capitalizedTheme = theme.charAt(0).toUpperCase() + theme.slice(1);
+  const capitalizedTheme = capitalize(theme);
 
   return (
     <Link

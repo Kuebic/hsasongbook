@@ -89,8 +89,8 @@ function QuickAccessCard({ item, index }: QuickAccessCardProps) {
   return (
     <Link
       to={item.href}
-      className="group relative flex-shrink-0 snap-start"
-      style={{ animationDelay: `${index * 50}ms` }}
+      className="group relative flex-shrink-0 snap-start animate-in fade-in-0 slide-in-from-bottom-2"
+      style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
     >
       <div className="relative w-[140px] h-[88px] rounded-xl border border-border bg-card overflow-hidden transition-all duration-300 ease-out group-hover:border-primary/30 group-hover:shadow-md group-hover:-translate-y-0.5 group-active:scale-[0.98]">
         {/* Subtle corner accent */}

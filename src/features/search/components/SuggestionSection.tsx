@@ -4,11 +4,10 @@
  * Reusable section for displaying a list of songs with a header and "See All" link.
  */
 
-import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Song } from '@/types/Song.types';
 import SongList from './SongList';
+import SectionHeader from './SectionHeader';
 
 interface SuggestionSectionProps {
   title: string;
@@ -32,17 +31,7 @@ export default function SuggestionSection({
 
   return (
     <section className="mb-12">
-      {/* Header with title and See All link */}
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-headline text-foreground">{title}</h2>
-        <Link
-          to={seeAllLink}
-          className="group flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
-        >
-          <span>View all</span>
-          <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-        </Link>
-      </div>
+      <SectionHeader title={title} viewAllLink={seeAllLink} />
 
       {/* Content */}
       {loading ? (
