@@ -316,11 +316,38 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
   const setVolume = useCallback((newVolume: number) => {
     setVolumeState(newVolume);
     setIsMuted(newVolume === 0);
-    // Note: YouTube volume is controlled via the iframe, not via this
+    // Also apply to YouTube player if active
+    if (youtubePlayerRef.current) {
+      try {
+        youtubePlayerRef.current.setVolume(newVolume * 100); // YouTube uses 0-100
+        if (newVolume === 0) {
+          youtubePlayerRef.current.mute();
+        } else {
+          youtubePlayerRef.current.unMute();
+        }
+      } catch {
+        // Player might not be ready
+      }
+    }
   }, []);
 
   const toggleMute = useCallback(() => {
-    setIsMuted((prev) => !prev);
+    setIsMuted((prev) => {
+      const newMuted = !prev;
+      // Also apply to YouTube player if active
+      if (youtubePlayerRef.current) {
+        try {
+          if (newMuted) {
+            youtubePlayerRef.current.mute();
+          } else {
+            youtubePlayerRef.current.unMute();
+          }
+        } catch {
+          // Player might not be ready
+        }
+      }
+      return newMuted;
+    });
   }, []);
 
   const expand = useCallback(() => {

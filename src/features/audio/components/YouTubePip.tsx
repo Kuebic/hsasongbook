@@ -9,7 +9,8 @@
 
 import { useEffect, useRef, useId } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Minimize2, Maximize2 } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { X, Minimize2, Maximize2, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer, type YouTubePipSize } from '../context/AudioPlayerContext';
 import { useYouTubeAPI } from '../hooks/useYouTubeAPI';
@@ -27,13 +28,19 @@ const SIZE_ORDER: YouTubePipSize[] = ['small', 'medium', 'large'];
 export default function YouTubePip() {
   const {
     track,
+    isPlaying,
     isVisible,
+    volume,
+    isMuted,
     youtubePipSize,
     registerYouTubePlayer,
     unregisterYouTubePlayer,
     setYoutubePipSize,
     setYouTubeDuration,
     setYouTubeIsPlaying,
+    togglePlay,
+    setVolume,
+    toggleMute,
     close,
   } = useAudioPlayer();
 
@@ -204,9 +211,73 @@ export default function YouTubePip() {
           </Button>
         </div>
 
-        {/* Bottom info (optional - could show title) */}
-        <div className="text-xs text-white/80 truncate px-1">
-          {track.arrangementName}
+        {/* Center play/pause button */}
+        <div className="flex-1 flex items-center justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-12 w-12 rounded-full bg-black/60 hover:bg-black/80 text-white"
+            onClick={togglePlay}
+          >
+            {isPlaying ? (
+              <Pause className="h-6 w-6" />
+            ) : (
+              <Play className="h-6 w-6 ml-0.5" />
+            )}
+          </Button>
+        </div>
+
+        {/* Bottom: volume + title */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 bg-black/50 hover:bg-black/70 text-white shrink-0"
+            onClick={toggleMute}
+          >
+            {isMuted || volume === 0 ? (
+              <VolumeX className="h-3.5 w-3.5" />
+            ) : (
+              <Volume2 className="h-3.5 w-3.5" />
+            )}
+          </Button>
+          <Slider
+            value={[isMuted ? 0 : volume]}
+            min={0}
+            max={1}
+            step={0.1}
+            onValueChange={(value) => value[0] !== undefined && setVolume(value[0])}
+            className="w-16 shrink-0"
+          />
+          <span className="text-xs text-white/80 truncate flex-1">
+            {track.arrangementName}
+          </span>
+          {/* YouTube link - opens video on YouTube and stops playback */}
+          <a
+            href={`https://www.youtube.com/watch?v=${videoId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
+              // Pause playback when opening YouTube
+              if (isPlaying && playerRef.current) {
+                playerRef.current.pauseVideo();
+              }
+            }}
+            className="shrink-0 p-1 rounded bg-black/50 hover:bg-black/70 transition-colors"
+            title="Watch on YouTube"
+          >
+            <svg
+              viewBox="0 0 28 20"
+              className="h-4 w-5"
+              fill="currentColor"
+            >
+              <path
+                d="M27.4 3.1c-.3-1.2-1.2-2.1-2.4-2.4C22.8 0 14 0 14 0S5.2 0 3 .7C1.8 1 .9 1.9.6 3.1 0 5.3 0 10 0 10s0 4.7.6 6.9c.3 1.2 1.2 2.1 2.4 2.4 2.2.7 11 .7 11 .7s8.8 0 11-.7c1.2-.3 2.1-1.2 2.4-2.4.6-2.2.6-6.9.6-6.9s0-4.7-.6-6.9zM11 14V6l7.4 4-7.4 4z"
+                fill="#FF0000"
+              />
+              <path d="M11 14V6l7.4 4-7.4 4z" fill="#FFFFFF" />
+            </svg>
+          </a>
         </div>
       </div>
     </div>
