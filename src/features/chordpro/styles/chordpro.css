@@ -29,13 +29,17 @@
   margin-bottom: 1.5rem;
   padding-top: 1.2rem; /* Add padding to accommodate absolute positioned chords */
   position: relative;
+  /* Increase row gap for wrapped lines so chords don't overlap previous lyrics */
+  row-gap: 1.4rem;
 }
 
 /* Chord/lyric pair container */
 .chord-sheet-output .column {
   display: inline-block; /* Changed from inline-flex */
   position: relative;
-  padding-right: 0.5rem;
+  padding-right: 0.1rem;
+  /* Add top margin when wrapping to prevent chord overlap with previous line */
+  margin-top: 0.2rem;
 }
 
 /* Chord text - positioned absolutely above lyrics */
@@ -52,9 +56,9 @@
 .chord-sheet-output .lyrics {
   @apply text-foreground;
   display: inline-block; /* Changed from block to inline-block */
-  white-space: pre;
+  white-space: pre-wrap; /* Allow wrapping while preserving spaces */
+  word-break: break-word; /* Break long words if needed */
   line-height: 1.5; /* Ensure consistent line height */
-  /* Preserve spaces in lyrics */
 }
 
 /* Section labels and formatting */
