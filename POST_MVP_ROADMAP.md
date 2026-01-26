@@ -1,6 +1,6 @@
 # HSA Songbook - Post-MVP Roadmap
 
-**Last Updated**: 2026-01-23
+**Last Updated**: 2026-01-26
 
 Features and improvements planned after MVP, organized by priority and effort.
 
@@ -85,7 +85,38 @@ New users don't understand the community nature of the app.
 
 ---
 
-## Priority 4: Editor Improvements
+## Priority 4: Theme & Display Customization
+
+| Feature | Description | Effort | Status |
+|---------|-------------|--------|--------|
+| ~~**Earth-tone color palette**~~ | ~~Warm earthy tones (sage green, terracotta) replacing default shadcn colors~~ | ~~Medium~~ | ✅ Done |
+| **Theme color switcher** | Allow users to choose from preset color themes (earthy, ocean, forest, sunset, etc.) | Medium | |
+| **Font customization** | Allow users to choose fonts for chord sheets (serif, sans-serif, monospace options) | Medium | |
+| **Font size preference** | Global font size preference for chord sheets (small, medium, large) | Low | |
+
+### Theme Customization Details
+
+**Color Themes to Implement:**
+- **Earthy** (current default): Sage green primary, terracotta accent, warm backgrounds
+- **Ocean**: Deep blue primary, coral accent, cool gray backgrounds
+- **Forest**: Deep green primary, amber accent, natural tones
+- **Sunset**: Warm orange primary, purple accent, gradient-inspired
+- **Classic**: Traditional blue/gray theme (similar to original shadcn)
+
+**Implementation approach:**
+- Store preference in localStorage and user profile (Convex)
+- CSS custom properties already in place - just swap color values
+- Create `src/lib/theme/colorThemes.ts` with presets
+- Add theme selector to Settings page
+
+**Font Customization:**
+- **Chord sheet fonts**: Georgia (serif), Inter (sans-serif), JetBrains Mono (monospace)
+- Stored per-user, synced via Convex
+- Applied via CSS variable `--font-chordsheet`
+
+---
+
+## Priority 5: Editor Improvements
 
 | Feature | Description | Effort |
 |---------|-------------|--------|
@@ -96,7 +127,7 @@ New users don't understand the community nature of the app.
 
 ---
 
-## Priority 5: Key Selection UX
+## Priority 6: Key Selection UX
 
 | Issue | Fix | Effort |
 |-------|-----|--------|
@@ -105,7 +136,7 @@ New users don't understand the community nature of the app.
 
 ---
 
-## Priority 6: Search & Input
+## Priority 7: Search & Input
 
 | Feature | Description | Effort |
 |---------|-------------|--------|
@@ -115,11 +146,11 @@ New users don't understand the community nature of the app.
 
 ---
 
-## Priority 7: User & Social Features
+## Priority 8: User & Social Features
 
 | Feature | Description | Effort |
 |---------|-------------|--------|
-| **Ratings & favorites** | Like/rate arrangements from arrangement view. Should also list # of raters | Medium |
+| ~~**Favorites**~~ | ~~Heart/favorite arrangements; show favorite count~~ | ~~Medium~~ | ✅ Done |
 | **Comments with threads** | Threaded comments on songs and arrangements. See details below. | High |
 
 ### Comments Feature Details
@@ -146,7 +177,7 @@ New users don't understand the community nature of the app.
 
 ---
 
-## Priority 8: OAuth Authentication
+## Priority 9: OAuth Authentication
 
 ### Google OAuth (Recommended First)
 
@@ -180,7 +211,7 @@ Only implement if planning App Store release or significant iOS user base.
 
 ---
 
-## Priority 9: Setlist Enhancements
+## Priority 10: Setlist Enhancements
 
 | Feature | Description | Effort |
 |---------|-------------|--------|
@@ -204,7 +235,7 @@ Only implement if planning App Store release or significant iOS user base.
 
 ---
 
-## Priority 10: Technical Debt
+## Priority 11: Technical Debt
 
 | Issue | Fix | Effort | Status |
 |-------|-----|--------|--------|
@@ -235,6 +266,9 @@ Only implement if planning App Store release or significant iOS user base.
 
 | Date | Change |
 |------|--------|
+| 2026-01-26 | Added theme customization roadmap (Priority 4); implemented earth-tone color palette; added theme suggestions for songs; added origin field and filtering |
+| 2026-01-26 | Redesigned search/home page with hero section, browse-by-theme, and quick access bar |
+| 2026-01-26 | Implemented favorites system for arrangements |
 | 2026-01-24 | Removed arrangement switchers (dropdown + bottom nav); added "Only mine" filter on song pages; added "My Arrangements" section to profile page |
 | 2026-01-24 | Added arrangement management features: inline name editing, delete (with setlist warning), duplicate |
 | 2026-01-23 | Fixed duplicate "Available Arrangements" header - removed from ArrangementList since SongPage already provides section header |
@@ -269,9 +303,9 @@ These N+1 patterns exist but are less critical (Convex batches parallel `ctx.db.
 
 ## Future Ideas (To Be Fleshed Out)
 
-### Song Origin/Category Taxonomy
+### Song Origin/Category Taxonomy ✅ IMPLEMENTED
 
-Need a way to categorize songs by origin/tradition:
+Songs now have an `origin` field for categorization:
 - **Traditional Holy Songs** - The original 40, originally Korean, translated to English
 - **Pioneer Songs** - Traditional songs written by early pioneers, popular in US
 - **Repurposed Hymns** - Traditional hymns adapted for our use
@@ -279,10 +313,11 @@ Need a way to categorize songs by origin/tradition:
 - **Original Songs** - New compositions by community members
 - **New Holy Songs** - Recently added to official holy song collection
 
-Questions to resolve:
-- Is this a single "origin" field or multiple tags?
-- Should this be curated/admin-controlled or user-contributed?
-- How does this interact with existing themes/tags?
+**Implementation:**
+- Single `origin` field (not multiple tags) - songs have one origin
+- User-contributed when adding songs
+- Separate from themes (themes describe content, origin describes source)
+- Filter by origin on Browse page via `getDistinctOrigins()` query
 
 ### Mashup Arrangements
 

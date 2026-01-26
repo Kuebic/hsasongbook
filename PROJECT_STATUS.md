@@ -1,8 +1,8 @@
 # HSA Songbook - Project Status & MVP Roadmap
 
-**Last Updated**: 2026-01-23
-**Current Phase**: 6.2b Complete (Version History)
-**Goal**: MVP ASAP - solid skeleton, secure foundation
+**Last Updated**: 2026-01-26
+**Current Phase**: MVP Complete + Post-MVP Enhancements
+**Status**: Production-ready with ongoing feature development
 
 ---
 
@@ -42,7 +42,7 @@ HSA Songbook is a Progressive Web App (PWA) for managing worship songs and chord
 
 ## Completed Phases Summary
 
-### Phases 1-5.4 ✅ COMPLETE
+### All MVP Phases ✅ COMPLETE
 
 | Feature | Status |
 |---------|--------|
@@ -60,6 +60,14 @@ HSA Songbook is a Progressive Web App (PWA) for managing worship songs and chord
 | Add Song/Arrangement forms with auth gating | ✅ |
 | Setlists wired to Convex | ✅ |
 | Seed script for initial data | ✅ |
+| User profiles with avatars | ✅ |
+| Groups & permissions system | ✅ |
+| Version history for Community content | ✅ |
+| Collaborators on arrangements | ✅ |
+| Favorites system | ✅ |
+| Theme-based song discovery | ✅ |
+| Song origin categorization | ✅ |
+| Earth-tone color palette | ✅ |
 
 ---
 
@@ -291,13 +299,13 @@ npx convex run seed:makeCommunityGroupOpen # Make Community open to join
 ## Post-MVP Features
 
 See [POST_MVP_ROADMAP.md](POST_MVP_ROADMAP.md) for:
+- Theme & display customization (color themes, fonts)
 - OAuth authentication (Google, Apple)
-- Bug fixes
-- Permissions & ownership features
-- User & social features
-- Setlist enhancements
-- Editor UX improvements
-- Search improvements
+- Collaborator notifications
+- User onboarding
+- Editor improvements
+- Comments system
+- Setlist enhancements (offline mode)
 - Technical debt
 
 ---
@@ -306,6 +314,7 @@ See [POST_MVP_ROADMAP.md](POST_MVP_ROADMAP.md) for:
 
 | Date | Change |
 |------|--------|
+| 2026-01-26 | **Post-MVP enhancements**: Earth-tone color palette, theme suggestions, song origin field, favorites system, redesigned search page with browse-by-theme |
 | 2026-01-23 | **Database optimizations**: Fixed N+1 in `groups.ts list()`, added `isSystemGroup` index, added `arrangements.getCountsBySong` query, fixed SongList over-fetching |
 | 2026-01-23 | **Phase 6.2b complete**: Version history UI, owner selector in forms, co-author picker, song ownership display. Full groups & permissions system complete. |
 | 2026-01-23 | **Phase 6.2 complete**: Groups feature with ownership, membership, permissions. Routes: `/groups`, `/groups/:slug`, `/groups/:slug/settings` |

@@ -1,13 +1,15 @@
 # HSA Songbook
 
-A Progressive Web App (PWA) for managing worship songs and chord arrangements.
+A Progressive Web App (PWA) for managing worship songs and chord arrangements, designed for worship teams.
 
 ## Tech Stack
 
 - **Frontend**: React 19 + TypeScript + Vite
 - **Backend**: Convex (real-time database + auth)
-- **Styling**: TailwindCSS + shadcn/ui
+- **Styling**: TailwindCSS + shadcn/ui (earth-tone color palette)
+- **Editor**: CodeMirror 6 (ChordPro syntax highlighting)
 - **PWA**: vite-plugin-pwa + Workbox
+- **File Storage**: Cloudflare R2 (profile pictures)
 
 ## Getting Started
 
@@ -66,27 +68,46 @@ src/
 │   ├── auth/      # Authentication (Convex Auth)
 │   ├── songs/     # Song management
 │   ├── arrangements/ # Chord arrangements
+│   ├── chordpro/  # ChordPro editor (CodeMirror 6)
 │   ├── setlists/  # Setlist management
+│   ├── groups/    # Groups and membership
+│   ├── versions/  # Version history
+│   ├── profile/   # User profiles
+│   ├── browse/    # Song browsing with filters
+│   ├── search/    # Search and discovery
+│   ├── settings/  # User settings
 │   ├── pwa/       # PWA/offline functionality
-│   └── ...
-├── lib/           # Utilities and config
+│   └── shared/    # Shared components
+├── lib/           # Utilities, theme config
 └── types/         # TypeScript types
 
 convex/
 ├── schema.ts      # Database schema
 ├── auth.ts        # Auth configuration
-├── auth.config.ts # Auth providers
-└── http.ts        # HTTP routes
+├── songs.ts       # Song queries/mutations
+├── arrangements.ts # Arrangement queries/mutations
+├── setlists.ts    # Setlist queries/mutations
+├── groups.ts      # Group queries/mutations
+├── versions.ts    # Version history
+├── permissions.ts # Permission helpers
+├── files.ts       # R2 file storage
+└── seed.ts        # Seed scripts
 ```
 
 ## Features
 
-- Offline-first PWA architecture
-- Anonymous + email/password authentication
-- Song and chord arrangement management
-- Setlist creation for performances
-- ChordPro format support
-- Dark/light theme
+- **PWA** - Installable app with offline UI caching
+- **Real-time sync** - Changes sync instantly across devices via Convex
+- **Authentication** - Anonymous (view-only) or email/password (full access)
+- **Song management** - Add songs with themes, origin, lyrics, and metadata
+- **Chord arrangements** - ChordPro editor with syntax highlighting and transposition
+- **Setlists** - Create and manage setlists with drag-drop ordering
+- **Groups & permissions** - Share content with groups, collaborators, and the Community
+- **Version history** - Rollback Community-owned content to previous versions
+- **Favorites** - Heart arrangements to build your collection
+- **User profiles** - Profile pages with avatars and arrangement history
+- **Theme discovery** - Browse songs by worship themes (praise, thanksgiving, etc.)
+- **Dark/light mode** - System-aware theme with manual toggle
 
 ## Scripts
 
