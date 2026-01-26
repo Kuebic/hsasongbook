@@ -33,6 +33,8 @@ export const Z_INDEX = {
   base: 0,
   dropdown: 1000,
   sticky: 1020,
+  youtubePip: 1024,      // YouTube picture-in-picture, above sticky but below player bar
+  globalPlayer: 1025,    // Global media player bar
   mobileNav: 1030,
   desktopHeader: 1040,
   backdrop: 1050,

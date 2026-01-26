@@ -8,7 +8,6 @@ import ChordProViewer, { type TranspositionState } from '@/features/chordpro';
 import ArrangementHeader from '../components/ArrangementHeader';
 import ArrangementMetadataForm from '../components/ArrangementMetadataForm';
 import AudioReferencesForm from '../components/AudioReferencesForm';
-import YouTubePlayer from '../components/YouTubePlayer';
 import CollaboratorsDialog from '../components/CollaboratorsDialog';
 import CoAuthorsList from '../components/CoAuthorsList';
 import { ArrangementActionsMenu } from '../components/ArrangementActionsMenu';
@@ -24,6 +23,7 @@ import logger from '@/lib/logger';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Music, Printer, Play, Youtube } from 'lucide-react';
 import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSanitizer';
+import { extractYoutubeVideoId } from '../validation/audioSchemas';
 import type { ArrangementMetadata } from '@/types/Arrangement.types';
 
 export function ArrangementPage() {
@@ -36,9 +36,8 @@ export function ArrangementPage() {
   const [showCollaboratorsDialog, setShowCollaboratorsDialog] = useState(false);
   const [showChords, setShowChords] = useState(true);
   const [transposition, setTransposition] = useState<TranspositionState | null>(null);
-  const [showYouTubePlayer, setShowYouTubePlayer] = useState(false);
 
-  // Global audio player for MP3 playback
+  // Global media player for MP3 and YouTube playback
   const { playTrack, track: currentTrack, isPlaying } = useAudioPlayer();
 
   // Callback to receive transposition state from ChordProViewer
@@ -82,10 +81,17 @@ export function ArrangementPage() {
   const isThisTrackPlaying =
     currentTrack?.arrangementSlug === arrangementSlug && isPlaying;
 
+  // Check if this arrangement's YouTube is currently playing
+  const isThisYouTubePlaying =
+    currentTrack?.mediaType === 'youtube' &&
+    currentTrack?.arrangementSlug === arrangementSlug &&
+    isPlaying;
+
   // Handle playing MP3 in global player
   const handlePlayAudio = useCallback(() => {
     if (!audioUrl || !song || !arrangement || !songSlug || !arrangementSlug) return;
     playTrack({
+      mediaType: 'mp3',
       audioUrl,
       songTitle: song.title,
       arrangementName: arrangement.name,
@@ -93,6 +99,21 @@ export function ArrangementPage() {
       songSlug,
     });
   }, [audioUrl, song, arrangement, songSlug, arrangementSlug, playTrack]);
+
+  // Handle playing YouTube in global player
+  const handlePlayYouTube = useCallback(() => {
+    if (!arrangement?.youtubeUrl || !song || !songSlug || !arrangementSlug) return;
+    const videoId = extractYoutubeVideoId(arrangement.youtubeUrl);
+    if (!videoId) return;
+    playTrack({
+      mediaType: 'youtube',
+      youtubeVideoId: videoId,
+      songTitle: song.title,
+      arrangementName: arrangement.name,
+      arrangementSlug,
+      songSlug,
+    });
+  }, [arrangement?.youtubeUrl, song, songSlug, arrangementSlug, playTrack]);
 
   // Auto-enable edit mode when arrangement has no content AND user can edit
   useEffect(() => {
@@ -155,12 +176,12 @@ export function ArrangementPage() {
               {/* Play YouTube Button - only show if YouTube URL available */}
               {hasYoutube && (
                 <Button
-                  variant={showYouTubePlayer ? 'default' : 'outline'}
+                  variant={isThisYouTubePlaying ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setShowYouTubePlayer(true)}
+                  onClick={handlePlayYouTube}
                 >
                   <Youtube className="h-4 w-4 mr-2" />
-                  {showYouTubePlayer ? 'YouTube' : 'Play YouTube'}
+                  {isThisYouTubePlaying ? 'Playing' : 'Play YouTube'}
                 </Button>
               )}
 
@@ -319,15 +340,6 @@ export function ArrangementPage() {
       />
     )}
 
-    {/* Inline YouTube Player - must be visible for playback */}
-    {hasYoutube && showYouTubePlayer && (
-      <YouTubePlayer
-        youtubeUrl={arrangement.youtubeUrl!}
-        songTitle={song.title}
-        arrangementName={arrangement.name}
-        onClose={() => setShowYouTubePlayer(false)}
-      />
-    )}
     </SimplePageTransition>
   );
 }

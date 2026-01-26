@@ -56,6 +56,9 @@ export function useFeaturedArrangements(limit = 6): UseFeaturedArrangementsRetur
           title: 'Unknown Song',
           artist: '',
         },
+    // Audio references (for play button on cards)
+    audioFileKey: item.audioFileKey,
+    youtubeUrl: item.youtubeUrl,
   }));
 
   return {

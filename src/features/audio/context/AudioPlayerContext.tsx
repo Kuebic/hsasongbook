@@ -1,10 +1,12 @@
 /**
- * Global Audio Player Context
+ * Global Media Player Context
  *
- * Provides app-wide audio playback state and controls.
- * The audio element lives inside this provider so it persists
- * across page navigation.
+ * Provides app-wide media playback state and controls for both MP3 and YouTube.
+ * The audio element and YouTube player reference live inside this provider
+ * so they persist across page navigation.
  */
+
+/* eslint-disable no-undef */ // YT is a global from YouTube IFrame API
 
 import {
   createContext,
@@ -14,8 +16,14 @@ import {
   useEffect,
   useCallback,
   type ReactNode,
+  type MutableRefObject,
 } from 'react';
 
+// Media types
+export type MediaType = 'mp3' | 'youtube';
+export type YouTubePipSize = 'small' | 'medium' | 'large';
+
+// Legacy type for backwards compatibility
 export interface AudioTrack {
   audioUrl: string;
   songTitle: string;
@@ -24,8 +32,21 @@ export interface AudioTrack {
   songSlug: string;
 }
 
-interface AudioPlayerState {
-  track: AudioTrack | null;
+// Unified media track type
+export interface MediaTrack {
+  songTitle: string;
+  arrangementName: string;
+  arrangementSlug: string;
+  songSlug: string;
+  mediaType: MediaType;
+  // MP3-specific
+  audioUrl?: string;
+  // YouTube-specific
+  youtubeVideoId?: string;
+}
+
+interface MediaPlayerState {
+  track: MediaTrack | null;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
@@ -33,10 +54,13 @@ interface AudioPlayerState {
   isMuted: boolean;
   isVisible: boolean;
   isExpanded: boolean;
+  // YouTube-specific
+  youtubePlayerReady: boolean;
+  youtubePipSize: YouTubePipSize;
 }
 
-interface AudioPlayerActions {
-  playTrack: (track: AudioTrack) => void;
+interface MediaPlayerActions {
+  playTrack: (track: MediaTrack | AudioTrack) => void;
   pause: () => void;
   resume: () => void;
   togglePlay: () => void;
@@ -48,9 +72,19 @@ interface AudioPlayerActions {
   show: () => void;
   hide: () => void;
   close: () => void;
+  // YouTube-specific
+  registerYouTubePlayer: (player: YT.Player) => void;
+  unregisterYouTubePlayer: () => void;
+  setYoutubePipSize: (size: YouTubePipSize) => void;
+  setYouTubeDuration: (duration: number) => void;
+  setYouTubeIsPlaying: (playing: boolean) => void;
 }
 
-type AudioPlayerContextValue = AudioPlayerState & AudioPlayerActions;
+interface MediaPlayerRefs {
+  youtubePlayerRef: MutableRefObject<YT.Player | null>;
+}
+
+type AudioPlayerContextValue = MediaPlayerState & MediaPlayerActions & MediaPlayerRefs;
 
 const AudioPlayerContext = createContext<AudioPlayerContextValue | undefined>(undefined);
 
@@ -58,9 +92,21 @@ interface AudioPlayerProviderProps {
   children: ReactNode;
 }
 
+// Helper to convert legacy AudioTrack to MediaTrack
+function normalizeTrack(track: MediaTrack | AudioTrack): MediaTrack {
+  if ('mediaType' in track) {
+    return track;
+  }
+  // Legacy AudioTrack - convert to MediaTrack
+  return {
+    ...track,
+    mediaType: 'mp3' as const,
+  };
+}
+
 export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
   // Track and playback state
-  const [track, setTrack] = useState<AudioTrack | null>(null);
+  const [track, setTrack] = useState<MediaTrack | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -71,8 +117,14 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Audio element ref
+  // YouTube-specific state
+  const [youtubePlayerReady, setYoutubePlayerReady] = useState(false);
+  const [youtubePipSize, setYoutubePipSizeState] = useState<YouTubePipSize>('medium');
+
+  // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const youtubePlayerRef = useRef<YT.Player | null>(null);
+  const youtubeTimeUpdateRef = useRef<number | null>(null);
 
   // Create audio element on mount
   useEffect(() => {
@@ -80,7 +132,6 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     audio.preload = 'metadata';
     audioRef.current = audio;
 
-    // Event listeners
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
     };
@@ -133,59 +184,139 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     }
   }, [volume, isMuted]);
 
-  // Actions
-  const playTrack = useCallback((newTrack: AudioTrack) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    // If same track, just resume
-    if (track?.audioUrl === newTrack.audioUrl) {
-      audio.play();
-      setIsVisible(true);
+  // YouTube time update polling
+  useEffect(() => {
+    // Only poll when YouTube is playing
+    if (!isPlaying || track?.mediaType !== 'youtube' || !youtubePlayerRef.current) {
+      if (youtubeTimeUpdateRef.current) {
+        clearInterval(youtubeTimeUpdateRef.current);
+        youtubeTimeUpdateRef.current = null;
+      }
       return;
     }
 
-    // New track
-    setTrack(newTrack);
-    setCurrentTime(0);
-    setDuration(0);
-    audio.src = newTrack.audioUrl;
-    audio.load();
-    audio.play();
-    setIsVisible(true);
-    setIsExpanded(false);
+    youtubeTimeUpdateRef.current = window.setInterval(() => {
+      const player = youtubePlayerRef.current;
+      if (player) {
+        try {
+          setCurrentTime(player.getCurrentTime());
+        } catch {
+          // Player might be destroyed
+        }
+      }
+    }, 500);
+
+    return () => {
+      if (youtubeTimeUpdateRef.current) {
+        clearInterval(youtubeTimeUpdateRef.current);
+        youtubeTimeUpdateRef.current = null;
+      }
+    };
+  }, [isPlaying, track?.mediaType]);
+
+  // Actions
+  const playTrack = useCallback((newTrackInput: MediaTrack | AudioTrack) => {
+    const newTrack = normalizeTrack(newTrackInput);
+
+    // Stop current media if switching types
+    if (track?.mediaType === 'youtube' && newTrack.mediaType === 'mp3') {
+      youtubePlayerRef.current?.pauseVideo();
+    }
+    if (track?.mediaType === 'mp3' && newTrack.mediaType === 'youtube') {
+      audioRef.current?.pause();
+    }
+
+    if (newTrack.mediaType === 'mp3') {
+      const audio = audioRef.current;
+      if (!audio || !newTrack.audioUrl) return;
+
+      // If same track, just resume
+      if (track?.mediaType === 'mp3' && track?.audioUrl === newTrack.audioUrl) {
+        audio.play();
+        setIsVisible(true);
+        return;
+      }
+
+      // New MP3 track
+      setTrack(newTrack);
+      setCurrentTime(0);
+      setDuration(0);
+      audio.src = newTrack.audioUrl;
+      audio.load();
+      audio.play();
+      setIsVisible(true);
+      setIsExpanded(false);
+    } else if (newTrack.mediaType === 'youtube') {
+      // If same YouTube video, just resume
+      if (
+        track?.mediaType === 'youtube' &&
+        track?.youtubeVideoId === newTrack.youtubeVideoId
+      ) {
+        youtubePlayerRef.current?.playVideo();
+        setIsVisible(true);
+        return;
+      }
+
+      // New YouTube track - the YouTubePip component will handle loading
+      setTrack(newTrack);
+      setCurrentTime(0);
+      setDuration(0);
+      setIsVisible(true);
+      setIsExpanded(false);
+      setYoutubePlayerReady(false);
+    }
   }, [track]);
 
   const pause = useCallback(() => {
-    audioRef.current?.pause();
-  }, []);
+    if (track?.mediaType === 'youtube') {
+      youtubePlayerRef.current?.pauseVideo();
+    } else {
+      audioRef.current?.pause();
+    }
+    setIsPlaying(false);
+  }, [track?.mediaType]);
 
   const resume = useCallback(() => {
-    audioRef.current?.play();
-  }, []);
+    if (track?.mediaType === 'youtube') {
+      youtubePlayerRef.current?.playVideo();
+    } else {
+      audioRef.current?.play();
+    }
+  }, [track?.mediaType]);
 
   const togglePlay = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
     if (isPlaying) {
-      audio.pause();
+      if (track?.mediaType === 'youtube') {
+        youtubePlayerRef.current?.pauseVideo();
+      } else {
+        audioRef.current?.pause();
+      }
     } else {
-      audio.play();
+      if (track?.mediaType === 'youtube') {
+        youtubePlayerRef.current?.playVideo();
+      } else {
+        audioRef.current?.play();
+      }
     }
-  }, [isPlaying]);
+  }, [isPlaying, track?.mediaType]);
 
   const seek = useCallback((time: number) => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.currentTime = time;
+    if (track?.mediaType === 'youtube') {
+      youtubePlayerRef.current?.seekTo(time, true);
       setCurrentTime(time);
+    } else {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = time;
+        setCurrentTime(time);
+      }
     }
-  }, []);
+  }, [track?.mediaType]);
 
   const setVolume = useCallback((newVolume: number) => {
     setVolumeState(newVolume);
     setIsMuted(newVolume === 0);
+    // Note: YouTube volume is controlled via the iframe, not via this
   }, []);
 
   const toggleMute = useCallback(() => {
@@ -206,15 +337,48 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
 
   const hide = useCallback(() => {
     setIsVisible(false);
-    audioRef.current?.pause();
-  }, []);
+    if (track?.mediaType === 'youtube') {
+      youtubePlayerRef.current?.pauseVideo();
+    } else {
+      audioRef.current?.pause();
+    }
+    setIsPlaying(false);
+  }, [track?.mediaType]);
 
   const close = useCallback(() => {
     setIsVisible(false);
-    audioRef.current?.pause();
-    // Keep track info so user can reopen
+    if (track?.mediaType === 'youtube') {
+      youtubePlayerRef.current?.pauseVideo();
+    } else {
+      audioRef.current?.pause();
+    }
+    setIsPlaying(false);
+  }, [track?.mediaType]);
+
+  // YouTube-specific actions
+  const registerYouTubePlayer = useCallback((player: YT.Player) => {
+    youtubePlayerRef.current = player;
+    setYoutubePlayerReady(true);
   }, []);
 
+  const unregisterYouTubePlayer = useCallback(() => {
+    youtubePlayerRef.current = null;
+    setYoutubePlayerReady(false);
+  }, []);
+
+  const setYoutubePipSize = useCallback((size: YouTubePipSize) => {
+    setYoutubePipSizeState(size);
+  }, []);
+
+  const setYouTubeDuration = useCallback((dur: number) => {
+    setDuration(dur);
+  }, []);
+
+  const setYouTubeIsPlaying = useCallback((playing: boolean) => {
+    setIsPlaying(playing);
+  }, []);
+
+  // Add to context value so YouTubePip can use it
   const value: AudioPlayerContextValue = {
     // State
     track,
@@ -225,6 +389,8 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     isMuted,
     isVisible,
     isExpanded,
+    youtubePlayerReady,
+    youtubePipSize,
     // Actions
     playTrack,
     pause,
@@ -238,6 +404,13 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     show,
     hide,
     close,
+    registerYouTubePlayer,
+    unregisterYouTubePlayer,
+    setYoutubePipSize,
+    setYouTubeDuration,
+    setYouTubeIsPlaying,
+    // Refs
+    youtubePlayerRef,
   };
 
   return (
@@ -254,3 +427,4 @@ export function useAudioPlayer() {
   }
   return context;
 }
+

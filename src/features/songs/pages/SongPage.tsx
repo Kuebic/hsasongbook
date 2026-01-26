@@ -99,6 +99,9 @@ export function SongPage() {
         : new Date(arr._creationTime).toISOString(),
       creator: arr.creator ?? null,
       owner: arr.owner,
+      // Audio references (for play button on cards)
+      audioFileKey: arr.audioFileKey,
+      youtubeUrl: arr.youtubeUrl,
     }));
   }, [convexArrangements]);
 

@@ -81,6 +81,9 @@ export function UserProfilePage() {
           showRealName: userData.showRealName,
           avatarKey: userData.avatarKey,
         },
+        // Audio references (for play button on cards)
+        audioFileKey: arr.audioFileKey,
+        youtubeUrl: arr.youtubeUrl,
       }));
   }, [userArrangements, userData]);
 

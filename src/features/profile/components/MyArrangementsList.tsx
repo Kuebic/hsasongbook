@@ -54,6 +54,9 @@ export function MyArrangementsList() {
           displayName: user.displayName,
           showRealName: user.showRealName,
         },
+        // Audio references (for play button on cards)
+        audioFileKey: arr.audioFileKey,
+        youtubeUrl: arr.youtubeUrl,
       }));
   }, [myArrangements, user]);
 

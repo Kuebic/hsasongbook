@@ -59,6 +59,9 @@ export function MyFavoritesList() {
             displayName: arr.creator.displayName,
           }
         : undefined,
+      // Audio references (for play button on cards)
+      audioFileKey: arr.audioFileKey,
+      youtubeUrl: arr.youtubeUrl,
     }));
   }, [favoriteArrangements, user]);
 
