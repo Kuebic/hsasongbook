@@ -18,12 +18,12 @@ const CHROMATIC_FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', '
 // G# major = 8 sharps (theoretical) → prefer Ab major = 4 flats
 // D# major = 9 sharps (theoretical) → prefer Eb major = 3 flats
 // A# major = 10 sharps (theoretical) → prefer Bb major = 2 flats
-const UNUSUAL_SHARP_KEYS = new Set(['G#', 'D#', 'A#'])
+const UNUSUAL_SHARP_KEYS = new Set<string>(['G#', 'D#', 'A#'])
 
 // Theoretical flat keys that should prefer their sharp enharmonic equivalents
 // Cb major = 7 flats → prefer B major = 5 sharps
 // Fb would be E, but Fb isn't in our chromatic scale
-const UNUSUAL_FLAT_KEYS = new Set(['Cb'])
+const UNUSUAL_FLAT_KEYS = new Set<string>(['Cb'])
 
 
 /**
@@ -124,7 +124,7 @@ export function useTransposition(
   }, [parsedSong, transpositionOffset, preferFlats])
 
   // Control functions
-  const transposeBy = useCallback((semitones) => {
+  const transposeBy = useCallback((semitones: number) => {
     const newOffset = transpositionOffset + semitones
     // Limit to +/- 11 semitones (full octave minus one)
     if (newOffset >= -11 && newOffset <= 11) {
