@@ -8,7 +8,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -30,6 +30,8 @@ import { generateSlug } from '@/features/shared/utils/slugGenerator';
 import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
 import { extractErrorMessage } from '@/lib/utils';
 import OwnerSelector, { type OwnerSelection } from '@/features/shared/components/OwnerSelector';
+import { suggestThemes } from '@/lib/themeSuggester';
+import { ThemeSuggestions } from './ThemeSuggestions';
 
 interface AddSongFormProps {
   onSuccess?: () => void;
@@ -56,6 +58,24 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
   const [owner, setOwner] = useState<OwnerSelection>({ ownerType: 'user' });
   // Origin selection state
   const [origin, setOrigin] = useState<string>('');
+  // Theme suggestion state
+  const [lyricsForSuggestion, setLyricsForSuggestion] = useState<string>('');
+  const [themesInput, setThemesInput] = useState<string>('');
+
+  // Compute theme suggestions from lyrics (updates on blur)
+  const suggestedThemes = useMemo(
+    () => suggestThemes(lyricsForSuggestion),
+    [lyricsForSuggestion]
+  );
+  const selectedThemes = useMemo(
+    () => parseCommaSeparatedTags(themesInput),
+    [themesInput]
+  );
+
+  const handleThemeSuggestionSelect = (theme: string) => {
+    const newThemes = themesInput ? `${themesInput}, ${theme}` : theme;
+    setThemesInput(newThemes);
+  };
 
   const {
     register,
@@ -78,7 +98,6 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
       setSubmitError(null);
 
       // Parse themes from comma-separated string
-      const themesInput = (document.getElementById('themes') as HTMLInputElement)?.value || '';
       const themes = parseCommaSeparatedTags(themesInput);
 
       // Generate slug from title
@@ -196,10 +215,17 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
           type="text"
           placeholder="e.g., grace, salvation, worship"
           disabled={isSubmitting}
+          value={themesInput}
+          onChange={(e) => setThemesInput(e.target.value)}
         />
         <p className="text-xs text-muted-foreground mt-1">
           Separate multiple themes with commas
         </p>
+        <ThemeSuggestions
+          suggestions={suggestedThemes}
+          selectedThemes={selectedThemes}
+          onSelect={handleThemeSuggestionSelect}
+        />
       </div>
 
       {/* Lyrics field (optional textarea) */}
@@ -211,6 +237,7 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
           placeholder="Enter the song lyrics (optional)"
           disabled={isSubmitting}
           {...register('lyrics')}
+          onBlur={(e) => setLyricsForSuggestion(e.target.value)}
         />
         {errors.lyrics && (
           <p id="lyrics-error" className="text-sm text-destructive mt-1">

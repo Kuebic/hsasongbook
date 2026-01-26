@@ -6,7 +6,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,8 @@ import { SONG_ORIGIN_GROUPS } from '../validation/songSchemas';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
 import { extractErrorMessage } from '@/lib/utils';
+import { suggestThemes } from '@/lib/themeSuggester';
+import { ThemeSuggestions } from './ThemeSuggestions';
 
 // Edit form schema (all fields optional since partial updates allowed)
 const editSongSchema = z.object({
@@ -65,11 +67,17 @@ export default function SongEditForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   // Origin state (managed separately for Select component)
   const [origin, setOrigin] = useState<string>(initialData.origin || '');
+  // Theme suggestion state (updates on lyrics blur)
+  const [lyricsForSuggestion, setLyricsForSuggestion] = useState<string>(
+    initialData.lyrics || ''
+  );
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<EditSongFormData>({
     resolver: zodResolver(editSongSchema),
@@ -95,7 +103,24 @@ export default function SongEditForm({
       origin: initialData.origin || '',
     });
     setOrigin(initialData.origin || '');
+    setLyricsForSuggestion(initialData.lyrics || '');
   }, [initialData, reset]);
+
+  // Theme suggestions
+  const themesValue = watch('themes') || '';
+  const suggestedThemes = useMemo(
+    () => suggestThemes(lyricsForSuggestion),
+    [lyricsForSuggestion]
+  );
+  const selectedThemes = useMemo(
+    () => parseCommaSeparatedTags(themesValue),
+    [themesValue]
+  );
+
+  const handleThemeSuggestionSelect = (theme: string) => {
+    const newThemes = themesValue ? `${themesValue}, ${theme}` : theme;
+    setValue('themes', newThemes, { shouldDirty: true });
+  };
 
   const onSubmit = async (data: EditSongFormData) => {
     try {
@@ -212,6 +237,11 @@ export default function SongEditForm({
         <p className="text-xs text-muted-foreground mt-1">
           Separate multiple themes with commas
         </p>
+        <ThemeSuggestions
+          suggestions={suggestedThemes}
+          selectedThemes={selectedThemes}
+          onSelect={handleThemeSuggestionSelect}
+        />
       </div>
 
       {/* Copyright field (optional) */}
@@ -235,6 +265,7 @@ export default function SongEditForm({
           placeholder="Enter the song lyrics"
           disabled={isSubmitting}
           {...register('lyrics')}
+          onBlur={(e) => setLyricsForSuggestion(e.target.value)}
         />
         {errors.lyrics && (
           <p id="lyrics-error" className="text-sm text-destructive mt-1">
