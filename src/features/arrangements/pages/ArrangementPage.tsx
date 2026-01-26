@@ -34,7 +34,7 @@ export function ArrangementPage() {
   const isAuthenticated = user && !user.isAnonymous;
   const [isEditMode, setIsEditMode] = useState(false);
   const [showCollaboratorsDialog, setShowCollaboratorsDialog] = useState(false);
-  const [showChords, setShowChords] = useState(true);
+  const [showChords, _setShowChords] = useState(true);
   const [transposition, setTransposition] = useState<TranspositionState | null>(null);
 
   // Global media player for MP3 and YouTube playback
@@ -68,7 +68,7 @@ export function ArrangementPage() {
     owner?.isSystemGroup === true;
 
   // Phase 2: Fetch co-authors for group-owned arrangements
-  const { coAuthors, loading: coAuthorsLoading } = useArrangementCoAuthors(
+  const { coAuthors, loading: _coAuthorsLoading } = useArrangementCoAuthors(
     arrangement?.id ?? null
   );
 
@@ -113,7 +113,7 @@ export function ArrangementPage() {
       arrangementSlug,
       songSlug,
     });
-  }, [arrangement?.youtubeUrl, song, songSlug, arrangementSlug, playTrack]);
+  }, [arrangement?.youtubeUrl, arrangement?.name, song, songSlug, arrangementSlug, playTrack]);
 
   // Auto-enable edit mode when arrangement has no content AND user can edit
   useEffect(() => {

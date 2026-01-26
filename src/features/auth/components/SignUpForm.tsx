@@ -51,7 +51,7 @@ interface SignUpFormProps {
  */
 export default function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
   const { signUp } = useAuthActions();
-  const setUsername = useMutation(api.users.setUsername);
+  const _setUsername = useMutation(api.users.setUsername);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 

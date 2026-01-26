@@ -42,7 +42,7 @@ export default function GroupJoinButton({
   const isAuthenticated = user && !user.isAnonymous;
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
 
-  const { loading, error, requestJoin, cancelRequest, leaveGroup } =
+  const { loading, error: _error, requestJoin, cancelRequest, leaveGroup } =
     useGroupMembershipActions();
 
   // Not authenticated - show sign in prompt

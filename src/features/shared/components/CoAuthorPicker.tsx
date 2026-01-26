@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import UserAvatar from '@/components/UserAvatar';
-import { Search, UserPlus, X, Star, Loader2 } from 'lucide-react';
+import { Search, UserPlus, X, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getDisplayName } from '../utils/userDisplay';
 
@@ -49,7 +49,7 @@ interface CoAuthorPickerProps {
 export default function CoAuthorPicker({
   selectedAuthors,
   onChange,
-  currentUserId,
+  currentUserId: _currentUserId,
   disabled = false,
   className,
 }: CoAuthorPickerProps) {

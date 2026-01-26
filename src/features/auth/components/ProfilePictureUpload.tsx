@@ -11,7 +11,7 @@
  * - Auto-deletes old avatar on new upload
  */
 
-import { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useMutation } from 'convex/react';
 import { useUploadFile } from '@convex-dev/r2/react';
 import { api } from '../../../../convex/_generated/api';

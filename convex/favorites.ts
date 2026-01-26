@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation, QueryCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { Id, Doc } from "./_generated/dataModel";
+import { Id } from "./_generated/dataModel";
 import { requireAuthenticatedUser } from "./permissions";
 
 // ============ QUERIES ============

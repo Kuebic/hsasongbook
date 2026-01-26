@@ -1,3 +1,4 @@
+import React from 'react';
 import { Heart } from 'lucide-react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';

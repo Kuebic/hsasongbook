@@ -15,7 +15,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Heart, Music } from 'lucide-react';
 import ArrangementCard from '@/features/arrangements/components/ArrangementCard';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { cn } from '@/lib/utils';
 import type { ArrangementWithSongAndCreator } from '@/types/Arrangement.types';
 
 type TabType = 'songs' | 'arrangements';
