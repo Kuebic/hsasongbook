@@ -31,16 +31,16 @@ export default function SuggestionSection({
   }
 
   return (
-    <section className="mb-8">
+    <section className="mb-12">
       {/* Header with title and See All link */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">{title}</h2>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-headline text-foreground">{title}</h2>
         <Link
           to={seeAllLink}
-          className="text-sm text-primary hover:underline flex items-center gap-1"
+          className="group flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
         >
-          See all
-          <ChevronRight className="h-4 w-4" />
+          <span>View all</span>
+          <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>
       </div>
 

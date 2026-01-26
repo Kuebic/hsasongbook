@@ -1,20 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import SongList from '../components/SongList';
 import SearchBar from '../components/SearchBar';
 import StatsWidget from '../components/StatsWidget';
-import FeaturedArrangementsWidget from '../components/FeaturedArrangementsWidget';
+import HeroSection from '../components/HeroSection';
+import QuickAccessBar from '../components/QuickAccessBar';
+import BrowseByTheme from '../components/BrowseByTheme';
 import RecentlyAddedSection from '../components/RecentlyAddedSection';
 import PopularSongsSection from '../components/PopularSongsSection';
-import FeaturedSongsSection from '../components/FeaturedSongsSection';
 import { SongListSkeleton } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { Button } from '@/components/ui/button';
 import AddSongDialog from '@/features/songs/components/AddSongDialog';
-import { Plus } from 'lucide-react';
 import type { Song } from '@/types/Song.types';
 
 export function SearchPage() {
@@ -22,7 +20,7 @@ export function SearchPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [addSongDialogOpen, setAddSongDialogOpen] = useState(false);
   const { user } = useAuth();
-  const isAuthenticated = user && !user.isAnonymous;
+  const isAuthenticated = !!(user && !user.isAnonymous);
 
   // Load all songs from Convex
   const convexSongs = useQuery(api.songs.list);
@@ -73,54 +71,39 @@ export function SearchPage() {
   return (
     <SimplePageTransition>
       <div className="min-h-screen bg-background">
+        {/* Hero Section with Search */}
+        <HeroSection
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          onAddSongClick={() => setAddSongDialogOpen(true)}
+          isAuthenticated={isAuthenticated}
+        />
+
+        {/* Add Song Dialog */}
+        <AddSongDialog open={addSongDialogOpen} onOpenChange={setAddSongDialogOpen} />
+
         <div className="container mx-auto px-4 py-8 max-w-6xl">
-          <header className="text-center mb-8">
-            <h1 className="text-4xl font-bold tracking-tight mb-2">
-              HSA Songbook
-            </h1>
-            <p className="text-muted-foreground">
-              Search and discover worship songs
-            </p>
-            {/* Add Song button or Sign in prompt */}
-            <div className="mt-4">
-              {isAuthenticated ? (
-                <Button onClick={() => setAddSongDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Song
-                </Button>
-              ) : (
-                <Link
-                  to="/auth/signin"
-                  className="text-sm text-primary hover:underline"
-                >
-                  Sign in to add songs
-                </Link>
-              )}
-            </div>
-          </header>
-
-          {/* Add Song Dialog */}
-          <AddSongDialog open={addSongDialogOpen} onOpenChange={setAddSongDialogOpen} />
-
-          <div className="mb-8">
-            <SearchBar value={searchTerm} onChange={setSearchTerm} />
-          </div>
-
           {/* Show discovery sections when not searching */}
           {!searchTerm && !isSearching && (
             <>
-              <StatsWidget />
+              <QuickAccessBar isAuthenticated={isAuthenticated} />
+              <BrowseByTheme limit={6} />
               <RecentlyAddedSection limit={6} />
               <PopularSongsSection limit={6} />
-              <FeaturedSongsSection />
-              <FeaturedArrangementsWidget limit={6} />
+              <StatsWidget />
             </>
           )}
 
           {/* Show search results count and list */}
           {(searchTerm || isSearching) && (
             <>
-              <div className="mb-4">
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <h2 className="text-headline text-foreground">
+                    Search Results
+                  </h2>
+                  <span className="flex-1 h-px bg-border" />
+                </div>
                 <p className="text-sm text-muted-foreground">
                   {isSearching ? (
                     'Searching...'
@@ -135,6 +118,18 @@ export function SearchPage() {
               ) : (
                 <SongList songs={filteredSongs} />
               )}
+
+              {/* Show simplified search bar at bottom for refinement */}
+              <div className="mt-12 pt-8 border-t border-border">
+                <p className="text-sm text-muted-foreground text-center mb-4">
+                  Refine your search
+                </p>
+                <SearchBar
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  compact
+                />
+              </div>
             </>
           )}
         </div>
