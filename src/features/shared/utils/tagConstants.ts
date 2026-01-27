@@ -54,6 +54,18 @@ export const THEME_SUGGESTIONS = [
   // Occasions
   'holy-days',
   'blessing-ceremony',
+
+  // General Worship Themes
+  'praise',
+  'worship',
+  'prayer',
+  'guidance',
+
+  // Additional UC-Specific Themes
+  'homecoming',
+  'youth',
+  'cultural',
+  'christmas',
 ] as const;
 
 export type ThemeSuggestion = (typeof THEME_SUGGESTIONS)[number];

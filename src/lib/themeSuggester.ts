@@ -55,6 +55,18 @@ const THEME_KEYWORDS: Record<string, string[]> = {
   // Retained themes with updated keywords
   'unity': ['unity', 'united', 'together', 'one', 'unification', 'oneness', 'harmonious'],
   'kingdom': ['kingdom', 'cheon il guk', 'heaven on earth', 'ideal world', 'heavenly kingdom', 'kingdom of heaven'],
+
+  // General Worship Themes
+  'praise': ['praise', 'praising', 'praises', 'praised', 'sing praise', 'shout praise', 'give praise', 'offer praise'],
+  'worship': ['worship', 'worshiping', 'worshipper', 'adore', 'adoration', 'adoring', 'bow down', 'exalt', 'exalting', 'magnify'],
+  'prayer': ['prayer', 'praying', 'pray', 'prayers', 'intercede', 'intercession', 'petition', 'call upon', 'cry out to'],
+  'guidance': ['guide', 'guidance', 'lead', 'leading', 'direct', 'direction', 'show me', 'teach me', 'instruct', 'shepherd'],
+
+  // Additional UC-Specific Themes
+  'homecoming': ['homecoming', 'return home', 'returning', 'hometown', 'going home', 'come back', 'original homeland', 'heavenly homeland'],
+  'youth': ['youth', 'young', 'young people', 'next generation', 'second generation', 'children', 'blessed children', '2nd gen'],
+  'cultural': ['korea', 'korean', 'hanbok', 'traditional', 'heritage', 'culture', 'cultural', '한국', 'arirang'],
+  'christmas': ['christmas', 'nativity', 'bethlehem', 'manger', 'shepherds', 'wise men', 'star', 'born this day', 'silent night'],
 };
 
 /** Normalize text for matching: lowercase and remove punctuation */
