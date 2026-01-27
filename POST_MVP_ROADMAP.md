@@ -1,8 +1,55 @@
 # HSA Songbook - Post-MVP Roadmap
 
-**Last Updated**: 2026-01-26
+**Last Updated**: 2026-01-27
 
 Features and improvements planned after MVP, organized by priority and effort.
+
+---
+
+## Recently Completed (Jan 26-27, 2026)
+
+### Major Feature Releases
+
+**Phase 7: Audio & Media Features** ✅
+- MP3 upload and playback (10 MB max, stored in R2)
+- YouTube video embedding with thumbnail preview
+- Global audio player with persistent mini-player across navigation
+- Audio source toggle (MP3 vs YouTube)
+- Automatic file cleanup
+
+**Phase 8: Theme & Appearance Customization** ✅
+- 5 preset color themes (Earth-tones, Ocean, Forest, Sunset, Classic)
+- Custom color mixing (20+ curated colors for primary/accent)
+- App-wide font selection and size scaling
+- Chord-specific styling (font, size, weight, color, highlighting)
+- Live preview with accordion-style settings page
+- Cross-device sync via Convex
+
+**Phase 9: Discovery-Oriented Homepage** ✅
+- Hero section with prominent search
+- Recently viewed tracking and display
+- Browse by theme, origin, and style sections
+- Favorites quick access
+- Recently added content section
+- Horizontal scroll sections for discovery
+
+**Phase 10: Setlist Enhancements** (Partial) ✅
+- Custom keys per setlist entry
+- Quick add to setlist dialog with fuzzy search
+
+### Database Schema Additions
+```typescript
+// New tables
+userAppearancePreferences  // User theme/font preferences
+userViews                  // Recently viewed tracking
+
+// New fields on arrangements
+audioFileKey: v.optional(v.string())    // R2 MP3 file
+youtubeUrl: v.optional(v.string())      // YouTube video URL
+
+// New fields on setlist songs
+customKey: v.optional(v.string())       // Per-song key override
+```
 
 ---
 
@@ -85,34 +132,44 @@ New users don't understand the community nature of the app.
 
 ---
 
-## Priority 4: Theme & Display Customization
+## Priority 4: Theme & Display Customization ✅ COMPLETE
 
 | Feature | Description | Effort | Status |
 |---------|-------------|--------|--------|
 | ~~**Earth-tone color palette**~~ | ~~Warm earthy tones (sage green, terracotta) replacing default shadcn colors~~ | ~~Medium~~ | ✅ Done |
-| **Theme color switcher** | Allow users to choose from preset color themes (earthy, ocean, forest, sunset, etc.) | Medium | |
-| **Font customization** | Allow users to choose fonts for chord sheets (serif, sans-serif, monospace options) | Medium | |
-| **Font size preference** | Global font size preference for chord sheets (small, medium, large) | Low | |
+| ~~**Theme color switcher**~~ | ~~Allow users to choose from preset color themes (earthy, ocean, forest, sunset, etc.)~~ | ~~Medium~~ | ✅ Done |
+| ~~**Font customization**~~ | ~~Allow users to choose fonts for chord sheets (serif, sans-serif, monospace options)~~ | ~~Medium~~ | ✅ Done |
+| ~~**Font size preference**~~ | ~~Global font size preference for chord sheets (small, medium, large)~~ | ~~Low~~ | ✅ Done |
+| ~~**Chord-specific styling**~~ | ~~Chord font family, size, weight, color, and highlight customization~~ | ~~Medium~~ | ✅ Done |
 
-### Theme Customization Details
+### Implementation Complete
 
-**Color Themes to Implement:**
-- **Earthy** (current default): Sage green primary, terracotta accent, warm backgrounds
-- **Ocean**: Deep blue primary, coral accent, cool gray backgrounds
-- **Forest**: Deep green primary, amber accent, natural tones
-- **Sunset**: Warm orange primary, purple accent, gradient-inspired
-- **Classic**: Traditional blue/gray theme (similar to original shadcn)
+**Implemented Color Themes:**
+- ✅ **Earth-tones** (default): Sage green primary, terracotta accent, warm backgrounds
+- ✅ **Ocean**: Deep blue primary, coral accent, cool gray backgrounds
+- ✅ **Forest**: Deep green primary, amber accent, natural tones
+- ✅ **Sunset**: Warm orange primary, purple accent, gradient-inspired
+- ✅ **Classic**: Traditional blue/gray theme (similar to original shadcn)
+- ✅ **Custom Mix**: Users can select any primary + accent color combination from 20+ curated colors
 
-**Implementation approach:**
-- Store preference in localStorage and user profile (Convex)
-- CSS custom properties already in place - just swap color values
-- Create `src/lib/theme/colorThemes.ts` with presets
-- Add theme selector to Settings page
+**Implementation Details:**
+- ✅ Stored in `userAppearancePreferences` Convex table, synced across devices
+- ✅ CSS custom properties applied at app root for live theming
+- ✅ `src/features/appearance/presets/colorPresets.ts` - Theme definitions
+- ✅ `src/features/appearance/presets/fontPresets.ts` - Font definitions
+- ✅ Appearance settings in Settings page with accordion layout
+- ✅ Live preview component showing changes in real-time
 
-**Font Customization:**
-- **Chord sheet fonts**: Georgia (serif), Inter (sans-serif), JetBrains Mono (monospace)
-- Stored per-user, synced via Convex
-- Applied via CSS variable `--font-chordsheet`
+**Font Customization Implemented:**
+- ✅ **App-wide fonts**: System, Inter, Lora, and more
+- ✅ **Global font size**: Scaling from 0.85x to 1.25x
+- ✅ **Chord-specific fonts**: Inherit, monospace options
+- ✅ **Chord font size**: Independent scaling from 0.8x to 1.4x
+- ✅ **Chord font weight**: Normal, medium, bold options
+- ✅ **Chord color**: Custom color selection from palette
+- ✅ **Chord highlight**: Toggle background highlighting for chords
+- ✅ Stored per-user, synced via Convex
+- ✅ Applied via CSS variables dynamically
 
 ---
 
@@ -213,11 +270,12 @@ Only implement if planning App Store release or significant iOS user base.
 
 ## Priority 10: Setlist Enhancements
 
-| Feature | Description | Effort |
-|---------|-------------|--------|
-| **Custom key per entry** | Override arrangement key for specific songs | Medium |
-| **Notes per entry** | Add performance notes to individual songs | Low |
-| **Offline caching** | "Download for Offline" for performance mode | High |
+| Feature | Description | Effort | Status |
+|---------|-------------|--------|--------|
+| ~~**Custom key per entry**~~ | ~~Override arrangement key for specific songs~~ | ~~Medium~~ | ✅ Done |
+| ~~**Quick add to setlist**~~ | ~~Searchable dialog for adding arrangements to setlists~~ | ~~Medium~~ | ✅ Done |
+| **Notes per entry** | Add performance notes to individual songs | Low | |
+| **Offline caching** | "Download for Offline" for performance mode | High | |
 
 ### Offline Performance Mode Architecture
 
@@ -266,7 +324,11 @@ Only implement if planning App Store release or significant iOS user base.
 
 | Date | Change |
 |------|--------|
-| 2026-01-26 | **Audio references feature**: MP3 uploads (10 MB max) and YouTube links on arrangements with floating mini-player |
+| 2026-01-27 | **Priority 10 updates**: Marked custom key per entry and quick add to setlist as complete |
+| 2026-01-27 | **Priority 4 complete**: Full theme customization system - 5 preset themes + custom color mixing, app-wide and chord-specific font controls, live preview |
+| 2026-01-27 | **Audio features complete**: MP3 uploads, YouTube videos, global audio player with mini-bar and full controls, Picture-in-Picture support |
+| 2026-01-27 | **Discovery homepage complete**: Recently viewed tracking, browse by theme/origin/style sections, hero section, horizontal scroll sections |
+| 2026-01-26 | **Audio references feature development**: MP3 uploads (10 MB max) and YouTube links on arrangements with floating mini-player |
 | 2026-01-26 | Added theme customization roadmap (Priority 4); implemented earth-tone color palette; added theme suggestions for songs; added origin field and filtering |
 | 2026-01-26 | Redesigned search/home page with hero section, browse-by-theme, and quick access bar |
 | 2026-01-26 | Implemented favorites system for arrangements |
@@ -340,20 +402,31 @@ Current plan has both ratings and favorites. Reconsidering:
 
 Decision: Probably just favorites, not ratings. Simpler is better.
 
-### Media Attachments for Arrangements ✅ IMPLEMENTED (Partial)
+### Media Attachments for Arrangements ✅ IMPLEMENTED
 
 ~~Allow arrangement creators to attach resources:~~
 - ~~**YouTube video** - Link to a video demonstrating their arrangement~~ ✅
 - ~~**Audio file** - Upload MP3 of how it sounds~~ ✅
-- **Lead sheet / sheet music** - PDF uploads for musicians (future)
+- **Lead sheet / sheet music** - PDF uploads for musicians (future - low priority)
 
 **Implemented features:**
-- MP3 uploads (10 MB max) stored in Cloudflare R2
-- YouTube video links with thumbnail preview
-- Floating mini-player with play/pause, seek, volume controls
-- Source toggle when both MP3 and YouTube are available
-- Edit mode form for managing audio references
-- Automatic cleanup when arrangements are deleted or audio is replaced
+- ✅ MP3 uploads (10 MB max) stored in Cloudflare R2
+- ✅ YouTube video links with thumbnail preview and iframe embed
+- ✅ Global audio player - persistent across navigation, three states (hidden, collapsed mini-bar, expanded full controls)
+- ✅ Floating mini-player with play/pause, seek slider, volume/mute controls
+- ✅ Source toggle when both MP3 and YouTube are available
+- ✅ Edit mode form for managing audio references (`AudioReferencesForm.tsx`)
+- ✅ Automatic cleanup when arrangements are deleted or audio is replaced
+- ✅ YouTube Picture-in-Picture support for full-screen video playback
+- ✅ Audio context management (`AudioPlayerContext`) for global state
+
+**Implementation files:**
+- `src/features/audio/components/GlobalAudioPlayer.tsx` - Main player component
+- `src/features/audio/components/AudioUpload.tsx` - MP3 file upload with drag-drop
+- `src/features/audio/components/YouTubeInput.tsx` - YouTube URL input with validation
+- `src/features/audio/components/AudioReferencesForm.tsx` - Combined management form
+- `src/features/audio/context/AudioPlayerContext.tsx` - Audio state management
+- `convex/schema.ts` - Added `audioFileKey`, `youtubeUrl` to arrangements table
 
 ### Song-Level Demo/Reference Audio?
 
