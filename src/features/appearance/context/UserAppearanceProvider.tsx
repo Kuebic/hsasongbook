@@ -283,8 +283,8 @@ export function UserAppearanceProvider({ children }: UserAppearanceProviderProps
       try {
         await upsertMutation({
           colorPreset: presetId,
-          primaryColorId: null as any, // Clear custom colors when using preset
-          accentColorId: null as any, // Clear custom colors when using preset
+          primaryColorId: null, // Clear custom colors when using preset
+          accentColorId: null, // Clear custom colors when using preset
         });
       } catch (error) {
         console.error("Failed to apply preset:", error);
@@ -298,7 +298,7 @@ export function UserAppearanceProvider({ children }: UserAppearanceProviderProps
       if (!isAuthenticated) return;
       try {
         await upsertMutation({
-          colorPreset: null as any, // Must explicitly set to null to clear preset
+          colorPreset: null, // Must explicitly set to null to clear preset
           primaryColorId: primaryId,
           accentColorId: accentId,
         });

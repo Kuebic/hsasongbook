@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { Youtube } from 'lucide-react';
 import { cn, formatTime } from '@/lib/utils';
-import { useAudioPlayer } from '../context/AudioPlayerContext';
+import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import YouTubePip from './YouTubePip';
 
 export default function GlobalAudioPlayer() {

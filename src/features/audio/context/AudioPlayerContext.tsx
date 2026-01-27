@@ -10,7 +10,6 @@
 
 import {
   createContext,
-  useContext,
   useState,
   useRef,
   useEffect,
@@ -70,7 +69,6 @@ interface MediaPlayerActions {
   expand: () => void;
   collapse: () => void;
   show: () => void;
-  hide: () => void;
   close: () => void;
   // YouTube-specific
   registerYouTubePlayer: (player: YT.Player) => void;
@@ -86,7 +84,8 @@ interface MediaPlayerRefs {
 
 type AudioPlayerContextValue = MediaPlayerState & MediaPlayerActions & MediaPlayerRefs;
 
-const AudioPlayerContext = createContext<AudioPlayerContextValue | undefined>(undefined);
+// eslint-disable-next-line react-refresh/only-export-components
+export const AudioPlayerContext = createContext<AudioPlayerContextValue | undefined>(undefined);
 
 interface AudioPlayerProviderProps {
   children: ReactNode;
@@ -362,16 +361,6 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     setIsVisible(true);
   }, []);
 
-  const hide = useCallback(() => {
-    setIsVisible(false);
-    if (track?.mediaType === 'youtube') {
-      youtubePlayerRef.current?.pauseVideo();
-    } else {
-      audioRef.current?.pause();
-    }
-    setIsPlaying(false);
-  }, [track?.mediaType]);
-
   const close = useCallback(() => {
     setIsVisible(false);
     if (track?.mediaType === 'youtube') {
@@ -429,7 +418,6 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     expand,
     collapse,
     show,
-    hide,
     close,
     registerYouTubePlayer,
     unregisterYouTubePlayer,
@@ -446,12 +434,3 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     </AudioPlayerContext.Provider>
   );
 }
-
-export function useAudioPlayer() {
-  const context = useContext(AudioPlayerContext);
-  if (context === undefined) {
-    throw new Error('useAudioPlayer must be used within an AudioPlayerProvider');
-  }
-  return context;
-}
-

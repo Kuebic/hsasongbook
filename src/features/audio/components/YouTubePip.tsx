@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { X, Minimize2, Maximize2, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAudioPlayer, type YouTubePipSize } from '../context/AudioPlayerContext';
+import { type YouTubePipSize } from '../context/AudioPlayerContext';
+import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useYouTubeAPI } from '../hooks/useYouTubeAPI';
 
 // PiP size configurations (16:9 aspect ratio)

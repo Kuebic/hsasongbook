@@ -127,7 +127,7 @@ export function SongOwnershipMenu({
     }
 
     return actions;
-  }, [ownerType, isCommunityOwned, isOriginalCreator, eligibleGroups.length, isPersonalOwned, isGroupOwned]);
+  }, [isCommunityOwned, isOriginalCreator, eligibleGroups.length, isPersonalOwned, isGroupOwned]);
 
   // Don't show menu if no actions available
   if (availableActions.length === 0) return null;
