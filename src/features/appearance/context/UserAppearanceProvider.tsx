@@ -134,6 +134,10 @@ function applyCssVariables(resolved: ResolvedAppearance): void {
   root.style.setProperty("--primary", resolved.primaryColor);
   root.style.setProperty("--accent", resolved.accentColor);
 
+  // Sync ring and input colors with primary for consistent theming
+  root.style.setProperty("--ring", resolved.primaryColor);
+  root.style.setProperty("--input", resolved.primaryColor);
+
   // Apply font settings
   root.style.setProperty("--font-app", resolved.fontFamily);
   root.style.setProperty("--font-scale", resolved.fontSize.toString());
@@ -165,6 +169,8 @@ function resetCssVariables(): void {
   const propsToRemove = [
     "--primary",
     "--accent",
+    "--ring",
+    "--input",
     "--font-app",
     "--font-scale",
     "--font-chord",
