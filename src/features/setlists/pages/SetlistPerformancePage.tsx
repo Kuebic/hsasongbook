@@ -111,6 +111,7 @@ export function SetlistPerformancePage() {
             showChords={true}
             showToggle={false}
             showTranspose={false}
+            performanceMode={true}
           />
         )}
       </PerformanceLayout>

@@ -69,6 +69,7 @@ interface ChordProViewerProps {
   initialEditMode?: boolean;  // DEPRECATED: Use editMode instead
   arrangementMetadata?: ArrangementMetadata | null;  // Optional metadata to inject before parsing
   onTranspositionChange?: (state: TranspositionState) => void;  // Callback when transposition changes
+  performanceMode?: boolean;  // Minimal padding for performance mode on mobile
 }
 
 export default function ChordProViewer({
@@ -84,7 +85,8 @@ export default function ChordProViewer({
   editMode,  // Controlled edit mode from parent
   initialEditMode = false,  // DEPRECATED: Use editMode instead
   arrangementMetadata = null,  // Optional metadata to inject before parsing
-  onTranspositionChange  // Callback when transposition changes
+  onTranspositionChange,  // Callback when transposition changes
+  performanceMode = false  // Minimal padding for performance mode on mobile
 }: ChordProViewerProps) {
   const [showChords, setShowChords] = useState(showChordsProp)
   const [editContent, setEditContent] = useState(content)
@@ -432,7 +434,7 @@ export default function ChordProViewer({
                 'chord-sheet-output',
                 'font-mono',
                 'space-y-2',
-                'p-4',
+                performanceMode ? 'p-2 md:p-4' : 'p-4',
                 !showChords && 'hide-chords'
               )}
               dangerouslySetInnerHTML={{ __html: htmlOutput }}

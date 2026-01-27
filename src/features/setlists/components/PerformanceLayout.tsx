@@ -120,8 +120,8 @@ export default function PerformanceLayout({
         </div>
       </div>
 
-      {/* Mobile content area - full width */}
-      <div ref={mobileContentRef} className="md:hidden w-full h-full overflow-y-auto pt-16 pb-8 px-6">
+      {/* Mobile content area - full width, no horizontal padding for maximum space */}
+      <div ref={mobileContentRef} className="md:hidden w-full h-full overflow-y-auto pt-16 pb-8">
         {children}
       </div>
 
