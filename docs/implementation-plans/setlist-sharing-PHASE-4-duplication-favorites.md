@@ -12,9 +12,19 @@ Add setlist duplication feature and integrate favorites system.
 
 ### 1. Add Duplication Mutations to [convex/setlists.ts](convex/setlists.ts)
 
+**Add imports:**
+```typescript
+import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
+import { requireAuthenticatedUser, canViewSetlist, canEditSetlist } from "./permissions";
+import { getAuthUserId } from "@convex-dev/auth/server";
+```
+
 ```typescript
 /**
  * Duplicate a setlist (always creates private copy)
+ * Note: Both owners and non-owners can duplicate setlists they can view
  */
 export const duplicate = mutation({
   args: {
@@ -49,6 +59,7 @@ export const duplicate = mutation({
       duplicatedFromName: original.name,
       showAttribution: true, // Default to showing attribution
       favorites: 0,
+      createdAt: Date.now(),
       updatedAt: Date.now(),
     });
 
@@ -151,9 +162,11 @@ export const getUserFavoriteSetlists = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
+    // IMPORTANT: Verify the actual index name in your schema
+    // It might be "by_user_type" or "by_user_and_type" - check convex/schema.ts
     const favorites = await ctx.db
       .query("userFavorites")
-      .withIndex("by_user_and_type", (q) =>
+      .withIndex("by_user_type", (q) =>
         q.eq("userId", userId).eq("targetType", "setlist")
       )
       .collect();

@@ -10,7 +10,15 @@ Add mutations for managing setlist sharing and privacy changes.
 
 ### 1. Add Sharing Mutations to [convex/setlists.ts](convex/setlists.ts)
 
-**Add these three new mutations:**
+**Add these imports at the top:**
+```typescript
+import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
+import { requireAuthenticatedUser } from "./permissions";
+```
+
+**Add these mutations for managing the `setlistShares` table:**
 
 ```typescript
 /**
@@ -31,24 +39,25 @@ export const addSharedUser = mutation({
       throw new Error("Only owner can share setlists");
     }
 
-    const currentShared = setlist.sharedWith ?? [];
+    // Check if already shared (using setlistShares table)
+    const existingShare = await ctx.db
+      .query("setlistShares")
+      .withIndex("by_user_setlist", q =>
+        q.eq("userId", args.userIdToAdd).eq("setlistId", args.setlistId)
+      )
+      .first();
 
-    // Check if already shared
-    const existing = currentShared.find(s => s.userId === args.userIdToAdd);
-    if (existing) {
+    if (existingShare) {
       throw new Error("User already has access");
     }
 
-    await ctx.db.patch(args.setlistId, {
-      sharedWith: [
-        ...currentShared,
-        {
-          userId: args.userIdToAdd,
-          canEdit: args.canEdit,
-          addedBy: userId,
-          addedAt: Date.now(),
-        },
-      ],
+    // Create share record in setlistShares table
+    await ctx.db.insert("setlistShares", {
+      setlistId: args.setlistId,
+      userId: args.userIdToAdd,
+      canEdit: args.canEdit,
+      addedBy: userId,
+      addedAt: Date.now(),
     });
   },
 });
@@ -70,11 +79,17 @@ export const removeSharedUser = mutation({
       throw new Error("Only owner can manage sharing");
     }
 
-    await ctx.db.patch(args.setlistId, {
-      sharedWith: (setlist.sharedWith ?? []).filter(
-        s => s.userId !== args.userIdToRemove
-      ),
-    });
+    // Find and delete the share record
+    const share = await ctx.db
+      .query("setlistShares")
+      .withIndex("by_user_setlist", q =>
+        q.eq("userId", args.userIdToRemove).eq("setlistId", args.setlistId)
+      )
+      .first();
+
+    if (share) {
+      await ctx.db.delete(share._id);
+    }
   },
 });
 
@@ -123,18 +138,21 @@ export const updateSharedUserPermission = mutation({
       throw new Error("Only owner can manage permissions");
     }
 
-    const currentShared = setlist.sharedWith ?? [];
-    const userIndex = currentShared.findIndex(s => s.userId === args.targetUserId);
+    // Find the share record
+    const share = await ctx.db
+      .query("setlistShares")
+      .withIndex("by_user_setlist", q =>
+        q.eq("userId", args.targetUserId).eq("setlistId", args.setlistId)
+      )
+      .first();
 
-    if (userIndex === -1) {
+    if (!share) {
       throw new Error("User doesn't have access to this setlist");
     }
 
-    const updated = [...currentShared];
-    updated[userIndex] = { ...updated[userIndex], canEdit: args.canEdit };
-
-    await ctx.db.patch(args.setlistId, {
-      sharedWith: updated,
+    // Update the permission
+    await ctx.db.patch(share._id, {
+      canEdit: args.canEdit,
     });
   },
 });
@@ -144,7 +162,7 @@ export const updateSharedUserPermission = mutation({
 
 ### 2. Update `list()` Query in [convex/setlists.ts](convex/setlists.ts)
 
-**Replace the existing `list()` query handler with:**
+**Replace the existing `list()` query handler with this EFFICIENT version using setlistShares table:**
 
 ```typescript
 export const list = query({
@@ -153,24 +171,36 @@ export const list = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    // Get setlists owned by user
+    // Get setlists owned by user (efficient - uses index)
     const ownedSetlists = await ctx.db
       .query("setlists")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
-    // Get setlists shared WITH user
-    const allSetlists = await ctx.db.query("setlists").collect();
-    const sharedSetlists = allSetlists.filter((setlist) =>
-      setlist.sharedWith?.some((share) => share.userId === userId)
+    // Get setlists shared WITH user (efficient - uses setlistShares index)
+    const shares = await ctx.db
+      .query("setlistShares")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    // Fetch the shared setlists by ID
+    const sharedSetlists = await Promise.all(
+      shares.map(share => ctx.db.get(share.setlistId))
     );
 
-    return [...ownedSetlists, ...sharedSetlists].sort(
+    // Filter out any null results (deleted setlists) and combine
+    const validSharedSetlists = sharedSetlists.filter(
+      (s): s is NonNullable<typeof s> => s !== null
+    );
+
+    return [...ownedSetlists, ...validSharedSetlists].sort(
       (a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0)
     );
   },
 });
 ```
+
+**Note:** This is O(1) for the index lookups + O(k) for fetching shared setlists where k = number of setlists shared with user. Much better than the O(n) approach of scanning all setlists.
 
 ---
 
@@ -201,19 +231,22 @@ export const getSharingInfo = query({
     const sharedUsers = [];
 
     if (isOwner || canEdit) {
-      // Show full collaborator list
-      if (setlist.sharedWith) {
-        for (const share of setlist.sharedWith) {
-          const user = await ctx.db.get(share.userId);
-          if (user) {
-            sharedUsers.push({
-              userId: share.userId,
-              username: user.username,
-              displayName: user.displayName,
-              canEdit: share.canEdit,
-              addedAt: share.addedAt,
-            });
-          }
+      // Show full collaborator list from setlistShares table
+      const shares = await ctx.db
+        .query("setlistShares")
+        .withIndex("by_setlist", q => q.eq("setlistId", args.setlistId))
+        .collect();
+
+      for (const share of shares) {
+        const user = await ctx.db.get(share.userId);
+        if (user) {
+          sharedUsers.push({
+            oderId: share.userId,
+            username: user.username,
+            displayName: user.displayName,
+            canEdit: share.canEdit,
+            addedAt: share.addedAt,
+          });
         }
       }
     }
@@ -222,7 +255,7 @@ export const getSharingInfo = query({
       isOwner,
       canEdit,
       canChangePrivacy: isOwner,
-      privacyLevel: setlist.privacyLevel,
+      privacyLevel: setlist.privacyLevel ?? "private",  // Default to private
       sharedUsers: isOwner || canEdit ? sharedUsers : [], // Only show if owner or editor
       ownerInfo: isOwner ? null : {
         userId: setlist.userId,

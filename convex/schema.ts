@@ -121,8 +121,8 @@ export default defineSchema({
     .index("by_owner", ["ownerType", "ownerId"])
     .index("by_favorites", ["favorites"]),
 
-  // Setlists - Private to user
-  // Read: Owner only | Write: Owner only
+  // Setlists - User-owned with privacy levels
+  // Read: Based on privacyLevel | Write: Owner or shared with edit permission
   setlists: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
@@ -141,7 +141,52 @@ export default defineSchema({
     userId: v.id("users"),
     // Track edits
     updatedAt: v.optional(v.number()),
-  }).index("by_user", ["userId"]),
+
+    // Privacy level (optional for backward compatibility - treat undefined as "private")
+    privacyLevel: v.optional(
+      v.union(
+        v.literal("private"), // Default: owner only
+        v.literal("unlisted"), // Shareable via link, not in browse
+        v.literal("public") // Discoverable in browse/search
+      )
+    ),
+
+    // Discoverability metadata
+    tags: v.optional(v.array(v.string())),
+    estimatedDuration: v.optional(v.number()), // Minutes
+    difficulty: v.optional(
+      v.union(
+        v.literal("beginner"),
+        v.literal("intermediate"),
+        v.literal("advanced")
+      )
+    ),
+
+    // Attribution for duplicates
+    duplicatedFrom: v.optional(v.id("setlists")),
+    duplicatedFromName: v.optional(v.string()),
+    showAttribution: v.optional(v.boolean()),
+
+    // Denormalized favorites counter
+    favorites: v.optional(v.number()),
+
+    // Timestamps
+    createdAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_privacy", ["privacyLevel"]),
+
+  // Sharing relationships - separate table for efficient "shared with me" queries
+  setlistShares: defineTable({
+    setlistId: v.id("setlists"),
+    userId: v.id("users"), // The user being shared with
+    canEdit: v.boolean(),
+    addedBy: v.id("users"), // Who granted access
+    addedAt: v.number(),
+  })
+    .index("by_user", ["userId"]) // Query: "setlists shared with me"
+    .index("by_setlist", ["setlistId"]) // Query: "who has access to this setlist"
+    .index("by_user_setlist", ["userId", "setlistId"]), // Check specific access
 
   // Arrangement Collaborators - Users who can edit arrangements they don't own
   arrangementCollaborators: defineTable({

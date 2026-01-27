@@ -12,23 +12,12 @@ Establish the database schema and permission infrastructure for setlist privacy 
 **Add these new fields to the setlists table:**
 
 ```typescript
-// Privacy and sharing
-privacyLevel: v.union(
+// Privacy level (optional for backward compatibility - treat undefined as "private")
+privacyLevel: v.optional(v.union(
   v.literal("private"),   // Default: owner only
   v.literal("unlisted"),  // Shareable via link, not in browse
   v.literal("public")     // Discoverable in browse/search
-),
-
-sharedWith: v.optional(
-  v.array(
-    v.object({
-      userId: v.id("users"),
-      canEdit: v.boolean(),
-      addedBy: v.id("users"),
-      addedAt: v.number(),
-    })
-  )
-),
+)),
 
 // Discoverability metadata
 tags: v.optional(v.array(v.string())),
@@ -46,19 +35,47 @@ showAttribution: v.optional(v.boolean()),
 
 // Denormalized favorites counter
 favorites: v.optional(v.number()),
+
+// Timestamps
+createdAt: v.optional(v.number()),
 ```
 
-**Update the indexes (replace existing `.index("by_user", ["userId"])` with):**
+**IMPORTANT:** `privacyLevel` is optional so existing setlists don't break. In all queries, treat `undefined` as `"private"`.
+
+**Add NEW table for sharing (separate from setlists for efficient queries):**
+
+```typescript
+// Sharing relationships - separate table for efficient "shared with me" queries
+setlistShares: defineTable({
+  setlistId: v.id("setlists"),
+  userId: v.id("users"),      // The user being shared with
+  canEdit: v.boolean(),
+  addedBy: v.id("users"),     // Who granted access
+  addedAt: v.number(),
+})
+  .index("by_user", ["userId"])           // Query: "setlists shared with me"
+  .index("by_setlist", ["setlistId"])     // Query: "who has access to this setlist"
+  .index("by_user_setlist", ["userId", "setlistId"]),  // Check specific access
+```
+
+**Update the setlists indexes:**
 
 ```typescript
 .index("by_user", ["userId"])
 .index("by_privacy", ["privacyLevel"])
-.index("by_favorites", ["favorites"])
+// Note: by_favorites index removed - Convex indexes are for equality, not sorting
 ```
 
 ---
 
 ### 2. Add Permission Functions to [convex/permissions.ts](convex/permissions.ts)
+
+**Add these imports at the top:**
+
+```typescript
+import { QueryCtx, MutationCtx } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
+```
 
 **Add these three new functions at the end of the file:**
 
@@ -74,15 +91,27 @@ export async function canViewSetlist(
   const setlist = await ctx.db.get(setlistId);
   if (!setlist) return false;
 
-  // Public: anyone can view (including anonymous)
-  if (setlist.privacyLevel === "public") return true;
+  // Treat undefined privacyLevel as "private" (backward compatibility)
+  const privacyLevel = setlist.privacyLevel ?? "private";
 
-  // Owner always has access
+  // Public: anyone can view (including anonymous)
+  if (privacyLevel === "public") return true;
+
+  // Unlisted: anyone with the link can view (no auth required)
+  if (privacyLevel === "unlisted") return true;
+
+  // Private: owner or explicitly shared users only
   if (userId && setlist.userId === userId) return true;
 
-  // Check explicit sharing (unlisted or private)
-  if (userId && setlist.sharedWith) {
-    return setlist.sharedWith.some(share => share.userId === userId);
+  // Check explicit sharing via setlistShares table
+  if (userId) {
+    const share = await ctx.db
+      .query("setlistShares")
+      .withIndex("by_user_setlist", q =>
+        q.eq("userId", userId).eq("setlistId", setlistId)
+      )
+      .first();
+    if (share) return true;
   }
 
   return false;
@@ -102,13 +131,15 @@ export async function canEditSetlist(
   // Owner can always edit
   if (setlist.userId === userId) return true;
 
-  // Check if shared with edit permission
-  if (setlist.sharedWith) {
-    const share = setlist.sharedWith.find(s => s.userId === userId);
-    return share?.canEdit ?? false;
-  }
+  // Check if shared with edit permission via setlistShares table
+  const share = await ctx.db
+    .query("setlistShares")
+    .withIndex("by_user_setlist", q =>
+      q.eq("userId", userId).eq("setlistId", setlistId)
+    )
+    .first();
 
-  return false;
+  return share?.canEdit ?? false;
 }
 
 /**
@@ -131,13 +162,14 @@ export async function canChangeSetlistPrivacy(
 
 ### 3. Update [convex/setlists.ts](convex/setlists.ts) - Existing Queries
 
-**Update the `create` mutation to set default privacy:**
+**Update the `create` mutation to set default values:**
 
 Find the `create` mutation and add these fields to the `ctx.db.insert()` call:
 ```typescript
 privacyLevel: "private",  // Default to private
 favorites: 0,
 showAttribution: false,
+createdAt: Date.now(),
 ```
 
 **Update the `get()` query to check permissions:**

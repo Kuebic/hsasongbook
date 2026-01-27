@@ -78,3 +78,33 @@ export const backfillArrangementSummary = internalMutation({
     return { success: true, songsUpdated: updated };
   },
 });
+
+/**
+ * Migrate existing setlists to add privacy fields.
+ *
+ * Run once via: npx convex run migrations:migrateSetlistsToPrivacy
+ */
+export const migrateSetlistsToPrivacy = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const setlists = await ctx.db.query("setlists").collect();
+
+    let migratedCount = 0;
+
+    for (const setlist of setlists) {
+      // Only update if privacyLevel doesn't exist
+      if (!setlist.privacyLevel) {
+        await ctx.db.patch(setlist._id, {
+          privacyLevel: "private", // Default existing setlists to private
+          favorites: 0,
+          showAttribution: false,
+          tags: [],
+          createdAt: setlist._creationTime,
+        });
+        migratedCount++;
+      }
+    }
+
+    return { total: setlists.length, migrated: migratedCount };
+  },
+});

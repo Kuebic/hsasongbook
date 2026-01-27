@@ -369,6 +369,85 @@ export async function canEditContent(
   }
 }
 
+// ============ SETLIST PERMISSIONS ============
+
+/**
+ * Check if a user can view a setlist based on privacy level and sharing
+ */
+export async function canViewSetlist(
+  ctx: QueryCtx | MutationCtx,
+  setlistId: Id<"setlists">,
+  userId: Id<"users"> | null
+): Promise<boolean> {
+  const setlist = await ctx.db.get(setlistId);
+  if (!setlist) return false;
+
+  // Treat undefined privacyLevel as "private" (backward compatibility)
+  const privacyLevel = setlist.privacyLevel ?? "private";
+
+  // Public: anyone can view (including anonymous)
+  if (privacyLevel === "public") return true;
+
+  // Unlisted: anyone with the link can view (no auth required)
+  if (privacyLevel === "unlisted") return true;
+
+  // Private: owner or explicitly shared users only
+  if (userId && setlist.userId === userId) return true;
+
+  // Check explicit sharing via setlistShares table
+  if (userId) {
+    const share = await ctx.db
+      .query("setlistShares")
+      .withIndex("by_user_setlist", (q) =>
+        q.eq("userId", userId).eq("setlistId", setlistId)
+      )
+      .first();
+    if (share) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Check if a user can edit a setlist (owner or shared with edit permission)
+ */
+export async function canEditSetlist(
+  ctx: QueryCtx | MutationCtx,
+  setlistId: Id<"setlists">,
+  userId: Id<"users">
+): Promise<boolean> {
+  const setlist = await ctx.db.get(setlistId);
+  if (!setlist) return false;
+
+  // Owner can always edit
+  if (setlist.userId === userId) return true;
+
+  // Check if shared with edit permission via setlistShares table
+  const share = await ctx.db
+    .query("setlistShares")
+    .withIndex("by_user_setlist", (q) =>
+      q.eq("userId", userId).eq("setlistId", setlistId)
+    )
+    .first();
+
+  return share?.canEdit ?? false;
+}
+
+/**
+ * Check if a user can change a setlist's privacy level (owner only)
+ */
+export async function canChangeSetlistPrivacy(
+  ctx: QueryCtx | MutationCtx,
+  setlistId: Id<"setlists">,
+  userId: Id<"users">
+): Promise<boolean> {
+  const setlist = await ctx.db.get(setlistId);
+  if (!setlist) return false;
+
+  // ONLY owner can change privacy level
+  return setlist.userId === userId;
+}
+
 // ============ OWNERSHIP HELPERS ============
 
 /**

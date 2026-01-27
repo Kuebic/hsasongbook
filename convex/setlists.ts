@@ -1,7 +1,13 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { filterUndefined, requireAuth, requireAuthenticatedUser } from "./permissions";
+import {
+  filterUndefined,
+  requireAuth,
+  requireAuthenticatedUser,
+  canViewSetlist,
+  canEditSetlist,
+} from "./permissions";
 
 // ============ QUERIES ============
 
@@ -26,22 +32,19 @@ export const list = query({
 
 /**
  * Get single setlist by ID
- * Access: Owner only
+ * Access: Based on privacyLevel and sharing
  */
 export const get = query({
   args: { id: v.id("setlists") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      return null;
-    }
-
     const setlist = await ctx.db.get(args.id);
 
-    // Verify ownership
-    if (!setlist || setlist.userId !== userId) {
-      return null;
-    }
+    if (!setlist) return null;
+
+    // Check view permission
+    const canView = await canViewSetlist(ctx, args.id, userId);
+    if (!canView) return null;
 
     return setlist;
   },
@@ -49,22 +52,19 @@ export const get = query({
 
 /**
  * Get setlist with full arrangement and song data
- * Access: Owner only
+ * Access: Based on privacyLevel and sharing
  */
 export const getWithArrangements = query({
   args: { id: v.id("setlists") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      return null;
-    }
-
     const setlist = await ctx.db.get(args.id);
 
-    // Verify ownership
-    if (!setlist || setlist.userId !== userId) {
-      return null;
-    }
+    if (!setlist) return null;
+
+    // Check view permission
+    const canView = await canViewSetlist(ctx, args.id, userId);
+    if (!canView) return null;
 
     // Get songs array (prefer new format, fallback to legacy arrangementIds)
     const songsData =
@@ -142,6 +142,10 @@ export const create = mutation({
       performanceDate: args.performanceDate,
       songs,
       userId,
+      privacyLevel: "private",
+      favorites: 0,
+      showAttribution: false,
+      createdAt: Date.now(),
     });
 
     return setlistId;
@@ -150,7 +154,7 @@ export const create = mutation({
 
 /**
  * Update a setlist
- * Access: Owner only
+ * Access: Owner or shared with edit permission
  */
 export const update = mutation({
   args: {
@@ -178,9 +182,10 @@ export const update = mutation({
       throw new Error("Setlist not found");
     }
 
-    // Check ownership
-    if (setlist.userId !== userId) {
-      throw new Error("You can only edit your own setlists");
+    // Check edit permission
+    const canEdit = await canEditSetlist(ctx, args.id, userId);
+    if (!canEdit) {
+      throw new Error("You don't have permission to edit this setlist");
     }
 
     const { id: _id, arrangementIds, ...updates } = args;
@@ -228,7 +233,7 @@ export const remove = mutation({
 
 /**
  * Add an arrangement to a setlist
- * Access: Owner only
+ * Access: Owner or shared with edit permission
  */
 export const addArrangement = mutation({
   args: {
@@ -244,9 +249,10 @@ export const addArrangement = mutation({
       throw new Error("Setlist not found");
     }
 
-    // Check ownership
-    if (setlist.userId !== userId) {
-      throw new Error("You can only add to your own setlists");
+    // Check edit permission
+    const canEdit = await canEditSetlist(ctx, args.setlistId, userId);
+    if (!canEdit) {
+      throw new Error("You don't have permission to edit this setlist");
     }
 
     // Check if arrangement exists
@@ -285,7 +291,7 @@ export const addArrangement = mutation({
 
 /**
  * Update the custom key for a song in a setlist
- * Access: Owner only
+ * Access: Owner or shared with edit permission
  */
 export const updateSongKey = mutation({
   args: {
@@ -301,9 +307,10 @@ export const updateSongKey = mutation({
       throw new Error("Setlist not found");
     }
 
-    // Check ownership
-    if (setlist.userId !== userId) {
-      throw new Error("You can only edit your own setlists");
+    // Check edit permission
+    const canEdit = await canEditSetlist(ctx, args.setlistId, userId);
+    if (!canEdit) {
+      throw new Error("You don't have permission to edit this setlist");
     }
 
     // Get current songs (prefer new format, fallback to legacy)

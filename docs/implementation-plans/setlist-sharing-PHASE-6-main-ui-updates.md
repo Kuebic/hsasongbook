@@ -363,9 +363,17 @@ export function SetlistPage() {
   const duplicateSetlist = useMutation(api.setlists.duplicate);
   const toggleAttribution = useMutation(api.setlists.toggleAttribution);
 
+  const navigate = useNavigate();
+
   const handleDuplicate = async () => {
-    await duplicateSetlist({ setlistId: id as Id<"setlists"> });
-    // Navigate to new setlist
+    try {
+      const newId = await duplicateSetlist({ setlistId: id as Id<"setlists"> });
+      toast.success("Setlist duplicated!");
+      navigate(`/setlists/${newId}`);
+    } catch (error) {
+      toast.error("Failed to duplicate setlist");
+      console.error(error);
+    }
   };
 
   return (
@@ -388,17 +396,17 @@ export function SetlistPage() {
         {/* Actions */}
         <div className="flex items-center gap-2">
           <SetlistFavoriteButton
-            setlistId={setlist.id}
+            setlistId={setlist._id}  {/* Note: Convex uses _id */}
             favoriteCount={setlist.favorites ?? 0}
           />
 
-          {!sharingInfo?.isOwner && (
-            <Button variant="outline" onClick={handleDuplicate}>
-              <Copy className="h-4 w-4 mr-2" />
-              Duplicate
-            </Button>
-          )}
+          {/* Duplicate button - available to everyone who can view */}
+          <Button variant="outline" onClick={handleDuplicate}>
+            <Copy className="h-4 w-4 mr-2" />
+            Duplicate
+          </Button>
 
+          {/* Share button - owner only */}
           {sharingInfo?.isOwner && (
             <Button variant="outline">
               <Share2 className="h-4 w-4 mr-2" />

@@ -11,6 +11,12 @@ Add queries for discovering and browsing public setlists.
 
 ### 1. Add Browse Queries to [convex/setlists.ts](convex/setlists.ts)
 
+**Add imports:**
+```typescript
+import { v } from "convex/values";
+import { query } from "./_generated/server";
+```
+
 ```typescript
 /**
  * Browse public setlists with filtering and sorting
@@ -32,7 +38,8 @@ export const browse = query({
     ),
   },
   handler: async (ctx, args) => {
-    // Get all public setlists
+    // Get all public setlists using index
+    // Note: privacyLevel might be undefined for old setlists, so we also need to filter
     let setlists = await ctx.db
       .query("setlists")
       .withIndex("by_privacy", (q) => q.eq("privacyLevel", "public"))

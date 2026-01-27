@@ -8,6 +8,53 @@ Complete the remaining features: sharing dialog, user profile integration, offli
 
 ## Changes Required
 
+### 0. Add User Search Query to [convex/users.ts](convex/users.ts)
+
+**This query is needed for the share dialog to find users to share with:**
+
+```typescript
+import { v } from "convex/values";
+import { query } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
+
+/**
+ * Search for users by username or email (for sharing)
+ * Returns up to 10 results to avoid overwhelming the UI
+ */
+export const searchByUsernameOrEmail = query({
+  args: { searchTerm: v.string() },
+  handler: async (ctx, args) => {
+    // Require authentication to search users
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    // Don't search for very short terms
+    if (args.searchTerm.length < 2) return [];
+
+    const users = await ctx.db.query("users").collect();
+    const term = args.searchTerm.toLowerCase();
+
+    return users
+      .filter(u =>
+        // Exclude current user from results
+        u._id !== userId &&
+        // Match username or email
+        (u.username?.toLowerCase().includes(term) ||
+         u.email?.toLowerCase().includes(term))
+      )
+      .slice(0, 10)  // Limit results
+      .map(u => ({
+        _id: u._id,
+        username: u.username,
+        displayName: u.displayName,
+        // Don't expose full email for privacy
+      }));
+  },
+});
+```
+
+---
+
 ### 1. Create Share Dialog Component
 
 **Create [src/features/setlists/components/SetlistShareDialog.tsx](src/features/setlists/components/SetlistShareDialog.tsx):**
@@ -66,10 +113,24 @@ export function SetlistShareDialog({ setlistId, open, onOpenChange }: Props) {
     });
   };
 
-  const handleAddUser = async () => {
-    // TODO: Search for user by username/email and add
-    // This would require a user search query
-    setUserInput('');
+  // Search for users (see new query below)
+  const searchResults = useQuery(
+    api.users.searchByUsernameOrEmail,
+    userInput.length >= 2 ? { searchTerm: userInput } : "skip"
+  );
+
+  const handleAddUser = async (userIdToAdd: Id<'users'>) => {
+    try {
+      await addSharedUser({
+        setlistId: setlistId as Id<'setlists'>,
+        userIdToAdd,
+        canEdit: false, // Default to view-only
+      });
+      setUserInput('');
+      toast.success("User added!");
+    } catch (error) {
+      toast.error("Failed to add user");
+    }
   };
 
   const handleRemoveUser = async (userId: string) => {
@@ -131,17 +192,38 @@ export function SetlistShareDialog({ setlistId, open, onOpenChange }: Props) {
             <div>
               <Label>Shared With</Label>
 
-              {/* Add User Input */}
-              <div className="flex gap-2 mt-2 mb-4">
+              {/* Add User Input with Search Results */}
+              <div className="mt-2 mb-4 space-y-2">
                 <Input
-                  placeholder="Enter username or email..."
+                  placeholder="Search by username or email..."
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
                 />
-                <Button onClick={handleAddUser}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Add
-                </Button>
+
+                {/* Search Results Dropdown */}
+                {searchResults && searchResults.length > 0 && (
+                  <div className="border rounded-md shadow-sm">
+                    {searchResults.map((user) => (
+                      <button
+                        key={user._id}
+                        onClick={() => handleAddUser(user._id)}
+                        className="w-full flex items-center justify-between p-2 hover:bg-accent text-left"
+                      >
+                        <div>
+                          <p className="font-medium">{user.username}</p>
+                          {user.displayName && (
+                            <p className="text-sm text-muted-foreground">{user.displayName}</p>
+                          )}
+                        </div>
+                        <UserPlus className="h-4 w-4" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {userInput.length >= 2 && searchResults?.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No users found</p>
+                )}
               </div>
 
               {/* Shared Users */}

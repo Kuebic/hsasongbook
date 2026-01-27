@@ -12,39 +12,37 @@ Update frontend types and create reusable UI components for privacy and sharing.
 
 **Find the `Setlist` interface and add these fields:**
 
+**NOTE:** In practice, Convex generates types automatically. You may not need to maintain manual types. Check if `Doc<"setlists">` from Convex is preferred in this codebase.
+
 ```typescript
 export interface Setlist {
-  id: string;
+  _id: string;  // Convex uses _id, not id
   name: string;
   description?: string;
   performanceDate?: string;
   songs: SetlistSong[];
-  createdAt: string;
-  updatedAt: string;
-  userId?: string;
+  createdAt?: number;  // Optional for backward compatibility (timestamp, not string)
+  updatedAt?: number;
+  userId: string;
 
-  // NEW PRIVACY & SHARING FIELDS
-  privacyLevel: 'private' | 'unlisted' | 'public';
-  sharedWith?: Array<{
-    userId: string;
-    canEdit: boolean;
-    addedBy: string;
-    addedAt: number;
-  }>;
+  // PRIVACY FIELDS (optional for backward compatibility)
+  privacyLevel?: 'private' | 'unlisted' | 'public';  // undefined = "private"
 
-  // NEW METADATA FIELDS
+  // METADATA FIELDS
   tags?: string[];
   estimatedDuration?: number;  // minutes
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
 
-  // NEW ATTRIBUTION FIELDS
+  // ATTRIBUTION FIELDS
   duplicatedFrom?: string;
   duplicatedFromName?: string;
   showAttribution?: boolean;
 
-  // NEW SOCIAL FIELD
-  favorites: number;
+  // SOCIAL FIELD
+  favorites?: number;  // Optional, defaults to 0
 }
+
+// Note: sharedWith is now in a separate setlistShares table, not embedded
 ```
 
 ---
