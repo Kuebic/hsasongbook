@@ -27,13 +27,13 @@ export function useSongsWithArrangementSummary({
   // Don't pass searchQuery to server - we'll filter client-side with fuzzy search
   const data = useQuery(api.songs.listWithArrangementSummary, {
     themes: filters.themes.length > 0 ? filters.themes : undefined,
-    artist: filters.artist || undefined,
-    origin: filters.origin || undefined,
+    artists: filters.artists.length > 0 ? filters.artists : undefined,
+    origins: filters.origins.length > 0 ? filters.origins : undefined,
     dateFrom: dateRange.from || undefined,
     dateTo: dateRange.to || undefined,
-    hasKey: filters.hasKey || undefined,
-    tempoRange: filters.tempoRange || undefined,
-    hasDifficulty: filters.hasDifficulty || undefined,
+    hasKeys: filters.hasKeys.length > 0 ? filters.hasKeys : undefined,
+    tempoRanges: filters.tempoRanges.length > 0 ? filters.tempoRanges : undefined,
+    hasDifficulties: filters.hasDifficulties.length > 0 ? filters.hasDifficulties : undefined,
     arrangementFilter: filters.arrangementFilter !== 'all' ? filters.arrangementFilter : undefined,
     sortBy: filters.sortBy,
     limit,

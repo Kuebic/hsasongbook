@@ -24,14 +24,14 @@ export type ArrangementFilter = 'all' | 'has_arrangements' | 'needs_arrangements
 export interface BrowseFilters {
   // Song-level
   themes: string[];
-  artist: string | null;
-  origin: string | null;
+  artists: string[];
+  origins: string[];
   datePreset: DatePreset | null;
   searchQuery: string;
   // Arrangement-level
-  hasKey: string | null;
-  tempoRange: TempoRange | null;
-  hasDifficulty: DifficultyLevel | null;
+  hasKeys: string[];
+  tempoRanges: TempoRange[];
+  hasDifficulties: DifficultyLevel[];
   arrangementFilter: ArrangementFilter;
   // User-specific
   showFavoritesOnly: boolean;
@@ -41,13 +41,13 @@ export interface BrowseFilters {
 
 const DEFAULT_FILTERS: BrowseFilters = {
   themes: [],
-  artist: null,
-  origin: null,
+  artists: [],
+  origins: [],
   datePreset: null,
   searchQuery: '',
-  hasKey: null,
-  tempoRange: null,
-  hasDifficulty: null,
+  hasKeys: [],
+  tempoRanges: [],
+  hasDifficulties: [],
   arrangementFilter: 'all',
   showFavoritesOnly: false,
   sortBy: 'popular',
@@ -80,20 +80,20 @@ export function useBrowseFilters() {
   // Parse filters from URL with type validation
   const filtersFromUrl = useMemo((): BrowseFilters => {
     const dateParam = searchParams.get('date');
-    const tempoParam = searchParams.get('tempo');
-    const difficultyParam = searchParams.get('difficulty');
     const sortParam = searchParams.get('sort');
     const arrFilterParam = searchParams.get('arr');
 
     return {
       themes: searchParams.get('themes')?.split(',').filter(Boolean) || [],
-      artist: searchParams.get('artist') || null,
-      origin: searchParams.get('origin') || null,
+      artists: searchParams.get('artists')?.split(',').filter(Boolean) || [],
+      origins: searchParams.get('origins')?.split(',').filter(Boolean) || [],
       datePreset: isValidDatePreset(dateParam) ? dateParam : null,
       searchQuery: searchParams.get('q') || '',
-      hasKey: searchParams.get('key') || null,
-      tempoRange: isValidTempoRange(tempoParam) ? tempoParam : null,
-      hasDifficulty: isValidDifficultyLevel(difficultyParam) ? difficultyParam : null,
+      hasKeys: searchParams.get('keys')?.split(',').filter(Boolean) || [],
+      tempoRanges: (searchParams.get('tempo')?.split(',').filter(Boolean) || [])
+        .filter((t): t is TempoRange => isValidTempoRange(t)),
+      hasDifficulties: (searchParams.get('difficulties')?.split(',').filter(Boolean) || [])
+        .filter((d): d is DifficultyLevel => isValidDifficultyLevel(d)),
       arrangementFilter: isValidArrangementFilter(arrFilterParam) ? arrFilterParam : 'all',
       showFavoritesOnly: searchParams.get('favorites') === 'true',
       sortBy: isValidSortOption(sortParam) ? sortParam : 'popular',
@@ -116,13 +116,13 @@ export function useBrowseFilters() {
         // Sync to URL
         const params = new URLSearchParams();
         if (next.themes.length > 0) params.set('themes', next.themes.join(','));
-        if (next.artist) params.set('artist', next.artist);
-        if (next.origin) params.set('origin', next.origin);
+        if (next.artists.length > 0) params.set('artists', next.artists.join(','));
+        if (next.origins.length > 0) params.set('origins', next.origins.join(','));
         if (next.datePreset) params.set('date', next.datePreset);
         if (next.searchQuery) params.set('q', next.searchQuery);
-        if (next.hasKey) params.set('key', next.hasKey);
-        if (next.tempoRange) params.set('tempo', next.tempoRange);
-        if (next.hasDifficulty) params.set('difficulty', next.hasDifficulty);
+        if (next.hasKeys.length > 0) params.set('keys', next.hasKeys.join(','));
+        if (next.tempoRanges.length > 0) params.set('tempo', next.tempoRanges.join(','));
+        if (next.hasDifficulties.length > 0) params.set('difficulties', next.hasDifficulties.join(','));
         if (next.arrangementFilter !== 'all') params.set('arr', next.arrangementFilter);
         if (next.showFavoritesOnly) params.set('favorites', 'true');
         if (next.sortBy !== 'popular') params.set('sort', next.sortBy);
@@ -145,12 +145,12 @@ export function useBrowseFilters() {
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filters.themes.length > 0) count++;
-    if (filters.artist) count++;
-    if (filters.origin) count++;
+    if (filters.artists.length > 0) count++;
+    if (filters.origins.length > 0) count++;
     if (filters.datePreset) count++;
-    if (filters.hasKey) count++;
-    if (filters.tempoRange) count++;
-    if (filters.hasDifficulty) count++;
+    if (filters.hasKeys.length > 0) count++;
+    if (filters.tempoRanges.length > 0) count++;
+    if (filters.hasDifficulties.length > 0) count++;
     if (filters.arrangementFilter !== 'all') count++;
     if (filters.showFavoritesOnly) count++;
     return count;

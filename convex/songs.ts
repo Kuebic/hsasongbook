@@ -514,18 +514,18 @@ export const listWithArrangementSummary = query({
   args: {
     // Song-level filters
     themes: v.optional(v.array(v.string())),
-    artist: v.optional(v.string()),
-    origin: v.optional(v.string()),
+    artists: v.optional(v.array(v.string())),
+    origins: v.optional(v.array(v.string())),
     dateFrom: v.optional(v.number()), // timestamp
     dateTo: v.optional(v.number()),
     searchQuery: v.optional(v.string()),
     // Arrangement-level filters (filter songs by their arrangements)
-    hasKey: v.optional(v.string()),
-    tempoRange: v.optional(
-      v.union(v.literal("slow"), v.literal("medium"), v.literal("fast"))
+    hasKeys: v.optional(v.array(v.string())),
+    tempoRanges: v.optional(
+      v.array(v.union(v.literal("slow"), v.literal("medium"), v.literal("fast")))
     ),
-    hasDifficulty: v.optional(
-      v.union(v.literal("simple"), v.literal("standard"), v.literal("advanced"))
+    hasDifficulties: v.optional(
+      v.array(v.union(v.literal("simple"), v.literal("standard"), v.literal("advanced")))
     ),
     // Arrangement filter: show all, only songs with arrangements, or only songs needing arrangements
     arrangementFilter: v.optional(
@@ -559,14 +559,18 @@ export const listWithArrangementSummary = query({
       );
     }
 
-    if (args.artist) {
+    if (args.artists && args.artists.length > 0) {
       songs = songs.filter((song) =>
-        song.artist?.toLowerCase().includes(args.artist!.toLowerCase())
+        args.artists!.some((artist) =>
+          song.artist?.toLowerCase().includes(artist.toLowerCase())
+        )
       );
     }
 
-    if (args.origin) {
-      songs = songs.filter((song) => song.origin === args.origin);
+    if (args.origins && args.origins.length > 0) {
+      songs = songs.filter((song) =>
+        args.origins!.some((origin) => song.origin === origin)
+      );
     }
 
     if (args.dateFrom) {
@@ -588,31 +592,35 @@ export const listWithArrangementSummary = query({
     }
 
     // Apply arrangement-level filters using denormalized fields
-    if (args.hasKey) {
+    if (args.hasKeys && args.hasKeys.length > 0) {
       songs = songs.filter((song) =>
-        song.arrangementKeys?.includes(args.hasKey!)
+        args.hasKeys!.some((key) => song.arrangementKeys?.includes(key))
       );
     }
 
-    if (args.tempoRange) {
+    if (args.tempoRanges && args.tempoRanges.length > 0) {
       const tempoRanges = {
         slow: { min: 0, max: 69 },
         medium: { min: 70, max: 110 },
         fast: { min: 111, max: 999 },
       };
-      const range = tempoRanges[args.tempoRange];
       songs = songs.filter((song) => {
         const tempoMin = song.arrangementTempoMin;
         const tempoMax = song.arrangementTempoMax;
         if (tempoMin === undefined || tempoMax === undefined) return false;
-        // Song matches if any of its arrangements fall within the tempo range
-        return tempoMax >= range.min && tempoMin <= range.max;
+        // Song matches if any of its arrangements fall within any of the tempo ranges
+        return args.tempoRanges!.some((rangeKey) => {
+          const range = tempoRanges[rangeKey];
+          return tempoMax >= range.min && tempoMin <= range.max;
+        });
       });
     }
 
-    if (args.hasDifficulty) {
+    if (args.hasDifficulties && args.hasDifficulties.length > 0) {
       songs = songs.filter((song) =>
-        song.arrangementDifficulties?.includes(args.hasDifficulty!)
+        args.hasDifficulties!.some((difficulty) =>
+          song.arrangementDifficulties?.includes(difficulty)
+        )
       );
     }
 

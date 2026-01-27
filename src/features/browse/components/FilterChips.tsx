@@ -34,23 +34,25 @@ export default function FilterChips({
     });
   });
 
-  // Artist chip
-  if (filters.artist) {
+  // Artist chips
+  filters.artists.forEach((artist) => {
     chips.push({
-      key: 'artist',
-      label: `Artist: ${filters.artist}`,
-      onRemove: () => onRemoveFilter('artist', null),
+      key: `artist-${artist}`,
+      label: `Artist: ${artist}`,
+      onRemove: () =>
+        onRemoveFilter('artists', filters.artists.filter((a) => a !== artist)),
     });
-  }
+  });
 
-  // Origin chip
-  if (filters.origin) {
+  // Origin chips
+  filters.origins.forEach((origin) => {
     chips.push({
-      key: 'origin',
-      label: `Origin: ${getOriginLabel(filters.origin) || filters.origin}`,
-      onRemove: () => onRemoveFilter('origin', null),
+      key: `origin-${origin}`,
+      label: `Origin: ${getOriginLabel(origin) || origin}`,
+      onRemove: () =>
+        onRemoveFilter('origins', filters.origins.filter((o) => o !== origin)),
     });
-  }
+  });
 
   // Date preset chip
   if (filters.datePreset) {
@@ -61,32 +63,35 @@ export default function FilterChips({
     });
   }
 
-  // Key chip
-  if (filters.hasKey) {
+  // Key chips
+  filters.hasKeys.forEach((key) => {
     chips.push({
-      key: 'key',
-      label: `Key: ${filters.hasKey}`,
-      onRemove: () => onRemoveFilter('hasKey', null),
+      key: `key-${key}`,
+      label: `Key: ${key}`,
+      onRemove: () =>
+        onRemoveFilter('hasKeys', filters.hasKeys.filter((k) => k !== key)),
     });
-  }
+  });
 
-  // Tempo chip
-  if (filters.tempoRange) {
+  // Tempo chips
+  filters.tempoRanges.forEach((tempoRange) => {
     chips.push({
-      key: 'tempo',
-      label: `Tempo: ${TEMPO_RANGES[filters.tempoRange].label}`,
-      onRemove: () => onRemoveFilter('tempoRange', null),
+      key: `tempo-${tempoRange}`,
+      label: `Tempo: ${TEMPO_RANGES[tempoRange].label}`,
+      onRemove: () =>
+        onRemoveFilter('tempoRanges', filters.tempoRanges.filter((t) => t !== tempoRange)),
     });
-  }
+  });
 
-  // Difficulty chip
-  if (filters.hasDifficulty) {
+  // Difficulty chips
+  filters.hasDifficulties.forEach((difficulty) => {
     chips.push({
-      key: 'difficulty',
-      label: `Difficulty: ${DIFFICULTY_OPTIONS[filters.hasDifficulty].label}`,
-      onRemove: () => onRemoveFilter('hasDifficulty', null),
+      key: `difficulty-${difficulty}`,
+      label: `Difficulty: ${DIFFICULTY_OPTIONS[difficulty].label}`,
+      onRemove: () =>
+        onRemoveFilter('hasDifficulties', filters.hasDifficulties.filter((d) => d !== difficulty)),
     });
-  }
+  });
 
   // Arrangement filter chip
   if (filters.arrangementFilter === 'has_arrangements') {

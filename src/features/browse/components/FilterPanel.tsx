@@ -22,14 +22,15 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import ThemeMultiSelect from './ThemeMultiSelect';
-import ArtistCombobox from './ArtistCombobox';
-import OriginFilter from './OriginFilter';
-import KeyFilter from './KeyFilter';
-import TempoRangeFilter from './TempoRangeFilter';
-import DifficultyFilter from './DifficultyFilter';
+import ArtistMultiSelect from './ArtistMultiSelect';
+import OriginMultiSelect from './OriginMultiSelect';
+import KeyMultiSelectGrid from './KeyMultiSelectGrid';
+import TempoMultiSelect from './TempoMultiSelect';
+import DifficultyMultiSelect from './DifficultyMultiSelect';
 import ArrangementCountFilter from './ArrangementCountFilter';
 import DatePresetFilter from './DatePresetFilter';
 import type { BrowseFilters } from '../hooks/useBrowseFilters';
+import { useState, useEffect } from 'react';
 
 interface FilterPanelProps {
   filters: BrowseFilters;
@@ -47,6 +48,16 @@ export default function FilterPanel({
   const { user } = useAuth();
   const isAuthenticated = user && !user.isAnonymous;
 
+  // Detect screen size for responsive drawer position
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 768);
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -60,7 +71,10 @@ export default function FilterPanel({
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-xl">
+      <SheetContent
+        side={isDesktop ? "left" : "bottom"}
+        className={isDesktop ? "w-[400px] h-full" : "h-[85vh] rounded-t-xl"}
+      >
         <SheetHeader>
           <SheetTitle>Filter Songs</SheetTitle>
           <SheetDescription>
@@ -68,7 +82,7 @@ export default function FilterPanel({
           </SheetDescription>
         </SheetHeader>
 
-        <ScrollArea className="flex-1 py-4 h-[calc(85vh-180px)]">
+        <ScrollArea className={isDesktop ? "flex-1 py-4 h-[calc(100vh-180px)]" : "flex-1 py-4 h-[calc(85vh-180px)]"}>
           <div className="space-y-6 px-1">
             {/* My Favorites Filter - only for authenticated users */}
             {isAuthenticated && (
@@ -98,13 +112,13 @@ export default function FilterPanel({
                   selected={filters.themes}
                   onChange={(themes) => onFilterChange('themes', themes)}
                 />
-                <ArtistCombobox
-                  value={filters.artist}
-                  onChange={(artist) => onFilterChange('artist', artist)}
+                <ArtistMultiSelect
+                  selected={filters.artists}
+                  onChange={(artists) => onFilterChange('artists', artists)}
                 />
-                <OriginFilter
-                  value={filters.origin}
-                  onChange={(origin) => onFilterChange('origin', origin)}
+                <OriginMultiSelect
+                  selected={filters.origins}
+                  onChange={(origins) => onFilterChange('origins', origins)}
                 />
                 <DatePresetFilter
                   value={filters.datePreset}
@@ -122,17 +136,17 @@ export default function FilterPanel({
                 Show songs that have arrangements matching these criteria
               </p>
               <div className="space-y-4">
-                <KeyFilter
-                  value={filters.hasKey}
-                  onChange={(key) => onFilterChange('hasKey', key)}
+                <KeyMultiSelectGrid
+                  selected={filters.hasKeys}
+                  onChange={(keys) => onFilterChange('hasKeys', keys)}
                 />
-                <TempoRangeFilter
-                  value={filters.tempoRange}
-                  onChange={(range) => onFilterChange('tempoRange', range)}
+                <TempoMultiSelect
+                  selected={filters.tempoRanges}
+                  onChange={(ranges) => onFilterChange('tempoRanges', ranges)}
                 />
-                <DifficultyFilter
-                  value={filters.hasDifficulty}
-                  onChange={(difficulty) => onFilterChange('hasDifficulty', difficulty)}
+                <DifficultyMultiSelect
+                  selected={filters.hasDifficulties}
+                  onChange={(difficulties) => onFilterChange('hasDifficulties', difficulties)}
                 />
                 <ArrangementCountFilter
                   value={filters.arrangementFilter}
