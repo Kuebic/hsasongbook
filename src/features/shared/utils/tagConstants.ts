@@ -4,32 +4,56 @@
  */
 
 // Curated theme suggestions for songs
-// Includes general worship themes + holidays
+// Unification Church theology-specific themes
 export const THEME_SUGGESTIONS = [
-  'grace',
-  'hope',
-  'forgiveness',
-  'praise',
-  'peace',
-  'love',
-  'thanksgiving',
-  'faith',
-  'redemption',
-  'sacrifice',
-  'holiness',
-  'joy',
-  'comfort',
-  'lament',
-  'creation',
-  'kingdom',
+  // Core Unification Themes
+  'true-love',
+  'true-parents',
+  'heart-of-god',
+  'restoration',
+  'indemnity',
+  'blessing',
+  'lineage',
   'unity',
-  'surrender',
-  'healing',
-  'trust',
-  // Holidays (kept as themes per design decision)
-  'christmas',
-  'easter',
-  'advent',
+  'liberation',
+  'kingdom',
+  'family',
+
+  // Providence & Mission
+  'victory',
+  'dedication',
+  'mission',
+  'sacrifice',
+  'pioneering',
+
+  // Spiritual Life
+  'heart',
+  'attendance',
+  'offering',
+  'devotion',
+  'gratitude',
+  'faith',
+
+  // Vision & Hope
+  'new-age',
+  'fatherland',
+  'eden',
+  'peace',
+  'hope',
+  'joy',
+
+  // Creation & Nature
+  'creation',
+  'nature',
+
+  // Relationships
+  'filial-piety',
+  'brotherhood',
+  'service',
+
+  // Occasions
+  'holy-days',
+  'blessing-ceremony',
 ] as const;
 
 export type ThemeSuggestion = (typeof THEME_SUGGESTIONS)[number];

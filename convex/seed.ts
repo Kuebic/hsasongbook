@@ -11,7 +11,7 @@ const SEED_SONGS = [
   {
     title: "Amazing Grace",
     artist: "John Newton",
-    themes: ["grace", "salvation", "redemption"],
+    themes: ["restoration", "liberation", "gratitude"],
     copyright: "Public Domain",
     origin: "traditional-hymns",
     lyrics:
@@ -20,7 +20,7 @@ const SEED_SONGS = [
   {
     title: "How Great Thou Art",
     artist: "Carl Boberg",
-    themes: ["worship", "creation", "majesty"],
+    themes: ["creation", "nature", "heart-of-god"],
     copyright: "Public Domain",
     origin: "traditional-hymns",
     lyrics:
@@ -29,7 +29,7 @@ const SEED_SONGS = [
   {
     title: "Oceans (Where Feet May Fail)",
     artist: "Hillsong United",
-    themes: ["faith", "trust", "courage"],
+    themes: ["faith", "mission", "dedication"],
     copyright: "Hillsong Music Publishing",
     origin: "contemporary-christian",
     lyrics:
@@ -38,7 +38,7 @@ const SEED_SONGS = [
   {
     title: "Way Maker",
     artist: "Sinach",
-    themes: ["miracle", "promise", "worship"],
+    themes: ["restoration", "hope", "devotion"],
     copyright: "Integrity Music",
     origin: "contemporary-christian",
     lyrics:
@@ -47,7 +47,7 @@ const SEED_SONGS = [
   {
     title: "10,000 Reasons (Bless the Lord)",
     artist: "Matt Redman",
-    themes: ["blessing", "praise", "worship"],
+    themes: ["gratitude", "devotion", "joy"],
     copyright: "Thankyou Music",
     origin: "contemporary-christian",
     lyrics:
@@ -65,7 +65,7 @@ const SEED_SONGS = [
   {
     title: "Good Good Father",
     artist: "Chris Tomlin",
-    themes: ["father", "love", "identity"],
+    themes: ["heart-of-god", "true-love", "family"],
     copyright: "Capitol CMG Publishing",
     origin: "contemporary-christian",
     lyrics:
@@ -74,7 +74,7 @@ const SEED_SONGS = [
   {
     title: "Reckless Love",
     artist: "Cory Asbury",
-    themes: ["love", "grace", "pursuit"],
+    themes: ["true-love", "heart-of-god", "restoration"],
     copyright: "Bethel Music Publishing",
     origin: "contemporary-christian",
     lyrics:
@@ -83,7 +83,7 @@ const SEED_SONGS = [
   {
     title: "Build My Life",
     artist: "Housefires",
-    themes: ["foundation", "worship", "devotion"],
+    themes: ["dedication", "devotion", "attendance"],
     copyright: "Capitol CMG Publishing",
     origin: "contemporary-christian",
     lyrics:
