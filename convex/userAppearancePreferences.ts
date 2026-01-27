@@ -40,9 +40,9 @@ export const get = query({
  */
 export const upsert = mutation({
   args: {
-    colorPreset: v.optional(v.string()),
-    primaryColorId: v.optional(v.string()),
-    accentColorId: v.optional(v.string()),
+    colorPreset: v.optional(v.union(v.string(), v.null())),
+    primaryColorId: v.optional(v.union(v.string(), v.null())),
+    accentColorId: v.optional(v.union(v.string(), v.null())),
     fontFamily: v.optional(v.string()),
     fontSize: v.optional(v.number()),
     chordFontFamily: v.optional(v.string()),
