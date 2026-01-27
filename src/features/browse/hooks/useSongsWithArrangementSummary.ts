@@ -2,10 +2,12 @@
  * useSongsWithArrangementSummary Hook
  *
  * Fetches songs with arrangement summary data for the browse page.
+ * Uses Fuse.js for fuzzy search on the searchQuery filter.
  */
 
 import { useMemo } from 'react';
 import { useQuery } from 'convex/react';
+import Fuse from 'fuse.js';
 import { api } from '../../../../convex/_generated/api';
 import { mapConvexSongToFrontend } from '@/features/shared';
 import type { BrowseFilters } from './useBrowseFilters';
@@ -22,13 +24,13 @@ export function useSongsWithArrangementSummary({
   dateRange,
   limit = 50,
 }: UseSongsWithArrangementSummaryOptions) {
+  // Don't pass searchQuery to server - we'll filter client-side with fuzzy search
   const data = useQuery(api.songs.listWithArrangementSummary, {
     themes: filters.themes.length > 0 ? filters.themes : undefined,
     artist: filters.artist || undefined,
     origin: filters.origin || undefined,
     dateFrom: dateRange.from || undefined,
     dateTo: dateRange.to || undefined,
-    searchQuery: filters.searchQuery || undefined,
     hasKey: filters.hasKey || undefined,
     tempoRange: filters.tempoRange || undefined,
     hasDifficulty: filters.hasDifficulty || undefined,
@@ -44,10 +46,25 @@ export function useSongsWithArrangementSummary({
   );
 
   const songs: SongWithSummary[] = useMemo(() => {
-    const allSongs = (data ?? []).map((song) => ({
+    let allSongs = (data ?? []).map((song) => ({
       ...mapConvexSongToFrontend(song),
       arrangementSummary: song.arrangementSummary,
     }));
+
+    // Apply fuzzy search for searchQuery (client-side with Fuse.js)
+    if (filters.searchQuery && filters.searchQuery.length >= 2) {
+      const fuse = new Fuse(allSongs, {
+        keys: [
+          { name: 'title', weight: 0.5 },
+          { name: 'artist', weight: 0.3 },
+          { name: 'themes', weight: 0.2 },
+        ],
+        threshold: 0.4,
+        includeScore: true,
+        ignoreLocation: true,
+      });
+      allSongs = fuse.search(filters.searchQuery).map((r) => r.item);
+    }
 
     // Filter by favorites if enabled
     if (filters.showFavoritesOnly && favoriteSongIds) {
@@ -56,7 +73,7 @@ export function useSongsWithArrangementSummary({
     }
 
     return allSongs;
-  }, [data, filters.showFavoritesOnly, favoriteSongIds]);
+  }, [data, filters.searchQuery, filters.showFavoritesOnly, favoriteSongIds]);
 
   const loading = data === undefined ||
     (filters.showFavoritesOnly && favoriteSongIds === undefined);

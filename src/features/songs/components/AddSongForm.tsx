@@ -32,6 +32,8 @@ import { extractErrorMessage } from '@/lib/utils';
 import OwnerSelector, { type OwnerSelection } from '@/features/shared/components/OwnerSelector';
 import { suggestThemes } from '@/lib/themeSuggester';
 import { ThemeSuggestions } from './ThemeSuggestions';
+import { useDuplicateDetection } from '../hooks/useDuplicateDetection';
+import { DuplicateWarning } from './DuplicateWarning';
 
 interface AddSongFormProps {
   onSuccess?: () => void;
@@ -80,6 +82,7 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<AddSongFormData>({
     resolver: zodResolver(addSongSchema),
@@ -91,6 +94,10 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
       lyrics: '',
     },
   });
+
+  // Watch title for duplicate detection
+  const titleValue = watch('title');
+  const { duplicates, isChecking } = useDuplicateDetection(titleValue);
 
   const onSubmit = async (data: AddSongFormData) => {
     try {
@@ -164,6 +171,8 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
             {errors.title.message}
           </p>
         )}
+        {/* Duplicate warning */}
+        <DuplicateWarning duplicates={duplicates} isChecking={isChecking} />
       </div>
 
       {/* Artist field (optional) */}

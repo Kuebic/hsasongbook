@@ -25,6 +25,8 @@ export { useDebounce } from './hooks/useDebounce';
 export { useSlugParams } from './hooks/useSlugParams';
 export { useKeyboardNavigation } from './hooks/useKeyboardNavigation';
 export { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+export { useFuzzySearch } from './hooks/useFuzzySearch';
+export type { FuzzySearchResult, UseFuzzySearchReturn } from './hooks/useFuzzySearch';
 
 // Utils
 export { getDisplayName, getCreatorDisplayName } from './utils/userDisplay';

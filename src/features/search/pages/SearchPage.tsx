@@ -1,6 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useQuery } from 'convex/react';
-import { api } from '../../../../convex/_generated/api';
+import { useState, useMemo } from 'react';
 import SongList from '../components/SongList';
 import SearchBar from '../components/SearchBar';
 import StatsWidget from '../components/StatsWidget';
@@ -11,62 +9,28 @@ import RecentlyAddedSection from '../components/RecentlyAddedSection';
 import PopularSongsSection from '../components/PopularSongsSection';
 import { SongListSkeleton } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
+import { useFuzzySearch } from '@/features/shared';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import AddSongDialog from '@/features/songs/components/AddSongDialog';
-import type { Song } from '@/types/Song.types';
 
 export function SearchPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [addSongDialogOpen, setAddSongDialogOpen] = useState(false);
   const { user } = useAuth();
   const isAuthenticated = !!(user && !user.isAnonymous);
 
-  // Load all songs from Convex
-  const convexSongs = useQuery(api.songs.list);
-  const isLoading = convexSongs === undefined;
+  // Fuzzy search with debouncing
+  const {
+    query: searchTerm,
+    setQuery: setSearchTerm,
+    results: fuzzyResults,
+    isLoading,
+    isSearching,
+  } = useFuzzySearch('');
 
-  // Map Convex songs to frontend Song type
-  const allSongs: Song[] = useMemo(() => {
-    if (!convexSongs) return [];
-    return convexSongs.map((song) => ({
-      id: song._id,
-      slug: song.slug,
-      title: song.title,
-      artist: song.artist ?? '',
-      themes: song.themes,
-      copyright: song.copyright,
-      lyrics: song.lyrics ? { en: song.lyrics } : undefined,
-      createdAt: new Date(song._creationTime).toISOString(),
-      updatedAt: new Date(song._creationTime).toISOString(),
-    }));
-  }, [convexSongs]);
-
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  // Filter songs client-side
+  // Extract songs from fuzzy results
   const filteredSongs = useMemo(() => {
-    if (!debouncedSearchTerm) {
-      return allSongs;
-    }
-
-    const query = debouncedSearchTerm.toLowerCase();
-    return allSongs.filter(
-      (song) =>
-        song.title.toLowerCase().includes(query) ||
-        song.artist.toLowerCase().includes(query) ||
-        song.themes?.some((theme) => theme.toLowerCase().includes(query))
-    );
-  }, [debouncedSearchTerm, allSongs]);
-
-  const isSearching = searchTerm !== debouncedSearchTerm;
+    return fuzzyResults.map((r) => r.item);
+  }, [fuzzyResults]);
 
   return (
     <SimplePageTransition>
