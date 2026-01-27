@@ -34,6 +34,7 @@ import { suggestThemes } from '@/lib/themeSuggester';
 import { ThemeSuggestions } from './ThemeSuggestions';
 import { useDuplicateDetection } from '../hooks/useDuplicateDetection';
 import { DuplicateWarning } from './DuplicateWarning';
+import { ArtistInput } from './ArtistInput';
 
 interface AddSongFormProps {
   onSuccess?: () => void;
@@ -63,6 +64,8 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
   // Theme suggestion state
   const [lyricsForSuggestion, setLyricsForSuggestion] = useState<string>('');
   const [themesInput, setThemesInput] = useState<string>('');
+  // Artist input state (controlled for autocomplete)
+  const [artistInput, setArtistInput] = useState<string>('');
 
   // Compute theme suggestions from lyrics (updates on blur)
   const suggestedThemes = useMemo(
@@ -113,7 +116,7 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
       // Create song via Convex mutation
       await createSong({
         title: data.title,
-        artist: data.artist || undefined,
+        artist: artistInput || undefined,
         themes,
         copyright: undefined,
         lyrics: data.lyrics || undefined,
@@ -175,23 +178,16 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
         <DuplicateWarning duplicates={duplicates} isChecking={isChecking} />
       </div>
 
-      {/* Artist field (optional) */}
+      {/* Artist field (optional) with autocomplete */}
       <div>
         <Label htmlFor="artist">Artist</Label>
-        <Input
+        <ArtistInput
           id="artist"
-          type="text"
-          placeholder="e.g., John Newton"
+          value={artistInput}
+          onChange={setArtistInput}
           disabled={isSubmitting}
-          aria-invalid={errors.artist ? 'true' : 'false'}
-          aria-describedby={errors.artist ? 'artist-error' : undefined}
-          {...register('artist')}
+          placeholder="e.g., John Newton"
         />
-        {errors.artist && (
-          <p id="artist-error" className="text-sm text-destructive mt-1">
-            {errors.artist.message}
-          </p>
-        )}
       </div>
 
       {/* Origin field (optional dropdown) */}
