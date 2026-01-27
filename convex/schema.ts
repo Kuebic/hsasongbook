@@ -78,6 +78,13 @@ export default defineSchema({
     // Social fields
     favorites: v.number(),
     tags: v.array(v.string()),
+    // Structured categorization fields (all optional)
+    instrument: v.optional(v.union(v.literal("guitar"), v.literal("piano"))),
+    energy: v.optional(
+      v.union(v.literal("high"), v.literal("medium"), v.literal("reflective"))
+    ),
+    style: v.optional(v.string()), // Validated via frontend constants
+    settings: v.optional(v.array(v.string())), // Multi-select: acoustic, full-band, etc.
     // Track edits
     updatedAt: v.optional(v.number()),
     // Ownership (Phase 2) - defaults to user ownership

@@ -270,6 +270,25 @@ export const getCountsBySong = query({
 });
 
 /**
+ * Get all distinct tags used across arrangements
+ * Used for tag autocomplete suggestions
+ * Access: Everyone
+ */
+export const getDistinctTags = query({
+  args: {},
+  handler: async (ctx) => {
+    const arrangements = await ctx.db.query("arrangements").collect();
+    const tagSet = new Set<string>();
+    for (const arr of arrangements) {
+      for (const tag of arr.tags) {
+        tagSet.add(tag);
+      }
+    }
+    return Array.from(tagSet).sort();
+  },
+});
+
+/**
  * Get arrangement IDs where the current user is a collaborator
  * Used for filtering "my arrangements" on song pages
  * Access: Authenticated users only
@@ -422,6 +441,13 @@ export const create = mutation({
     chordProContent: v.string(),
     slug: v.string(),
     tags: v.optional(v.array(v.string())),
+    // Structured categorization fields
+    instrument: v.optional(v.union(v.literal("guitar"), v.literal("piano"))),
+    energy: v.optional(
+      v.union(v.literal("high"), v.literal("medium"), v.literal("reflective"))
+    ),
+    style: v.optional(v.string()),
+    settings: v.optional(v.array(v.string())),
     // Phase 2: Group ownership
     ownerType: v.optional(v.union(v.literal("user"), v.literal("group"))),
     ownerId: v.optional(v.string()),
@@ -493,6 +519,10 @@ export const create = mutation({
       createdBy: userId,
       favorites: 0,
       tags: args.tags ?? [],
+      instrument: args.instrument,
+      energy: args.energy,
+      style: args.style,
+      settings: args.settings,
       ownerType,
       ownerId,
     });
@@ -557,6 +587,13 @@ export const update = mutation({
     ),
     chordProContent: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
+    // Structured categorization fields
+    instrument: v.optional(v.union(v.literal("guitar"), v.literal("piano"))),
+    energy: v.optional(
+      v.union(v.literal("high"), v.literal("medium"), v.literal("reflective"))
+    ),
+    style: v.optional(v.string()),
+    settings: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);

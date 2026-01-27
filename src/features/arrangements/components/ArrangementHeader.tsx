@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Clock, Music, Guitar, Hash, Users, Globe, Pencil, Loader2 } from 'lucide-react'
+import { Clock, Music, Guitar, Piano, Hash, Users, Globe, Pencil, Loader2, Zap, Volume2 } from 'lucide-react'
 import { getCreatorDisplayName } from '../../shared/utils/userDisplay'
+import { getEnergyOption, getStyleOption, getSettingOption } from '@/features/shared'
+import { cn } from '@/lib/utils'
 import type { Arrangement, CreatorInfo, OwnerInfo } from '@/types'
 
 interface ArrangementHeaderProps {
@@ -214,17 +216,59 @@ export default function ArrangementHeader({ arrangement, songTitle, artist, crea
         {renderOwnerAttribution()}
       </p>
 
-      {/* Tags - hidden in print */}
-      {arrangement.tags && arrangement.tags.length > 0 && (
-        <div className="print-tags flex flex-wrap gap-1">
-          {arrangement.tags.map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs capitalize">
-                <Hash className="h-2 w-2 mr-1" />
-                {tag}
-              </Badge>
-            ))}
-        </div>
-      )}
+      {/* Categorization badges - hidden in print */}
+      <div className="print-tags flex flex-wrap gap-1.5">
+        {/* Instrument badge */}
+        {arrangement.instrument && (
+          <Badge variant="outline" className="text-xs">
+            {arrangement.instrument === 'guitar' ? (
+              <Guitar className="h-3 w-3 mr-1" />
+            ) : (
+              <Piano className="h-3 w-3 mr-1" />
+            )}
+            {arrangement.instrument === 'guitar' ? 'Guitar' : 'Piano'}
+          </Badge>
+        )}
+
+        {/* Energy badge with color coding */}
+        {arrangement.energy && (
+          <Badge
+            variant="outline"
+            className={cn(
+              'text-xs',
+              arrangement.energy === 'high' && 'bg-red-50 text-red-700 border-red-200',
+              arrangement.energy === 'medium' && 'bg-yellow-50 text-yellow-700 border-yellow-200',
+              arrangement.energy === 'reflective' && 'bg-blue-50 text-blue-700 border-blue-200'
+            )}
+          >
+            <Zap className="h-3 w-3 mr-1" />
+            {getEnergyOption(arrangement.energy)?.label || arrangement.energy}
+          </Badge>
+        )}
+
+        {/* Style badge */}
+        {arrangement.style && (
+          <Badge variant="secondary" className="text-xs">
+            <Volume2 className="h-3 w-3 mr-1" />
+            {getStyleOption(arrangement.style)?.label || arrangement.style}
+          </Badge>
+        )}
+
+        {/* Settings badges */}
+        {arrangement.settings?.map((setting, index) => (
+          <Badge key={`setting-${index}`} variant="outline" className="text-xs bg-sky-50 text-sky-700 border-sky-200">
+            {getSettingOption(setting)?.label || setting}
+          </Badge>
+        ))}
+
+        {/* Free-form tags */}
+        {arrangement.tags?.map((tag, index) => (
+          <Badge key={`tag-${index}`} variant="outline" className="text-xs capitalize">
+            <Hash className="h-2 w-2 mr-1" />
+            {tag}
+          </Badge>
+        ))}
+      </div>
     </div>
   )
 }

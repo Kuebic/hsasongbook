@@ -3,6 +3,10 @@
  *
  * Main component for the appearance customization section in settings.
  * Combines all appearance controls with live preview.
+ *
+ * Exports:
+ * - AppearanceSettings: Full component with Card wrapper (for standalone use)
+ * - AppearanceSettingsContent: Content only (for use in accordion)
  */
 
 import { useCallback } from "react";
@@ -17,10 +21,23 @@ import { useAppearance } from "../context/UserAppearanceContext";
 import { ThemePresetPicker } from "./ThemePresetPicker";
 import { ColorPalettePicker } from "./ColorPalettePicker";
 import { FontSelector } from "./FontSelector";
-import { ChordStyleSettings } from "./ChordStyleSettings";
-import { LivePreview } from "./LivePreview";
 import { getThemePreset } from "../presets/colorPresets";
 
+/**
+ * AppearanceSettingsContent - Content without Card wrapper
+ * For use in accordion or other container layouts
+ */
+export function AppearanceSettingsContent({ isAuthenticated }: { isAuthenticated: boolean }) {
+  if (!isAuthenticated) {
+    return <AppearanceSettingsLockedContent />;
+  }
+  return <AppearanceSettingsAuthenticatedContent />;
+}
+
+/**
+ * AppearanceSettings - Full component with Card wrapper
+ * For standalone use
+ */
 export function AppearanceSettings() {
   const { user } = useAuth();
   const isAuthenticated = user && !user.isAnonymous;
@@ -34,7 +51,36 @@ export function AppearanceSettings() {
 }
 
 /**
- * Locked state for anonymous users
+ * Locked content for anonymous users (no Card wrapper)
+ */
+function AppearanceSettingsLockedContent() {
+  return (
+    <div className="space-y-4">
+      {/* Theme toggle is available for everyone */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-0.5">
+          <Label htmlFor="theme-toggle">Theme</Label>
+          <p className="text-sm text-muted-foreground">
+            Select your preferred theme or sync with your system
+          </p>
+        </div>
+        <ThemeToggle />
+      </div>
+
+      <Separator />
+
+      {/* Message about signing in */}
+      <div className="rounded-lg bg-muted/50 p-4 text-center">
+        <p className="text-sm text-muted-foreground">
+          Sign in to unlock color themes, font customization, and chord styling options.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Locked state for anonymous users (with Card wrapper)
  */
 function AppearanceSettingsLocked() {
   return (
@@ -45,26 +91,8 @@ function AppearanceSettingsLocked() {
           Customize how the app looks and feels
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Theme toggle is available for everyone */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="theme-toggle">Theme</Label>
-            <p className="text-sm text-muted-foreground">
-              Select your preferred theme or sync with your system
-            </p>
-          </div>
-          <ThemeToggle />
-        </div>
-
-        <Separator />
-
-        {/* Message about signing in */}
-        <div className="rounded-lg bg-muted/50 p-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            Sign in to unlock color themes, font customization, and chord styling options.
-          </p>
-        </div>
+      <CardContent>
+        <AppearanceSettingsLockedContent />
       </CardContent>
     </Card>
   );

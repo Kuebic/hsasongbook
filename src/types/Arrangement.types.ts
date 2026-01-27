@@ -13,6 +13,16 @@
  */
 export type ArrangementDifficulty = 'simple' | 'standard' | 'advanced';
 
+/**
+ * Instrument type for chord arrangements
+ */
+export type ArrangementInstrument = 'guitar' | 'piano';
+
+/**
+ * Energy level for arrangements
+ */
+export type ArrangementEnergy = 'high' | 'medium' | 'reflective';
+
 export interface Arrangement {
   id: string;
   slug: string; // URL-friendly slug (e.g., "gh2lk" - 6-char nanoid only)
@@ -28,6 +38,11 @@ export interface Arrangement {
   chordProContent: string; // ChordPro formatted text
   createdAt: string;
   updatedAt: string;
+  // Categorization fields
+  instrument?: ArrangementInstrument;  // Guitar or Piano
+  energy?: ArrangementEnergy;          // High, Medium, Reflective
+  style?: string;                      // Contemporary, Traditional, etc.
+  settings?: string[];                 // Acoustic, Full Band, Camp, etc.
   // Phase 5 fields (Authentication)
   userId?: string;                     // Creator user ID (optional for backward compatibility)
   isPublic?: boolean;                  // Public vs private (default: true for arrangements)

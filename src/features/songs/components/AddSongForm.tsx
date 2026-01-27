@@ -27,9 +27,10 @@ import {
 import { AlertCircle } from 'lucide-react';
 import { addSongSchema, type AddSongFormData, SONG_ORIGIN_GROUPS } from '../validation/songSchemas';
 import { generateSlug } from '@/features/shared/utils/slugGenerator';
-import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
 import { extractErrorMessage } from '@/lib/utils';
 import OwnerSelector, { type OwnerSelection } from '@/features/shared/components/OwnerSelector';
+import ChipInput from '@/features/shared/components/ChipInput';
+import { THEME_SUGGESTIONS } from '@/features/shared/utils/tagConstants';
 import { suggestThemes } from '@/lib/themeSuggester';
 import { ThemeSuggestions } from './ThemeSuggestions';
 import { useDuplicateDetection } from '../hooks/useDuplicateDetection';
@@ -61,9 +62,9 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
   const [owner, setOwner] = useState<OwnerSelection>({ ownerType: 'user' });
   // Origin selection state
   const [origin, setOrigin] = useState<string>('');
-  // Theme suggestion state
+  // Theme state (now using array directly)
   const [lyricsForSuggestion, setLyricsForSuggestion] = useState<string>('');
-  const [themesInput, setThemesInput] = useState<string>('');
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   // Artist input state (controlled for autocomplete)
   const [artistInput, setArtistInput] = useState<string>('');
 
@@ -72,14 +73,12 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
     () => suggestThemes(lyricsForSuggestion),
     [lyricsForSuggestion]
   );
-  const selectedThemes = useMemo(
-    () => parseCommaSeparatedTags(themesInput),
-    [themesInput]
-  );
 
   const handleThemeSuggestionSelect = (theme: string) => {
-    const newThemes = themesInput ? `${themesInput}, ${theme}` : theme;
-    setThemesInput(newThemes);
+    const normalizedTheme = theme.toLowerCase().trim();
+    if (!selectedThemes.includes(normalizedTheme)) {
+      setSelectedThemes([...selectedThemes, normalizedTheme]);
+    }
   };
 
   const {
@@ -107,8 +106,8 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
       setIsSubmitting(true);
       setSubmitError(null);
 
-      // Parse themes from comma-separated string
-      const themes = parseCommaSeparatedTags(themesInput);
+      // Use selectedThemes array directly (already normalized by ChipInput)
+      const themes = selectedThemes;
 
       // Generate slug from title
       const slug = generateSlug(data.title, 'song');
@@ -212,20 +211,19 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
         </Select>
       </div>
 
-      {/* Themes field (comma-separated) */}
+      {/* Themes field (chip-based autocomplete) */}
       <div>
-        <Label htmlFor="themes">Themes</Label>
-        <Input
-          id="themes"
-          type="text"
-          placeholder="e.g., grace, salvation, worship"
+        <ChipInput
+          label="Themes"
+          value={selectedThemes}
+          onChange={setSelectedThemes}
+          suggestions={[...THEME_SUGGESTIONS]}
+          allowCustom={true}
+          placeholder="Add themes..."
+          helperText="Select from suggestions or type custom themes"
           disabled={isSubmitting}
-          value={themesInput}
-          onChange={(e) => setThemesInput(e.target.value)}
+          chipVariant="theme"
         />
-        <p className="text-xs text-muted-foreground mt-1">
-          Separate multiple themes with commas
-        </p>
         <ThemeSuggestions
           suggestions={suggestedThemes}
           selectedThemes={selectedThemes}

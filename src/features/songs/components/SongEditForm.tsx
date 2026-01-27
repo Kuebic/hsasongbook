@@ -25,16 +25,16 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { SONG_ORIGIN_GROUPS } from '../validation/songSchemas';
 import type { Id } from '../../../../convex/_generated/dataModel';
-import { parseCommaSeparatedTags } from '@/features/shared/utils/dataHelpers';
 import { extractErrorMessage } from '@/lib/utils';
+import ChipInput from '@/features/shared/components/ChipInput';
+import { THEME_SUGGESTIONS } from '@/features/shared/utils/tagConstants';
 import { suggestThemes } from '@/lib/themeSuggester';
 import { ThemeSuggestions } from './ThemeSuggestions';
 
-// Edit form schema (all fields optional since partial updates allowed)
+// Edit form schema (themes managed separately as array state)
 const editSongSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   artist: z.string().max(200).optional(),
-  themes: z.string().optional(),
   copyright: z.string().max(500).optional(),
   lyrics: z.string().optional(),
   origin: z.string().optional(),
@@ -67,6 +67,11 @@ export default function SongEditForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   // Origin state (managed separately for Select component)
   const [origin, setOrigin] = useState<string>(initialData.origin || '');
+  // Themes state (managed separately for ChipInput)
+  const [selectedThemes, setSelectedThemes] = useState<string[]>(
+    initialData.themes || []
+  );
+  const [themesChanged, setThemesChanged] = useState(false);
   // Theme suggestion state (updates on lyrics blur)
   const [lyricsForSuggestion, setLyricsForSuggestion] = useState<string>(
     initialData.lyrics || ''
@@ -76,8 +81,6 @@ export default function SongEditForm({
     register,
     handleSubmit,
     reset,
-    watch,
-    setValue,
     formState: { errors, isDirty },
   } = useForm<EditSongFormData>({
     resolver: zodResolver(editSongSchema),
@@ -85,7 +88,6 @@ export default function SongEditForm({
     defaultValues: {
       title: initialData.title,
       artist: initialData.artist || '',
-      themes: initialData.themes?.join(', ') || '',
       copyright: initialData.copyright || '',
       lyrics: initialData.lyrics || '',
       origin: initialData.origin || '',
@@ -97,29 +99,32 @@ export default function SongEditForm({
     reset({
       title: initialData.title,
       artist: initialData.artist || '',
-      themes: initialData.themes?.join(', ') || '',
       copyright: initialData.copyright || '',
       lyrics: initialData.lyrics || '',
       origin: initialData.origin || '',
     });
     setOrigin(initialData.origin || '');
+    setSelectedThemes(initialData.themes || []);
+    setThemesChanged(false);
     setLyricsForSuggestion(initialData.lyrics || '');
   }, [initialData, reset]);
 
   // Theme suggestions
-  const themesValue = watch('themes') || '';
   const suggestedThemes = useMemo(
     () => suggestThemes(lyricsForSuggestion),
     [lyricsForSuggestion]
   );
-  const selectedThemes = useMemo(
-    () => parseCommaSeparatedTags(themesValue),
-    [themesValue]
-  );
+
+  const handleThemesChange = (newThemes: string[]) => {
+    setSelectedThemes(newThemes);
+    setThemesChanged(true);
+  };
 
   const handleThemeSuggestionSelect = (theme: string) => {
-    const newThemes = themesValue ? `${themesValue}, ${theme}` : theme;
-    setValue('themes', newThemes, { shouldDirty: true });
+    const normalizedTheme = theme.toLowerCase().trim();
+    if (!selectedThemes.includes(normalizedTheme)) {
+      handleThemesChange([...selectedThemes, normalizedTheme]);
+    }
   };
 
   const onSubmit = async (data: EditSongFormData) => {
@@ -127,10 +132,8 @@ export default function SongEditForm({
       setIsSubmitting(true);
       setSubmitError(null);
 
-      // Parse themes from comma-separated string
-      const themes = data.themes
-        ? parseCommaSeparatedTags(data.themes)
-        : undefined;
+      // Use selectedThemes array directly (already normalized by ChipInput)
+      const themes = selectedThemes.length > 0 ? selectedThemes : undefined;
 
       // Update song via Convex mutation
       await updateSong({
@@ -224,19 +227,19 @@ export default function SongEditForm({
         </Select>
       </div>
 
-      {/* Themes field (comma-separated) */}
+      {/* Themes field (chip-based autocomplete) */}
       <div>
-        <Label htmlFor="themes">Themes</Label>
-        <Input
-          id="themes"
-          type="text"
-          placeholder="e.g., grace, salvation, worship"
+        <ChipInput
+          label="Themes"
+          value={selectedThemes}
+          onChange={handleThemesChange}
+          suggestions={[...THEME_SUGGESTIONS]}
+          allowCustom={true}
+          placeholder="Add themes..."
+          helperText="Select from suggestions or type custom themes"
           disabled={isSubmitting}
-          {...register('themes')}
+          chipVariant="theme"
         />
-        <p className="text-xs text-muted-foreground mt-1">
-          Separate multiple themes with commas
-        </p>
         <ThemeSuggestions
           suggestions={suggestedThemes}
           selectedThemes={selectedThemes}
@@ -286,7 +289,7 @@ export default function SongEditForm({
             Cancel
           </Button>
         )}
-        <Button type="submit" disabled={isSubmitting || (!isDirty && origin === (initialData.origin || ''))}>
+        <Button type="submit" disabled={isSubmitting || (!isDirty && !themesChanged && origin === (initialData.origin || ''))}>
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
