@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { query, mutation, QueryCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
-import { requireAuthenticatedUser } from "./permissions";
+import { requireAuthenticatedUser, canViewSetlist } from "./permissions";
 
 // ============ QUERIES ============
 
@@ -11,7 +11,7 @@ import { requireAuthenticatedUser } from "./permissions";
  */
 export const isFavorited = query({
   args: {
-    targetType: v.union(v.literal("song"), v.literal("arrangement")),
+    targetType: v.union(v.literal("song"), v.literal("arrangement"), v.literal("setlist")),
     targetId: v.string(),
   },
   handler: async (ctx, args) => {
@@ -37,7 +37,7 @@ export const isFavorited = query({
  */
 export const getFavoriteIds = query({
   args: {
-    targetType: v.union(v.literal("song"), v.literal("arrangement")),
+    targetType: v.union(v.literal("song"), v.literal("arrangement"), v.literal("setlist")),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -146,11 +146,62 @@ export const getUserFavoriteArrangements = query({
 });
 
 /**
+ * Get user's favorited setlists with full setlist data
+ * Filters out setlists user can no longer view (privacy changed)
+ */
+export const getUserFavoriteSetlists = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const favorites = await ctx.db
+      .query("userFavorites")
+      .withIndex("by_user_and_type", (q) =>
+        q.eq("userId", userId).eq("targetType", "setlist")
+      )
+      .collect();
+
+    // Fetch setlists and filter out ones user can no longer access
+    const setlists = await Promise.all(
+      favorites.map(async (f) => {
+        const setlist = await ctx.db.get(f.targetId as Id<"setlists">);
+        if (!setlist) return null;
+
+        // Check if user can still view this setlist (privacy may have changed)
+        const canView = await canViewSetlist(ctx, setlist._id, userId);
+        if (!canView) return null;
+
+        // Get owner info
+        const owner = await ctx.db.get(setlist.userId);
+
+        return {
+          ...setlist,
+          owner: owner
+            ? {
+                _id: owner._id,
+                username: owner.username,
+                displayName: owner.displayName,
+              }
+            : null,
+          favoritedAt: f.createdAt,
+        };
+      })
+    );
+
+    // Filter out deleted/inaccessible setlists and sort by favorited date (newest first)
+    return setlists
+      .filter((s): s is NonNullable<typeof s> => s !== null)
+      .sort((a, b) => b.favoritedAt - a.favoritedAt);
+  },
+});
+
+/**
  * Get favorite count for a specific item
  */
 export const getFavoriteCount = query({
   args: {
-    targetType: v.union(v.literal("song"), v.literal("arrangement")),
+    targetType: v.union(v.literal("song"), v.literal("arrangement"), v.literal("setlist")),
     targetId: v.string(),
   },
   handler: async (ctx, args) => {
@@ -172,7 +223,7 @@ export const getFavoriteCount = query({
  */
 export const toggle = mutation({
   args: {
-    targetType: v.union(v.literal("song"), v.literal("arrangement")),
+    targetType: v.union(v.literal("song"), v.literal("arrangement"), v.literal("setlist")),
     targetId: v.string(),
   },
   handler: async (ctx, args) => {
@@ -213,11 +264,11 @@ export const toggle = mutation({
 // ============ HELPER FUNCTIONS ============
 
 /**
- * Update the denormalized favorites count on a song or arrangement
+ * Update the denormalized favorites count on a song, arrangement, or setlist
  */
 async function updateFavoriteCount(
   ctx: QueryCtx & { db: { patch: Function } },
-  targetType: "song" | "arrangement",
+  targetType: "song" | "arrangement" | "setlist",
   targetId: string,
   delta: number
 ) {
@@ -228,11 +279,18 @@ async function updateFavoriteCount(
         favorites: Math.max(0, (song.favorites || 0) + delta),
       });
     }
-  } else {
+  } else if (targetType === "arrangement") {
     const arrangement = await ctx.db.get(targetId as Id<"arrangements">);
     if (arrangement) {
       await ctx.db.patch(targetId as Id<"arrangements">, {
         favorites: Math.max(0, (arrangement.favorites || 0) + delta),
+      });
+    }
+  } else if (targetType === "setlist") {
+    const setlist = await ctx.db.get(targetId as Id<"setlists">);
+    if (setlist) {
+      await ctx.db.patch(targetId as Id<"setlists">, {
+        favorites: Math.max(0, (setlist.favorites || 0) + delta),
       });
     }
   }

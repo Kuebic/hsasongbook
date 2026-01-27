@@ -269,11 +269,11 @@ export default defineSchema({
     .index("by_content", ["contentType", "contentId"])
     .index("by_content_and_version", ["contentType", "contentId", "version"]),
 
-  // User Favorites - Track what users have favorited (songs and arrangements)
+  // User Favorites - Track what users have favorited (songs, arrangements, setlists)
   userFavorites: defineTable({
     userId: v.id("users"),
-    targetType: v.union(v.literal("song"), v.literal("arrangement")),
-    targetId: v.string(), // songId or arrangementId as string
+    targetType: v.union(v.literal("song"), v.literal("arrangement"), v.literal("setlist")),
+    targetId: v.string(), // songId, arrangementId, or setlistId as string
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])

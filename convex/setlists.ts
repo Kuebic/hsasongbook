@@ -779,3 +779,117 @@ export const updateSharedUserPermission = mutation({
     });
   },
 });
+
+// ============ DUPLICATION & ATTRIBUTION ============
+
+/**
+ * Duplicate a setlist (always creates private copy)
+ * Note: Both owners and non-owners can duplicate setlists they can view
+ * Access: Anyone who can view the setlist
+ */
+export const duplicate = mutation({
+  args: {
+    setlistId: v.id("setlists"),
+    newName: v.optional(v.string()), // Override name
+  },
+  handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(ctx);
+
+    // Check if user can view the original
+    const canView = await canViewSetlist(ctx, args.setlistId, userId);
+    if (!canView) {
+      throw new Error("Setlist not found or access denied");
+    }
+
+    const original = await ctx.db.get(args.setlistId);
+    if (!original) throw new Error("Setlist not found");
+
+    // Create duplicate (always private, as per user preference)
+    const duplicateId = await ctx.db.insert("setlists", {
+      name: args.newName ?? `${original.name} (Copy)`,
+      description: original.description,
+      performanceDate: undefined, // Don't copy date
+      songs: original.songs ?? [],
+      userId,
+      privacyLevel: "private", // Always default to private
+      tags: original.tags ?? [],
+      estimatedDuration: original.estimatedDuration,
+      difficulty: original.difficulty,
+      duplicatedFrom: args.setlistId,
+      duplicatedFromName: original.name,
+      showAttribution: true, // Default to showing attribution
+      favorites: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return duplicateId;
+  },
+});
+
+/**
+ * Toggle attribution visibility on a duplicated setlist
+ * Access: Owner only (since it's their copy)
+ */
+export const toggleAttribution = mutation({
+  args: { setlistId: v.id("setlists") },
+  handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(ctx);
+
+    const canEdit = await canEditSetlist(ctx, args.setlistId, userId);
+    if (!canEdit) {
+      throw new Error("You can only edit your own setlists");
+    }
+
+    const setlist = await ctx.db.get(args.setlistId);
+    if (!setlist) throw new Error("Setlist not found");
+
+    await ctx.db.patch(args.setlistId, {
+      showAttribution: !(setlist.showAttribution ?? false),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Get original setlist info for attribution (if accessible)
+ * Access: Anyone who can view the setlist
+ */
+export const getAttributionInfo = query({
+  args: { setlistId: v.id("setlists") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    const setlist = await ctx.db.get(args.setlistId);
+
+    if (!setlist?.duplicatedFrom) return null;
+
+    const original = await ctx.db.get(setlist.duplicatedFrom);
+    if (!original) {
+      // Original was deleted - return cached name
+      return {
+        name: setlist.duplicatedFromName ?? "[Deleted Setlist]",
+        isAccessible: false,
+      };
+    }
+
+    // Check if current user can view the original
+    const canView = await canViewSetlist(ctx, setlist.duplicatedFrom, userId);
+
+    if (!canView) {
+      // Original exists but user can't access it (privacy changed)
+      return {
+        name: setlist.duplicatedFromName ?? original.name,
+        isAccessible: false,
+      };
+    }
+
+    // User can access original
+    const owner = await ctx.db.get(original.userId);
+    return {
+      id: setlist.duplicatedFrom,
+      name: original.name,
+      isAccessible: true,
+      ownerUsername: owner?.username,
+    };
+  },
+});
