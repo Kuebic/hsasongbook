@@ -19,30 +19,44 @@ export interface UseSetlistSongsReturn {
   updateSongKey: (songId: string, newKey: string) => Promise<void>;
 }
 
+/**
+ * Convert SetlistSong array to Convex songs format
+ */
+function toConvexSongs(songs: SetlistSong[]) {
+  return songs.map((s) => ({
+    arrangementId: s.arrangementId as Id<'arrangements'>,
+    ...(s.customKey && { customKey: s.customKey }),
+  }));
+}
+
 export function useSetlistSongs(
   setlist: Setlist | null,
   onUpdate: (updatedSetlist: Setlist) => void
 ): UseSetlistSongsReturn {
   const updateMutation = useMutation(api.setlists.update);
+  const updateSongKeyMutation = useMutation(api.setlists.updateSongKey);
 
   /**
    * Add a song (arrangement) to the setlist
    */
   const addSong = useCallback(
-    async (arrangementId: string): Promise<void> => {
+    async (arrangementId: string, customKey?: string): Promise<void> => {
       if (!setlist) return;
 
-      // Build new arrangementIds array
-      const newArrangementIds = [
-        ...setlist.songs.map((s) => s.arrangementId),
-        arrangementId,
+      // Build new songs array with customKey preserved
+      const newSongs = [
+        ...toConvexSongs(setlist.songs),
+        {
+          arrangementId: arrangementId as Id<'arrangements'>,
+          ...(customKey && { customKey }),
+        },
       ];
 
       logger.debug('Adding song to setlist:', arrangementId);
 
       await updateMutation({
         id: setlist.id as Id<'setlists'>,
-        arrangementIds: newArrangementIds as Id<'arrangements'>[],
+        songs: newSongs,
       });
 
       // Optimistic update for UI
@@ -51,6 +65,7 @@ export function useSetlistSongs(
         songId: '', // Populated on next query
         arrangementId,
         order: setlist.songs.length,
+        customKey,
       };
 
       onUpdate({
@@ -74,15 +89,14 @@ export function useSetlistSongs(
       const songIndex = setlist.songs.findIndex((s) => s.id === songEntryId);
       if (songIndex === -1) return;
 
-      // Filter out the removed song and rebuild arrangementIds
+      // Filter out the removed song (preserving customKey on remaining songs)
       const newSongs = setlist.songs.filter((s) => s.id !== songEntryId);
-      const newArrangementIds = newSongs.map((s) => s.arrangementId);
 
       logger.debug('Removing song from setlist:', songEntryId);
 
       await updateMutation({
         id: setlist.id as Id<'setlists'>,
-        arrangementIds: newArrangementIds as Id<'arrangements'>[],
+        songs: toConvexSongs(newSongs),
       });
 
       // Optimistic update with reindexed order
@@ -104,12 +118,12 @@ export function useSetlistSongs(
     async (reorderedSongs: SetlistSong[]): Promise<void> => {
       if (!setlist) return;
 
-      const newArrangementIds = reorderedSongs.map((s) => s.arrangementId);
       logger.debug('Reordering songs:', { count: reorderedSongs.length });
 
+      // Preserve customKey when reordering
       await updateMutation({
         id: setlist.id as Id<'setlists'>,
-        arrangementIds: newArrangementIds as Id<'arrangements'>[],
+        songs: toConvexSongs(reorderedSongs),
       });
 
       logger.info('Songs reordered');
@@ -119,14 +133,39 @@ export function useSetlistSongs(
 
   /**
    * Update the custom key for a song in the setlist
-   * NOTE: Not supported in MVP - customKey is not stored in Convex schema
    */
   const updateSongKey = useCallback(
-    async (_songId: string, _newKey: string): Promise<void> => {
-      logger.warn('updateSongKey not supported in MVP - customKey not stored in Convex schema');
-      // Post-MVP: This would require schema changes to store per-song metadata
+    async (songId: string, newKey: string): Promise<void> => {
+      if (!setlist) return;
+
+      // Find the song entry (songId is the arrangementId in this context)
+      const songEntry = setlist.songs.find((s) => s.id === songId);
+      if (!songEntry) {
+        logger.warn('Song not found in setlist:', songId);
+        return;
+      }
+
+      logger.debug('Updating song key:', { songId, newKey });
+
+      // Optimistic update
+      onUpdate({
+        ...setlist,
+        songs: setlist.songs.map((s) =>
+          s.id === songId ? { ...s, customKey: newKey } : s
+        ),
+        updatedAt: new Date().toISOString(),
+      });
+
+      // Persist to Convex
+      await updateSongKeyMutation({
+        setlistId: setlist.id as Id<'setlists'>,
+        arrangementId: songEntry.arrangementId as Id<'arrangements'>,
+        customKey: newKey,
+      });
+
+      logger.info('Song key updated');
     },
-    []
+    [setlist, updateSongKeyMutation, onUpdate]
   );
 
   return { addSong, removeSong, reorderSongs, updateSongKey };

@@ -92,16 +92,25 @@ export function useSetlistData(setlistId: string | undefined): UseSetlistDataRet
       }
     }
 
-    // Build songs array for setlist from arrangementIds
-    const setlistSongs: SetlistSong[] = convexData.arrangementIds.map((arrId, index) => {
-      const arrangement = arrangementsMap.get(arrId);
-      return {
-        id: arrId, // Stable ID for dnd-kit (index-based IDs break animations)
-        songId: arrangement?.songId ?? '',
-        arrangementId: arrId,
-        order: index,
-      };
-    });
+    // Build songs array from Convex songs field (with customKey support)
+    // Falls back to legacy arrangementIds if songs field not present
+    const convexSongs =
+      convexData.songs ??
+      convexData.arrangementIds?.map((id: string) => ({ arrangementId: id })) ??
+      [];
+
+    const setlistSongs: SetlistSong[] = convexSongs.map(
+      (songData: { arrangementId: string; customKey?: string }, index: number) => {
+        const arrangement = arrangementsMap.get(songData.arrangementId);
+        return {
+          id: songData.arrangementId, // Stable ID for dnd-kit (index-based IDs break animations)
+          songId: arrangement?.songId ?? '',
+          arrangementId: songData.arrangementId,
+          order: index,
+          customKey: songData.customKey, // Pass through customKey from Convex
+        };
+      }
+    );
 
     // Build setlist object
     const setlistObj: Setlist = {

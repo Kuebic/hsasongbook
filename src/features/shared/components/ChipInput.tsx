@@ -232,10 +232,12 @@ export function ChipInput({
   );
 
   const handleInputFocus = useCallback(() => {
-    if (allSuggestions.length > 0) {
+    // Only open if user has already typed something
+    // This prevents flash of dropdown on initial focus
+    if (allSuggestions.length > 0 && inputValue.length > 0) {
       setOpen(true);
     }
-  }, [allSuggestions.length]);
+  }, [allSuggestions.length, inputValue.length]);
 
   const handleInputBlur = useCallback(() => {
     // Delay closing to allow click on suggestion

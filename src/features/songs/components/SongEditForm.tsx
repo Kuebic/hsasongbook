@@ -7,6 +7,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useEffect, useMemo } from 'react';
+import { useDebouncedValue } from '@/features/shared/hooks/useDebounce';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -72,15 +73,12 @@ export default function SongEditForm({
     initialData.themes || []
   );
   const [themesChanged, setThemesChanged] = useState(false);
-  // Theme suggestion state (updates on lyrics blur)
-  const [lyricsForSuggestion, setLyricsForSuggestion] = useState<string>(
-    initialData.lyrics || ''
-  );
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isDirty },
   } = useForm<EditSongFormData>({
     resolver: zodResolver(editSongSchema),
@@ -106,13 +104,16 @@ export default function SongEditForm({
     setOrigin(initialData.origin || '');
     setSelectedThemes(initialData.themes || []);
     setThemesChanged(false);
-    setLyricsForSuggestion(initialData.lyrics || '');
   }, [initialData, reset]);
+
+  // Watch lyrics for debounced theme suggestions
+  const lyricsValue = watch('lyrics') ?? '';
+  const debouncedLyrics = useDebouncedValue(lyricsValue, { delay: 300 });
 
   // Theme suggestions
   const suggestedThemes = useMemo(
-    () => suggestThemes(lyricsForSuggestion),
-    [lyricsForSuggestion]
+    () => suggestThemes(debouncedLyrics),
+    [debouncedLyrics]
   );
 
   const handleThemesChange = (newThemes: string[]) => {
@@ -227,26 +228,6 @@ export default function SongEditForm({
         </Select>
       </div>
 
-      {/* Themes field (chip-based autocomplete) */}
-      <div>
-        <ChipInput
-          label="Themes"
-          value={selectedThemes}
-          onChange={handleThemesChange}
-          suggestions={[...THEME_SUGGESTIONS]}
-          allowCustom={true}
-          placeholder="Add themes..."
-          helperText="Select from suggestions or type custom themes"
-          disabled={isSubmitting}
-          chipVariant="theme"
-        />
-        <ThemeSuggestions
-          suggestions={suggestedThemes}
-          selectedThemes={selectedThemes}
-          onSelect={handleThemeSuggestionSelect}
-        />
-      </div>
-
       {/* Copyright field (optional) */}
       <div>
         <Label htmlFor="copyright">Copyright</Label>
@@ -268,13 +249,32 @@ export default function SongEditForm({
           placeholder="Enter the song lyrics"
           disabled={isSubmitting}
           {...register('lyrics')}
-          onBlur={(e) => setLyricsForSuggestion(e.target.value)}
         />
         {errors.lyrics && (
           <p id="lyrics-error" className="text-sm text-destructive mt-1">
             {errors.lyrics.message}
           </p>
         )}
+      </div>
+
+      {/* Themes field (chip-based autocomplete) - after lyrics so suggestions can populate */}
+      <div>
+        <ChipInput
+          label="Themes"
+          value={selectedThemes}
+          onChange={handleThemesChange}
+          suggestions={[...THEME_SUGGESTIONS]}
+          allowCustom={true}
+          placeholder="Add themes..."
+          helperText="Select from suggestions or type custom themes"
+          disabled={isSubmitting}
+          chipVariant="theme"
+        />
+        <ThemeSuggestions
+          suggestions={suggestedThemes}
+          selectedThemes={selectedThemes}
+          onSelect={handleThemeSuggestionSelect}
+        />
       </div>
 
       {/* Action buttons */}

@@ -9,6 +9,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useMemo } from 'react';
+import { useDebouncedValue } from '@/features/shared/hooks/useDebounce';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -62,24 +63,10 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
   const [owner, setOwner] = useState<OwnerSelection>({ ownerType: 'user' });
   // Origin selection state
   const [origin, setOrigin] = useState<string>('');
-  // Theme state (now using array directly)
-  const [lyricsForSuggestion, setLyricsForSuggestion] = useState<string>('');
+  // Theme state
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   // Artist input state (controlled for autocomplete)
   const [artistInput, setArtistInput] = useState<string>('');
-
-  // Compute theme suggestions from lyrics (updates on blur)
-  const suggestedThemes = useMemo(
-    () => suggestThemes(lyricsForSuggestion),
-    [lyricsForSuggestion]
-  );
-
-  const handleThemeSuggestionSelect = (theme: string) => {
-    const normalizedTheme = theme.toLowerCase().trim();
-    if (!selectedThemes.includes(normalizedTheme)) {
-      setSelectedThemes([...selectedThemes, normalizedTheme]);
-    }
-  };
 
   const {
     register,
@@ -96,6 +83,23 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
       lyrics: '',
     },
   });
+
+  // Watch lyrics for debounced theme suggestions
+  const lyricsValue = watch('lyrics') ?? '';
+  const debouncedLyrics = useDebouncedValue(lyricsValue, { delay: 300 });
+
+  // Compute theme suggestions from debounced lyrics
+  const suggestedThemes = useMemo(
+    () => suggestThemes(debouncedLyrics),
+    [debouncedLyrics]
+  );
+
+  const handleThemeSuggestionSelect = (theme: string) => {
+    const normalizedTheme = theme.toLowerCase().trim();
+    if (!selectedThemes.includes(normalizedTheme)) {
+      setSelectedThemes([...selectedThemes, normalizedTheme]);
+    }
+  };
 
   // Watch title for duplicate detection
   const titleValue = watch('title');
@@ -211,7 +215,24 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
         </Select>
       </div>
 
-      {/* Themes field (chip-based autocomplete) */}
+      {/* Lyrics field (optional textarea) */}
+      <div>
+        <Label htmlFor="lyrics">Lyrics</Label>
+        <textarea
+          id="lyrics"
+          className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          placeholder="Enter the song lyrics (optional)"
+          disabled={isSubmitting}
+          {...register('lyrics')}
+        />
+        {errors.lyrics && (
+          <p id="lyrics-error" className="text-sm text-destructive mt-1">
+            {errors.lyrics.message}
+          </p>
+        )}
+      </div>
+
+      {/* Themes field (chip-based autocomplete) - after lyrics so suggestions can populate */}
       <div>
         <ChipInput
           label="Themes"
@@ -229,24 +250,6 @@ export default function AddSongForm({ onSuccess, onCancel }: AddSongFormProps) {
           selectedThemes={selectedThemes}
           onSelect={handleThemeSuggestionSelect}
         />
-      </div>
-
-      {/* Lyrics field (optional textarea) */}
-      <div>
-        <Label htmlFor="lyrics">Lyrics</Label>
-        <textarea
-          id="lyrics"
-          className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder="Enter the song lyrics (optional)"
-          disabled={isSubmitting}
-          {...register('lyrics')}
-          onBlur={(e) => setLyricsForSuggestion(e.target.value)}
-        />
-        {errors.lyrics && (
-          <p id="lyrics-error" className="text-sm text-destructive mt-1">
-            {errors.lyrics.message}
-          </p>
-        )}
       </div>
 
       {/* Action buttons */}

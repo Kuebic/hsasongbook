@@ -21,6 +21,7 @@ export { default as PerformanceProgressBar } from './components/PerformanceProgr
 export { useSetlists } from './hooks/useSetlists';
 export { useSetlistData } from './hooks/useSetlistData';
 export { useSetlistSongs } from './hooks/useSetlistSongs';
+export { useSetlistSearch } from './hooks/useSetlistSearch';
 export { useFullscreen } from './hooks/useFullscreen';
 export { useArrowKeyNavigation } from './hooks/useArrowKeyNavigation';
 export { usePerformanceMode } from './hooks/usePerformanceMode';

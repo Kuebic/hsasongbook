@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+
+const INITIAL_DISPLAY_COUNT = 3;
 
 interface ThemeSuggestionsProps {
   suggestions: string[];
@@ -13,11 +15,31 @@ export function ThemeSuggestions({
   selectedThemes,
   onSelect,
 }: ThemeSuggestionsProps) {
-  if (suggestions.length === 0) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const selectedSet = new Set(selectedThemes.map((t) => t.toLowerCase()));
+
+  // Filter out already-selected themes
+  const unselectedSuggestions = suggestions.filter(
+    (theme) => !selectedSet.has(theme.toLowerCase())
+  );
+
+  // Reset to collapsed when suggestions change significantly
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [suggestions.length]);
+
+  // Hide entire section if no suggestions or all have been selected
+  if (unselectedSuggestions.length === 0) {
     return null;
   }
 
-  const selectedSet = new Set(selectedThemes.map((t) => t.toLowerCase()));
+  const visibleSuggestions = isExpanded
+    ? unselectedSuggestions
+    : unselectedSuggestions.slice(0, INITIAL_DISPLAY_COUNT);
+
+  const hasMore = unselectedSuggestions.length > INITIAL_DISPLAY_COUNT;
+  const remainingCount = unselectedSuggestions.length - INITIAL_DISPLAY_COUNT;
 
   return (
     <div className="mt-2">
@@ -25,32 +47,42 @@ export function ThemeSuggestions({
         Suggested themes based on lyrics:
       </p>
       <div className="flex flex-wrap gap-1.5">
-        {suggestions.map((theme) => {
-          const isSelected = selectedSet.has(theme.toLowerCase());
-          return (
-            <button
-              key={theme}
-              type="button"
-              onClick={() => !isSelected && onSelect(theme)}
-              disabled={isSelected}
-              className={cn(
-                'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded-md',
-                isSelected && 'cursor-default'
-              )}
+        {visibleSuggestions.map((theme) => (
+          <button
+            key={theme}
+            type="button"
+            onClick={() => onSelect(theme)}
+            className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded-md"
+          >
+            <Badge variant="secondary" className="cursor-pointer select-none">
+              {theme}
+            </Badge>
+          </button>
+        ))}
+        {hasMore && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded-md"
+          >
+            <Badge
+              variant="outline"
+              className="cursor-pointer select-none text-muted-foreground gap-1"
             >
-              <Badge
-                variant={isSelected ? 'outline' : 'secondary'}
-                className={cn(
-                  'cursor-pointer select-none',
-                  isSelected && 'opacity-50 cursor-default'
-                )}
-              >
-                {isSelected && <Check className="w-3 h-3 mr-1" />}
-                {theme}
-              </Badge>
-            </button>
-          );
-        })}
+              {isExpanded ? (
+                <>
+                  Show less
+                  <ChevronUp className="h-3 w-3" />
+                </>
+              ) : (
+                <>
+                  +{remainingCount} more
+                  <ChevronDown className="h-3 w-3" />
+                </>
+              )}
+            </Badge>
+          </button>
+        )}
       </div>
     </div>
   );

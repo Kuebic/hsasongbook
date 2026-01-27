@@ -66,10 +66,16 @@ export const getWithArrangements = query({
       return null;
     }
 
+    // Get songs array (prefer new format, fallback to legacy arrangementIds)
+    const songsData =
+      setlist.songs ??
+      setlist.arrangementIds?.map((id) => ({ arrangementId: id })) ??
+      [];
+
     // Load arrangements with their songs
     const arrangements = await Promise.all(
-      setlist.arrangementIds.map(async (arrId) => {
-        const arr = await ctx.db.get(arrId);
+      songsData.map(async (songEntry) => {
+        const arr = await ctx.db.get(songEntry.arrangementId);
         if (!arr) return null;
 
         // Load parent song
@@ -91,6 +97,8 @@ export const getWithArrangements = query({
 
     return {
       ...setlist,
+      // Return songs array with customKey for frontend
+      songs: songsData,
       arrangements: arrangements.filter((a) => a !== null),
     };
   },
@@ -107,16 +115,32 @@ export const create = mutation({
     name: v.string(),
     description: v.optional(v.string()),
     performanceDate: v.optional(v.string()),
+    // Legacy field - prefer songs
     arrangementIds: v.optional(v.array(v.id("arrangements"))),
+    // New field with per-song metadata
+    songs: v.optional(
+      v.array(
+        v.object({
+          arrangementId: v.id("arrangements"),
+          customKey: v.optional(v.string()),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const { userId } = await requireAuthenticatedUser(ctx);
+
+    // Prefer songs array, fallback to arrangementIds for backwards compat
+    const songs =
+      args.songs ??
+      args.arrangementIds?.map((id) => ({ arrangementId: id })) ??
+      [];
 
     const setlistId = await ctx.db.insert("setlists", {
       name: args.name,
       description: args.description,
       performanceDate: args.performanceDate,
-      arrangementIds: args.arrangementIds ?? [],
+      songs,
       userId,
     });
 
@@ -134,7 +158,17 @@ export const update = mutation({
     name: v.optional(v.string()),
     description: v.optional(v.string()),
     performanceDate: v.optional(v.string()),
+    // Legacy field - prefer songs
     arrangementIds: v.optional(v.array(v.id("arrangements"))),
+    // New field with per-song metadata
+    songs: v.optional(
+      v.array(
+        v.object({
+          arrangementId: v.id("arrangements"),
+          customKey: v.optional(v.string()),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
@@ -149,11 +183,17 @@ export const update = mutation({
       throw new Error("You can only edit your own setlists");
     }
 
-    const { id: _id, ...updates } = args;
+    const { id: _id, arrangementIds, ...updates } = args;
+
+    // If arrangementIds provided (legacy), convert to songs format
+    const songsUpdate = args.songs ?? (arrangementIds
+      ? arrangementIds.map((id) => ({ arrangementId: id }))
+      : undefined);
 
     // Filter out undefined values and add timestamp
     const cleanUpdates = {
       ...filterUndefined(updates),
+      ...(songsUpdate !== undefined && { songs: songsUpdate }),
       updatedAt: Date.now(),
     };
 
@@ -194,6 +234,7 @@ export const addArrangement = mutation({
   args: {
     setlistId: v.id("setlists"),
     arrangementId: v.id("arrangements"),
+    customKey: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
@@ -214,14 +255,87 @@ export const addArrangement = mutation({
       throw new Error("Arrangement not found");
     }
 
+    // Get current songs (prefer new format, fallback to legacy)
+    const currentSongs =
+      setlist.songs ??
+      setlist.arrangementIds?.map((id) => ({ arrangementId: id })) ??
+      [];
+
     // Check if already in setlist
-    if (setlist.arrangementIds.includes(args.arrangementId)) {
+    if (currentSongs.some((s) => s.arrangementId === args.arrangementId)) {
       throw new Error("Arrangement is already in this setlist");
     }
 
-    // Add to end of setlist
+    // Add to end of setlist with optional customKey
+    const newSong: { arrangementId: typeof args.arrangementId; customKey?: string } = {
+      arrangementId: args.arrangementId,
+    };
+    if (args.customKey) {
+      newSong.customKey = args.customKey;
+    }
+
     await ctx.db.patch(args.setlistId, {
-      arrangementIds: [...setlist.arrangementIds, args.arrangementId],
+      songs: [...currentSongs, newSong],
+      updatedAt: Date.now(),
+    });
+
+    return args.setlistId;
+  },
+});
+
+/**
+ * Update the custom key for a song in a setlist
+ * Access: Owner only
+ */
+export const updateSongKey = mutation({
+  args: {
+    setlistId: v.id("setlists"),
+    arrangementId: v.id("arrangements"),
+    customKey: v.optional(v.string()), // undefined = reset to arrangement default
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const setlist = await ctx.db.get(args.setlistId);
+    if (!setlist) {
+      throw new Error("Setlist not found");
+    }
+
+    // Check ownership
+    if (setlist.userId !== userId) {
+      throw new Error("You can only edit your own setlists");
+    }
+
+    // Get current songs (prefer new format, fallback to legacy)
+    const currentSongs =
+      setlist.songs ??
+      setlist.arrangementIds?.map((id) => ({ arrangementId: id })) ??
+      [];
+
+    // Find and update the matching song's customKey
+    const songIndex = currentSongs.findIndex(
+      (s) => s.arrangementId === args.arrangementId
+    );
+
+    if (songIndex === -1) {
+      throw new Error("Arrangement not found in setlist");
+    }
+
+    // Update the song with new customKey
+    const updatedSongs = currentSongs.map((song, index) => {
+      if (index === songIndex) {
+        if (args.customKey) {
+          return { ...song, customKey: args.customKey };
+        }
+        // Remove customKey if not provided (reset to default)
+        const { customKey: _, ...rest } = song;
+        return rest;
+      }
+      return song;
+    });
+
+    await ctx.db.patch(args.setlistId, {
+      songs: updatedSongs,
       updatedAt: Date.now(),
     });
 

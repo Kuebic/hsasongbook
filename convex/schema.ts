@@ -106,7 +106,17 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     performanceDate: v.optional(v.string()),
-    arrangementIds: v.array(v.id("arrangements")),
+    // Legacy field - kept for backwards compatibility during migration
+    arrangementIds: v.optional(v.array(v.id("arrangements"))),
+    // New field: songs with per-song metadata (customKey, etc.)
+    songs: v.optional(
+      v.array(
+        v.object({
+          arrangementId: v.id("arrangements"),
+          customKey: v.optional(v.string()),
+        })
+      )
+    ),
     userId: v.id("users"),
     // Track edits
     updatedAt: v.optional(v.number()),
