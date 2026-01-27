@@ -17,6 +17,13 @@ export { default as SetlistSongItem } from './components/SetlistSongItem';
 export { default as PerformanceLayout } from './components/PerformanceLayout';
 export { default as ProgressPill } from './components/ProgressPill';
 
+// Sharing & Privacy Components
+export { default as SetlistPrivacyBadge } from './components/SetlistPrivacyBadge';
+export { default as SetlistSharedBadge } from './components/SetlistSharedBadge';
+export { default as SetlistPrivacySelector } from './components/SetlistPrivacySelector';
+export { default as SetlistFavoriteButton } from './components/SetlistFavoriteButton';
+export { default as SetlistAttribution } from './components/SetlistAttribution';
+
 // Hooks
 export { useSetlists } from './hooks/useSetlists';
 export { useSetlistData } from './hooks/useSetlistData';
