@@ -53,6 +53,26 @@ export default defineSchema({
     arrangementTotalFavorites: v.optional(v.number()),
     // Direct song favorites count
     favorites: v.optional(v.number()),
+    // Spiritual context (Phase 2.5)
+    notes: v.optional(v.string()), // Performance tips, spiritual themes, song background
+    bibleVerses: v.optional(
+      v.array(
+        v.object({
+          reference: v.string(), // e.g., "John 3:16"
+          text: v.string(), // Full verse text
+          version: v.optional(v.string()), // e.g., "NIV", "KJV"
+        })
+      )
+    ),
+    quotes: v.optional(
+      v.array(
+        v.object({
+          text: v.string(), // Quote text
+          source: v.string(), // e.g., "csg", "divine-principle"
+          reference: v.string(), // e.g., "2.1.3"
+        })
+      )
+    ),
   })
     .index("by_slug", ["slug"])
     .index("by_title", ["title"])

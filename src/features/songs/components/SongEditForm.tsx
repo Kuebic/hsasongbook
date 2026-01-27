@@ -31,14 +31,18 @@ import ChipInput from '@/features/shared/components/ChipInput';
 import { THEME_SUGGESTIONS } from '@/features/shared/utils/tagConstants';
 import { suggestThemes } from '@/lib/themeSuggester';
 import { ThemeSuggestions } from './ThemeSuggestions';
+import { BibleVerseManager } from './BibleVerseManager';
+import { QuoteManager } from './QuoteManager';
+import type { BibleVerse, Quote } from '@/types/SpiritualContext.types';
 
-// Edit form schema (themes managed separately as array state)
+// Edit form schema (themes and spiritual context managed separately)
 const editSongSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   artist: z.string().max(200).optional(),
   copyright: z.string().max(500).optional(),
   lyrics: z.string().optional(),
   origin: z.string().optional(),
+  notes: z.string().max(5000).optional(),
 });
 
 type EditSongFormData = z.infer<typeof editSongSchema>;
@@ -52,6 +56,9 @@ interface SongEditFormProps {
     copyright?: string;
     lyrics?: string;
     origin?: string;
+    notes?: string;
+    bibleVerses?: BibleVerse[];
+    quotes?: Quote[];
   };
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -73,6 +80,12 @@ export default function SongEditForm({
     initialData.themes || []
   );
   const [themesChanged, setThemesChanged] = useState(false);
+  // Spiritual context state
+  const [bibleVerses, setBibleVerses] = useState<BibleVerse[]>(
+    initialData.bibleVerses || []
+  );
+  const [quotes, setQuotes] = useState<Quote[]>(initialData.quotes || []);
+  const [spiritualContextChanged, setSpiritualContextChanged] = useState(false);
 
   const {
     register,
@@ -89,6 +102,7 @@ export default function SongEditForm({
       copyright: initialData.copyright || '',
       lyrics: initialData.lyrics || '',
       origin: initialData.origin || '',
+      notes: initialData.notes || '',
     },
   });
 
@@ -100,10 +114,14 @@ export default function SongEditForm({
       copyright: initialData.copyright || '',
       lyrics: initialData.lyrics || '',
       origin: initialData.origin || '',
+      notes: initialData.notes || '',
     });
     setOrigin(initialData.origin || '');
     setSelectedThemes(initialData.themes || []);
     setThemesChanged(false);
+    setBibleVerses(initialData.bibleVerses || []);
+    setQuotes(initialData.quotes || []);
+    setSpiritualContextChanged(false);
   }, [initialData, reset]);
 
   // Watch lyrics for debounced theme suggestions
@@ -128,6 +146,16 @@ export default function SongEditForm({
     }
   };
 
+  const handleBibleVersesChange = (newVerses: BibleVerse[]) => {
+    setBibleVerses(newVerses);
+    setSpiritualContextChanged(true);
+  };
+
+  const handleQuotesChange = (newQuotes: Quote[]) => {
+    setQuotes(newQuotes);
+    setSpiritualContextChanged(true);
+  };
+
   const onSubmit = async (data: EditSongFormData) => {
     try {
       setIsSubmitting(true);
@@ -145,6 +173,9 @@ export default function SongEditForm({
         copyright: data.copyright || undefined,
         lyrics: data.lyrics || undefined,
         origin: origin || undefined,
+        notes: data.notes || undefined,
+        bibleVerses: bibleVerses.length > 0 ? bibleVerses : undefined,
+        quotes: quotes.length > 0 ? quotes : undefined,
       });
 
       onSuccess?.();
@@ -277,6 +308,45 @@ export default function SongEditForm({
         />
       </div>
 
+      {/* Spiritual Context section */}
+      <div className="space-y-4 pt-4 border-t border-border">
+        <h3 className="text-lg font-semibold">Spiritual Context</h3>
+
+        {/* Notes field */}
+        <div>
+          <Label htmlFor="notes">Notes</Label>
+          <textarea
+            id="notes"
+            className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            placeholder="Add performance tips, spiritual themes, song background, etc."
+            disabled={isSubmitting}
+            {...register('notes')}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Add context for worship leaders
+          </p>
+          {errors.notes && (
+            <p id="notes-error" className="text-sm text-destructive mt-1">
+              {errors.notes.message}
+            </p>
+          )}
+        </div>
+
+        {/* Bible Verses */}
+        <BibleVerseManager
+          value={bibleVerses}
+          onChange={handleBibleVersesChange}
+          disabled={isSubmitting}
+        />
+
+        {/* Quotes */}
+        <QuoteManager
+          value={quotes}
+          onChange={handleQuotesChange}
+          disabled={isSubmitting}
+        />
+      </div>
+
       {/* Action buttons */}
       <div className="flex justify-end gap-2 pt-2">
         {onCancel && (
@@ -289,7 +359,16 @@ export default function SongEditForm({
             Cancel
           </Button>
         )}
-        <Button type="submit" disabled={isSubmitting || (!isDirty && !themesChanged && origin === (initialData.origin || ''))}>
+        <Button
+          type="submit"
+          disabled={
+            isSubmitting ||
+            (!isDirty &&
+              !themesChanged &&
+              !spiritualContextChanged &&
+              origin === (initialData.origin || ''))
+          }
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

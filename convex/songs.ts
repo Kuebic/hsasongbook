@@ -213,6 +213,26 @@ export const update = mutation({
     copyright: v.optional(v.string()),
     lyrics: v.optional(v.string()),
     origin: v.optional(v.string()),
+    // Spiritual context (Phase 2.5)
+    notes: v.optional(v.string()),
+    bibleVerses: v.optional(
+      v.array(
+        v.object({
+          reference: v.string(),
+          text: v.string(),
+          version: v.optional(v.string()),
+        })
+      )
+    ),
+    quotes: v.optional(
+      v.array(
+        v.object({
+          text: v.string(),
+          source: v.string(),
+          reference: v.string(),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
@@ -705,7 +725,18 @@ export const listWithArrangementSummary = query({
         (song) =>
           song.title.toLowerCase().includes(query) ||
           song.artist?.toLowerCase().includes(query) ||
-          song.themes?.some((t) => t.toLowerCase().includes(query))
+          song.themes?.some((t) => t.toLowerCase().includes(query)) ||
+          song.notes?.toLowerCase().includes(query) ||
+          song.bibleVerses?.some(
+            (v) =>
+              v.reference.toLowerCase().includes(query) ||
+              v.text.toLowerCase().includes(query)
+          ) ||
+          song.quotes?.some(
+            (q) =>
+              q.text.toLowerCase().includes(query) ||
+              q.reference.toLowerCase().includes(query)
+          )
       );
     }
 

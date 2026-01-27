@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Hash, Music2, Copyright, Users, Globe, Bookmark } from 'lucide-react';
+import { User, Hash, Music2, Copyright, Users, Globe, Bookmark, BookOpen, Quote as QuoteIcon } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { getDisplayName } from '../../shared/utils/userDisplay';
 import { Id } from '../../../../convex/_generated/dataModel';
 import type { Song, OwnerInfo } from '@/types';
-import { getOriginLabel } from '../validation/songSchemas';
+import { getOriginLabel, QUOTE_SOURCES } from '../validation/songSchemas';
 
 interface SongMetadataProps {
   song: Song | null;
@@ -124,6 +124,74 @@ export default function SongMetadata({ song, owner }: SongMetadataProps) {
                 {typeof song.lyrics === 'object' ? song.lyrics.en : song.lyrics}
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Spiritual Context section */}
+        {(song.notes || song.bibleVerses?.length || song.quotes?.length) && (
+          <div className="mt-6 pt-6 border-t border-border">
+            <h3 className="text-lg font-semibold mb-4">Spiritual Context</h3>
+
+            {/* Notes */}
+            {song.notes && (
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                  Notes
+                </h4>
+                <div className="bg-muted rounded-lg p-4">
+                  <p className="text-sm whitespace-pre-line">{song.notes}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Bible Verses */}
+            {song.bibleVerses && song.bibleVerses.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Related Bible Verses
+                </h4>
+                <div className="space-y-2">
+                  {song.bibleVerses.map((verse, idx) => (
+                    <div key={idx} className="bg-muted rounded-lg p-4">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <span className="font-semibold text-sm">{verse.reference}</span>
+                        {verse.version && (
+                          <Badge variant="outline" className="text-xs">
+                            {verse.version}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm italic">{verse.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quotes */}
+            {song.quotes && song.quotes.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                  <QuoteIcon className="h-4 w-4" />
+                  Related Quotes
+                </h4>
+                <div className="space-y-2">
+                  {song.quotes.map((quote, idx) => (
+                    <div key={idx} className="bg-muted rounded-lg p-4">
+                      <p className="text-sm italic mb-2">"{quote.text}"</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Badge variant="secondary" className="text-xs">
+                          {QUOTE_SOURCES.find(s => s.value === quote.source)?.label || quote.source}
+                        </Badge>
+                        <span>—</span>
+                        <span>{quote.reference}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

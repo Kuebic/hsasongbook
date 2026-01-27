@@ -69,3 +69,90 @@ export const addSongSchema = z.object({
 });
 
 export type AddSongFormData = z.infer<typeof addSongSchema>;
+
+/**
+ * Quote source options for Rev. Moon quotes
+ */
+export const QUOTE_SOURCES = [
+  { value: 'csg', label: 'Cheon Seong Gyeong' },
+  { value: 'divine-principle', label: 'Divine Principle' },
+  { value: 'true-parents', label: 'True Parents Speeches' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+export type QuoteSourceValue = (typeof QUOTE_SOURCES)[number]['value'];
+
+/**
+ * Helper to get reference placeholder based on quote source
+ */
+export function getReferencePlaceholder(source: string): string {
+  switch (source) {
+    case 'csg':
+      return 'e.g., 2.1.3';
+    case 'divine-principle':
+      return 'e.g., Chapter 1, Section 2';
+    case 'true-parents':
+      return 'e.g., Speech Title, Date';
+    default:
+      return 'Enter reference...';
+  }
+}
+
+/**
+ * Bible verse validation schema
+ */
+export const bibleVerseSchema = z.object({
+  reference: z
+    .string()
+    .min(1, 'Reference is required')
+    .max(100, 'Reference must be less than 100 characters'),
+  text: z
+    .string()
+    .min(1, 'Verse text is required')
+    .max(2000, 'Verse text must be less than 2000 characters'),
+  version: z
+    .string()
+    .max(50, 'Version must be less than 50 characters')
+    .optional()
+    .or(z.literal('')),
+});
+
+export type BibleVerseFormData = z.infer<typeof bibleVerseSchema>;
+
+/**
+ * Quote validation schema
+ */
+export const quoteSchema = z.object({
+  text: z
+    .string()
+    .min(1, 'Quote text is required')
+    .max(2000, 'Quote text must be less than 2000 characters'),
+  source: z.string().min(1, 'Source is required'),
+  reference: z
+    .string()
+    .min(1, 'Reference is required')
+    .max(200, 'Reference must be less than 200 characters'),
+});
+
+export type QuoteFormData = z.infer<typeof quoteSchema>;
+
+/**
+ * Edit Song form schema (includes spiritual context)
+ */
+export const editSongSchema = addSongSchema.extend({
+  copyright: z
+    .string()
+    .max(500, 'Copyright must be less than 500 characters')
+    .optional()
+    .or(z.literal('')),
+  // Spiritual context fields
+  notes: z
+    .string()
+    .max(5000, 'Notes must be less than 5000 characters')
+    .optional()
+    .or(z.literal('')),
+  bibleVerses: z.array(bibleVerseSchema).optional(),
+  quotes: z.array(quoteSchema).optional(),
+});
+
+export type EditSongFormData = z.infer<typeof editSongSchema>;

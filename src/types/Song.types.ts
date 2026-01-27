@@ -6,6 +6,7 @@
  */
 
 import type { ArrangementSummary } from './Arrangement.types';
+import type { BibleVerse, Quote } from './SpiritualContext.types';
 
 export interface Song {
   id: string;
@@ -30,6 +31,9 @@ export interface Song {
   notes?: string;
   createdAt?: string;
   updatedAt?: string;
+  // Spiritual context (Phase 2.5)
+  bibleVerses?: BibleVerse[];
+  quotes?: Quote[];
 }
 
 /**
