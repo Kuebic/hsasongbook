@@ -5,7 +5,7 @@ import { SearchPage } from '../features/search'
 import { BrowsePage } from '../features/browse'
 import { SongPage } from '../features/songs'
 import { ArrangementPage } from '../features/arrangements'
-import { SetlistsIndexPage, SetlistPage, SetlistPerformancePage } from '../features/setlists'
+import { SetlistsIndexPage, SetlistPage, SetlistPerformancePage, SetlistsBrowsePage } from '../features/setlists'
 import { SettingsPage } from '../features/settings'
 import { ProfilePage, UserProfilePage } from '../features/profile'
 import { GroupsIndexPage, GroupPage, GroupSettingsPage } from '../features/groups'
@@ -116,6 +116,7 @@ function AppWithFeatures() {
           <Route path="/song/:songSlug" element={<SongPage />} />
           <Route path="/song/:songSlug/:arrangementSlug" element={<ArrangementPage />} />
           <Route path="/setlists" element={<SetlistsIndexPage />} />
+          <Route path="/setlists/browse" element={<SetlistsBrowsePage />} />
           <Route path="/setlist/:setlistId" element={<SetlistPage />} />
           <Route path="/setlist/:setlistId/performance/:arrangementIndex?" element={<SetlistPerformancePage />} />
           <Route path="/profile" element={<ProfilePage />} />

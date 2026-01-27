@@ -8,6 +8,7 @@
 export { SetlistsIndexPage } from './pages/SetlistsIndexPage';
 export { SetlistPage } from './pages/SetlistPage';
 export { SetlistPerformancePage } from './pages/SetlistPerformancePage';
+export { SetlistsBrowsePage } from './pages/SetlistsBrowsePage';
 
 // Components
 export { default as SetlistCard } from './components/SetlistCard';

@@ -4,6 +4,7 @@ import { Heart } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAnonymousFavorites } from "@/features/favorites";
 import { cn } from "@/lib/utils";
 
 interface SetlistFavoriteButtonProps {
@@ -24,7 +25,13 @@ export default function SetlistFavoriteButton({
   const { user } = useAuth();
   const isAuthenticated = user && !user.isAnonymous;
 
-  const isFavorited = useQuery(
+  const {
+    toggleFavorite: toggleAnonymousFavorite,
+    isFavorited: isAnonymousFavorited
+  } = useAnonymousFavorites();
+
+  // Query for authenticated users only
+  const isFavoritedAuth = useQuery(
     api.favorites.isFavorited,
     isAuthenticated
       ? { targetType: "setlist" as const, targetId: setlistId }
@@ -32,6 +39,11 @@ export default function SetlistFavoriteButton({
   );
 
   const toggleFavorite = useMutation(api.favorites.toggle);
+
+  // Determine favorite status based on auth state
+  const isFavorited = isAuthenticated
+    ? isFavoritedAuth
+    : isAnonymousFavorited(setlistId, 'setlist');
 
   // Format large numbers
   const formatCount = (num: number): string => {
@@ -45,18 +57,21 @@ export default function SetlistFavoriteButton({
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isAuthenticated) {
-      // TODO: Handle anonymous favorites via localStorage (Phase 6)
-      return;
-    }
+    if (!user) return;
 
-    try {
-      await toggleFavorite({
-        targetType: "setlist",
-        targetId: setlistId,
-      });
-    } catch (error) {
-      console.error("Failed to toggle favorite:", error);
+    if (isAuthenticated) {
+      // Authenticated user: use Convex mutation
+      try {
+        await toggleFavorite({
+          targetType: "setlist",
+          targetId: setlistId,
+        });
+      } catch (error) {
+        console.error("Failed to toggle favorite:", error);
+      }
+    } else {
+      // Anonymous user: use localStorage
+      toggleAnonymousFavorite(setlistId, 'setlist');
     }
   };
 
@@ -65,11 +80,7 @@ export default function SetlistFavoriteButton({
       variant={variant}
       size={size}
       onClick={handleToggle}
-      disabled={!isAuthenticated}
-      className={cn(
-        "gap-2",
-        !isAuthenticated && "cursor-default opacity-70"
-      )}
+      className="gap-2"
       aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
     >
       <Heart
