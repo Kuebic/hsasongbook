@@ -33,25 +33,25 @@ function mapConvexSetlist(convexSetlist: {
   name: string;
   description?: string;
   performanceDate?: string;
+  // New field with per-song metadata (customKey)
+  songs?: Array<{ arrangementId: Id<'arrangements'>; customKey?: string }>;
+  // Legacy field - kept for backwards compatibility
   arrangementIds?: Id<'arrangements'>[];
-  songs?: Array<{
-    arrangementId: Id<'arrangements'>;
-    customKey?: string;
-  }>;
   userId: Id<'users'>;
   updatedAt?: number;
 }): Setlist {
-  // Get songs data (prefer new format, fallback to legacy arrangementIds)
-  const songsData = convexSetlist.songs ??
+  // Prefer new `songs` field, fallback to legacy `arrangementIds`
+  const convexSongs: Array<{ arrangementId: Id<'arrangements'>; customKey?: string }> =
+    convexSetlist.songs ??
     convexSetlist.arrangementIds?.map((id) => ({ arrangementId: id })) ??
     [];
 
-  // Map to SetlistSong array
-  const songs: SetlistSong[] = songsData.map((songEntry, index) => ({
-    id: songEntry.arrangementId, // Stable ID for dnd-kit (index-based IDs break animations)
+  const songs: SetlistSong[] = convexSongs.map((songData, index) => ({
+    id: songData.arrangementId, // Stable ID for dnd-kit
     songId: '', // Populated when loading full setlist data
-    arrangementId: songEntry.arrangementId,
+    arrangementId: songData.arrangementId,
     order: index,
+    customKey: songData.customKey,
   }));
 
   return {
@@ -109,7 +109,7 @@ export function useSetlists(): UseSetlistsReturn {
       name: data.name,
       description: data.description || undefined,
       performanceDate: data.performanceDate || undefined,
-      arrangementIds: [],
+      songs: [],
     });
 
     logger.info('Created setlist:', data.name);

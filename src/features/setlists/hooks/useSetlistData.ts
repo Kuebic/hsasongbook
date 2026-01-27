@@ -139,14 +139,16 @@ export function useSetlistData(setlistId: string | undefined): UseSetlistDataRet
 
     logger.debug('Updating setlist:', setlistId, updates);
 
-    // Build update payload
+    // Build update payload using new songs field (preserves customKey)
     await updateMutation({
       id: setlistId as Id<'setlists'>,
       name: updates.name,
       description: updates.description,
       performanceDate: updates.performanceDate,
-      // If songs array changed, extract arrangementIds
-      arrangementIds: updates.songs?.map((s) => s.arrangementId as Id<'arrangements'>),
+      songs: updates.songs?.map((s) => ({
+        arrangementId: s.arrangementId as Id<'arrangements'>,
+        ...(s.customKey && { customKey: s.customKey }),
+      })),
     });
 
     logger.info('Updated setlist:', setlist.name);
