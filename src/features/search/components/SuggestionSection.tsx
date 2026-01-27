@@ -2,6 +2,10 @@
  * SuggestionSection Component
  *
  * Reusable section for displaying a list of songs with a header and "See All" link.
+ *
+ * Exports:
+ * - SuggestionSection: Full component with section wrapper (for standalone use)
+ * - SuggestionSectionContent: Content only (for use in accordion)
  */
 
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +21,40 @@ interface SuggestionSectionProps {
   emptyMessage?: string;
 }
 
+interface SuggestionSectionContentProps {
+  songs: Song[];
+  loading?: boolean;
+  emptyMessage?: string;
+}
+
+/**
+ * SuggestionSectionContent - Content without section wrapper
+ * For use in accordion or other container layouts
+ */
+export function SuggestionSectionContent({
+  songs,
+  loading = false,
+  emptyMessage = 'No songs found',
+}: SuggestionSectionContentProps) {
+  if (loading) {
+    return <SuggestionSectionSkeleton />;
+  }
+
+  if (songs.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground text-center py-4">
+        {emptyMessage}
+      </p>
+    );
+  }
+
+  return <SongList songs={songs} />;
+}
+
+/**
+ * SuggestionSection - Full component with section wrapper
+ * For standalone use
+ */
 export default function SuggestionSection({
   title,
   seeAllLink,

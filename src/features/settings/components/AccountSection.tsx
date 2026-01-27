@@ -4,6 +4,10 @@
  * Settings section for user account management.
  * Shows sign-in prompt for anonymous users.
  * For authenticated users: profile picture, username, display name, email, and preferences.
+ *
+ * Exports:
+ * - AccountSection: Full component with Card wrapper (for standalone use)
+ * - AccountSectionContent: Content only (for use in accordion)
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -30,7 +34,10 @@ import type { Id } from '../../../../convex/_generated/dataModel';
 import { useDebounce } from '@/features/shared/hooks/useDebounce';
 import { formatDateString } from '../../shared/utils/dateFormatter';
 
-export default function AccountSection() {
+/**
+ * Custom hook for account section state and handlers
+ */
+function useAccountSection() {
   const { user } = useAuthState();
   const { signOut } = useAuthActions();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -193,14 +200,77 @@ export default function AccountSection() {
     }
   }, [user?.displayName]);
 
+  return {
+    user,
+    isAnonymous,
+    avatarUrl,
+    // Sign out
+    isSigningOut,
+    handleSignOut,
+    // Display name
+    isEditingDisplayName,
+    displayNameInput,
+    displayNameError,
+    isSavingDisplayName,
+    setDisplayNameInput,
+    startEditingDisplayName,
+    cancelEditingDisplayName,
+    saveDisplayName,
+    // Username
+    isSettingUsername,
+    usernameInput,
+    usernameError,
+    isSavingUsername,
+    setUsernameInput,
+    startSettingUsername,
+    cancelSettingUsername,
+    saveUsername,
+    getUsernameStatus,
+    // Show real name
+    handleShowRealNameToggle,
+    // Auth modal
+    showAuthModal,
+    setShowAuthModal,
+  };
+}
+
+/**
+ * AccountSectionContent - Content without Card wrapper
+ * For use in accordion or other container layouts
+ */
+export function AccountSectionContent() {
+  const {
+    user,
+    isAnonymous,
+    avatarUrl,
+    isSigningOut,
+    handleSignOut,
+    isEditingDisplayName,
+    displayNameInput,
+    displayNameError,
+    isSavingDisplayName,
+    setDisplayNameInput,
+    startEditingDisplayName,
+    cancelEditingDisplayName,
+    saveDisplayName,
+    isSettingUsername,
+    usernameInput,
+    usernameError,
+    isSavingUsername,
+    setUsernameInput,
+    startSettingUsername,
+    cancelSettingUsername,
+    saveUsername,
+    getUsernameStatus,
+    handleShowRealNameToggle,
+    showAuthModal,
+    setShowAuthModal,
+  } = useAccountSection();
+
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Account</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {isAnonymous ? (
+      <div className="space-y-6">
+        {isAnonymous ? (
             // Anonymous user view
             <>
               <p className="text-sm text-muted-foreground">
@@ -413,8 +483,7 @@ export default function AccountSection() {
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Sign-in modal */}
       <SignInModal
@@ -423,5 +492,22 @@ export default function AccountSection() {
         defaultView="signin"
       />
     </>
+  );
+}
+
+/**
+ * AccountSection - Full component with Card wrapper
+ * For standalone use
+ */
+export default function AccountSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Account</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <AccountSectionContent />
+      </CardContent>
+    </Card>
   );
 }

@@ -4,9 +4,7 @@ import SearchBar from '../components/SearchBar';
 import StatsWidget from '../components/StatsWidget';
 import HeroSection from '../components/HeroSection';
 import QuickAccessBar from '../components/QuickAccessBar';
-import BrowseByTheme from '../components/BrowseByTheme';
-import RecentlyAddedSection from '../components/RecentlyAddedSection';
-import PopularSongsSection from '../components/PopularSongsSection';
+import { DiscoveryAccordion } from '../components/DiscoveryAccordion';
 import { SongListSkeleton } from '../../shared/components/LoadingStates';
 import { SimplePageTransition } from '../../shared/components/PageTransition';
 import { useFuzzySearch } from '@/features/shared';
@@ -51,9 +49,9 @@ export function SearchPage() {
           {!searchTerm && !isSearching && (
             <>
               <QuickAccessBar isAuthenticated={isAuthenticated} />
-              <BrowseByTheme limit={6} />
-              <RecentlyAddedSection limit={6} />
-              <PopularSongsSection limit={6} />
+              <div className="mb-8">
+                <DiscoveryAccordion limit={6} />
+              </div>
               <StatsWidget />
             </>
           )}

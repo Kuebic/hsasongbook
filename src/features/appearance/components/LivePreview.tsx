@@ -12,11 +12,11 @@ export function LivePreview({ className }: LivePreviewProps) {
   return (
     <div className={className}>
       <p className="mb-2 text-sm font-medium text-muted-foreground">Preview</p>
-      <div className="rounded-lg border bg-card p-4">
+      <div className="rounded-lg border bg-card p-4 pt-8">
         <div className="chord-preview space-y-4 font-[var(--font-app)]">
           {/* Line 1 */}
           <div className="relative">
-            <div className="flex flex-wrap">
+            <div className="flex flex-wrap gap-x-1">
               <span className="relative inline-block">
                 <span
                   className="absolute -top-5 left-0 whitespace-nowrap"
@@ -24,7 +24,7 @@ export function LivePreview({ className }: LivePreviewProps) {
                     fontFamily: "var(--font-chord)",
                     color: "hsl(var(--chord-color))",
                     fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale) * var(--font-scale))",
+                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
                     backgroundColor: "var(--chord-highlight-bg)",
                     padding: "var(--chord-highlight-padding)",
                     borderRadius: "var(--chord-highlight-radius)",
@@ -32,7 +32,7 @@ export function LivePreview({ className }: LivePreviewProps) {
                 >
                   Am
                 </span>
-                <span>Amazing </span>
+                <span>Amazing</span>
               </span>
               <span className="relative inline-block">
                 <span
@@ -41,7 +41,7 @@ export function LivePreview({ className }: LivePreviewProps) {
                     fontFamily: "var(--font-chord)",
                     color: "hsl(var(--chord-color))",
                     fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale) * var(--font-scale))",
+                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
                     backgroundColor: "var(--chord-highlight-bg)",
                     padding: "var(--chord-highlight-padding)",
                     borderRadius: "var(--chord-highlight-radius)",
@@ -49,7 +49,7 @@ export function LivePreview({ className }: LivePreviewProps) {
                 >
                   G
                 </span>
-                <span>grace, how </span>
+                <span>grace, how</span>
               </span>
               <span className="relative inline-block">
                 <span
@@ -58,7 +58,7 @@ export function LivePreview({ className }: LivePreviewProps) {
                     fontFamily: "var(--font-chord)",
                     color: "hsl(var(--chord-color))",
                     fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale) * var(--font-scale))",
+                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
                     backgroundColor: "var(--chord-highlight-bg)",
                     padding: "var(--chord-highlight-padding)",
                     borderRadius: "var(--chord-highlight-radius)",
@@ -73,7 +73,7 @@ export function LivePreview({ className }: LivePreviewProps) {
 
           {/* Line 2 */}
           <div className="relative">
-            <div className="flex flex-wrap">
+            <div className="flex flex-wrap gap-x-1">
               <span className="relative inline-block">
                 <span
                   className="absolute -top-5 left-0 whitespace-nowrap"
@@ -81,7 +81,7 @@ export function LivePreview({ className }: LivePreviewProps) {
                     fontFamily: "var(--font-chord)",
                     color: "hsl(var(--chord-color))",
                     fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale) * var(--font-scale))",
+                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
                     backgroundColor: "var(--chord-highlight-bg)",
                     padding: "var(--chord-highlight-padding)",
                     borderRadius: "var(--chord-highlight-radius)",
@@ -89,7 +89,7 @@ export function LivePreview({ className }: LivePreviewProps) {
                 >
                   F
                 </span>
-                <span>sound, that </span>
+                <span>sound, that</span>
               </span>
               <span className="relative inline-block">
                 <span
@@ -98,7 +98,7 @@ export function LivePreview({ className }: LivePreviewProps) {
                     fontFamily: "var(--font-chord)",
                     color: "hsl(var(--chord-color))",
                     fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale) * var(--font-scale))",
+                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
                     backgroundColor: "var(--chord-highlight-bg)",
                     padding: "var(--chord-highlight-padding)",
                     borderRadius: "var(--chord-highlight-radius)",
@@ -106,7 +106,7 @@ export function LivePreview({ className }: LivePreviewProps) {
                 >
                   C/E
                 </span>
-                <span>saved a </span>
+                <span>saved a</span>
               </span>
               <span className="relative inline-block">
                 <span
@@ -115,7 +115,7 @@ export function LivePreview({ className }: LivePreviewProps) {
                     fontFamily: "var(--font-chord)",
                     color: "hsl(var(--chord-color))",
                     fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale) * var(--font-scale))",
+                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
                     backgroundColor: "var(--chord-highlight-bg)",
                     padding: "var(--chord-highlight-padding)",
                     borderRadius: "var(--chord-highlight-radius)",

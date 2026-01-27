@@ -7,56 +7,48 @@
 
 import { useNavigation } from '@/features/shared/hooks/useNavigation';
 import Breadcrumbs from '@/features/shared/components/Breadcrumbs';
-import { AppearanceSettings } from '@/features/appearance';
-import AboutSection from '../components/AboutSection';
-import AccountSection from '../components/AccountSection';
+import { useAuth } from '@/features/auth';
+import { SettingsAccordion } from '../components/SettingsAccordion';
 
 /**
  * Settings Page Component
  *
- * Displays settings interface with multiple sections:
- * - Appearance: Theme customization
- * - About: App version and database statistics
- * - Account: Authentication placeholder (Phase 5)
+ * Displays settings interface with accordion-based sections:
+ * - Appearance: Theme and color customization
+ * - Chord Display: Chord styling options (authenticated only)
+ * - Account: User profile and authentication
+ * - About: App version and statistics
  *
  * Features:
  * - Breadcrumb navigation (Home → Settings)
- * - Responsive layout with max-width container
- * - Sectioned content with consistent spacing
- * - Accessible page structure
+ * - Accordion layout for space efficiency
+ * - Responsive design with max-width container
+ * - Sticky live preview at bottom
  *
  * Route: /settings
- *
- * Usage:
- * ```tsx
- * // In App.tsx routes:
- * <Route path="/settings" element={<SettingsPage />} />
- * ```
  */
 export default function SettingsPage() {
   const { breadcrumbs } = useNavigation();
+  const { user } = useAuth();
+  const isAuthenticated = user && !user.isAnonymous;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-6 max-w-4xl">
       {/* Breadcrumbs */}
-      <div className="mb-6">
+      <div className="mb-4">
         <Breadcrumbs items={breadcrumbs} />
       </div>
 
       {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your app preferences and account settings
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Settings</h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          Manage your preferences and account
         </p>
       </div>
 
-      {/* Settings Sections */}
-      <div className="space-y-6">
-        <AppearanceSettings />
-        <AboutSection />
-        <AccountSection />
-      </div>
+      {/* Settings Accordion */}
+      <SettingsAccordion isAuthenticated={!!isAuthenticated} />
     </div>
   );
 }

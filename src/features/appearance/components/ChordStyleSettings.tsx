@@ -4,7 +4,10 @@
  * Controls for customizing chord display: font, size, weight, color, and highlight.
  */
 
+import type { ChangeEvent, KeyboardEvent } from "react";
+import { useState } from "react";
 import { Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -13,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
@@ -26,6 +28,9 @@ import {
 } from "../presets/fontPresets";
 import { accentColors, primaryColors } from "../presets/colorPresets";
 import type { CuratedColor } from "../types/appearance.types";
+
+// Preset percentage options for chord size dropdown
+const CHORD_SIZE_PRESETS = [80, 90, 100, 110, 120, 130, 140];
 
 // Combine colors for chord color picker
 const allChordColors: CuratedColor[] = [...accentColors, ...primaryColors];
@@ -66,9 +71,52 @@ export function ChordStyleSettings({
 
   // Convert size to percentage for display
   const sizePercent = Math.round(currentSize * 100);
+  const isCustomSize = !CHORD_SIZE_PRESETS.includes(sizePercent);
+  const [showCustomInput, setShowCustomInput] = useState(isCustomSize);
+  const [customInputValue, setCustomInputValue] = useState(
+    isCustomSize ? sizePercent.toString() : ""
+  );
+
+  // Handle dropdown selection
+  const handleSizeSelect = (value: string) => {
+    if (value === "custom") {
+      setShowCustomInput(true);
+      setCustomInputValue(sizePercent.toString());
+    } else {
+      setShowCustomInput(false);
+      const percent = parseInt(value, 10);
+      onChordFontSizeChange(percent / 100);
+    }
+  };
+
+  // Handle custom input changes
+  const handleCustomInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setCustomInputValue(e.target.value);
+  };
+
+  // Apply custom input value on blur
+  const handleCustomInputBlur = () => {
+    const percent = parseInt(customInputValue, 10);
+    const min = Math.round(CHORD_FONT_SIZE_MIN * 100);
+    const max = Math.round(CHORD_FONT_SIZE_MAX * 100);
+
+    if (!isNaN(percent) && percent >= min && percent <= max) {
+      onChordFontSizeChange(percent / 100);
+    } else {
+      // Reset to current value if invalid
+      setCustomInputValue(sizePercent.toString());
+    }
+  };
+
+  // Handle Enter key
+  const handleCustomInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleCustomInputBlur();
+    }
+  };
 
   return (
-    <div className="space-y-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {/* Chord Font Family */}
       <div className="space-y-2">
         <Label htmlFor="chord-font">Chord Font</Label>
@@ -77,7 +125,7 @@ export function ChordStyleSettings({
           onValueChange={onChordFontFamilyChange}
           disabled={disabled}
         >
-          <SelectTrigger id="chord-font" className="w-full">
+          <SelectTrigger id="chord-font">
             <SelectValue placeholder="Select a font" />
           </SelectTrigger>
           <SelectContent>
@@ -94,22 +142,6 @@ export function ChordStyleSettings({
         </Select>
       </div>
 
-      {/* Chord Size */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label>Chord Size</Label>
-          <span className="text-sm text-muted-foreground">{sizePercent}%</span>
-        </div>
-        <Slider
-          value={[currentSize]}
-          onValueChange={([value]) => onChordFontSizeChange(value)}
-          min={CHORD_FONT_SIZE_MIN}
-          max={CHORD_FONT_SIZE_MAX}
-          step={0.05}
-          disabled={disabled}
-        />
-      </div>
-
       {/* Chord Weight */}
       <div className="space-y-2">
         <Label htmlFor="chord-weight">Chord Weight</Label>
@@ -120,7 +152,7 @@ export function ChordStyleSettings({
           }
           disabled={disabled}
         >
-          <SelectTrigger id="chord-weight" className="w-full">
+          <SelectTrigger id="chord-weight">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -131,8 +163,48 @@ export function ChordStyleSettings({
         </Select>
       </div>
 
-      {/* Chord Color */}
-      <div className="space-y-3">
+      {/* Chord Size */}
+      <div className="space-y-2">
+        <Label htmlFor="chord-size">Chord Size</Label>
+        <div className="flex gap-2">
+          <Select
+            value={showCustomInput ? "custom" : sizePercent.toString()}
+            onValueChange={handleSizeSelect}
+            disabled={disabled}
+          >
+            <SelectTrigger id="chord-size" className="flex-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CHORD_SIZE_PRESETS.map((percent) => (
+                <SelectItem key={percent} value={percent.toString()}>
+                  {percent}%
+                </SelectItem>
+              ))}
+              <SelectItem value="custom">Custom...</SelectItem>
+            </SelectContent>
+          </Select>
+          {showCustomInput && (
+            <div className="flex items-center gap-1">
+              <Input
+                type="text"
+                inputMode="numeric"
+                value={customInputValue}
+                onChange={handleCustomInputChange}
+                onBlur={handleCustomInputBlur}
+                onKeyDown={handleCustomInputKeyDown}
+                disabled={disabled}
+                className="w-16 text-center"
+                aria-label="Custom chord size percentage"
+              />
+              <span className="text-sm text-muted-foreground">%</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chord Color - spans both columns */}
+      <div className="space-y-3 sm:col-span-2">
         <Label>Chord Color</Label>
 
         {/* "Use accent color" option */}
@@ -188,8 +260,8 @@ export function ChordStyleSettings({
         </div>
       </div>
 
-      {/* Chord Highlight */}
-      <div className="flex items-center justify-between">
+      {/* Chord Highlight - spans both columns */}
+      <div className="flex items-center justify-between sm:col-span-2">
         <div className="space-y-0.5">
           <Label htmlFor="chord-highlight">Highlight Chords</Label>
           <p className="text-xs text-muted-foreground">

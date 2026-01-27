@@ -6,8 +6,7 @@ import { useArrangementCoAuthors } from '../hooks/useArrangementCoAuthors';
 import { useArrangementAudio } from '../hooks/useArrangementAudio';
 import ChordProViewer, { type TranspositionState } from '@/features/chordpro';
 import ArrangementHeader from '../components/ArrangementHeader';
-import ArrangementMetadataForm from '../components/ArrangementMetadataForm';
-import AudioReferencesForm from '../components/AudioReferencesForm';
+import { EditModeAccordion } from '../components/EditModeAccordion';
 import CollaboratorsDialog from '../components/CollaboratorsDialog';
 import CoAuthorsList from '../components/CoAuthorsList';
 import { ArrangementActionsMenu } from '../components/ArrangementActionsMenu';
@@ -235,10 +234,10 @@ export function ArrangementPage() {
           </div>
         )}
 
-        {/* Metadata Form - Only show in edit mode when user can edit */}
+        {/* Edit Mode Accordion - Collapsed forms for metadata and audio */}
         {isEditMode && canEdit && (
           <div className="mb-6 no-print">
-            <ArrangementMetadataForm
+            <EditModeAccordion
               metadata={{
                 key: arrangement.key,
                 tempo: arrangement.tempo,
@@ -246,9 +245,8 @@ export function ArrangementPage() {
                 capo: arrangement.capo,
                 difficulty: arrangement.difficulty
               }}
-              onChange={async (newMetadata: ArrangementMetadata) => {
+              onMetadataChange={async (newMetadata: ArrangementMetadata) => {
                 logger.debug('Metadata changed, saving to Convex:', newMetadata);
-                // Save metadata via useArrangementData hook
                 const result = await updateArrangement(newMetadata);
                 if (result.success) {
                   logger.debug('Metadata saved to Convex successfully');
@@ -256,14 +254,6 @@ export function ArrangementPage() {
                   logger.error('Failed to save metadata:', result.error);
                 }
               }}
-            />
-          </div>
-        )}
-
-        {/* Audio References Form - Only show in edit mode when user can edit */}
-        {isEditMode && canEdit && (
-          <div className="mb-6 no-print">
-            <AudioReferencesForm
               arrangementId={arrangement.id}
               youtubeUrl={arrangement.youtubeUrl}
               hasAudio={!!arrangement.audioFileKey}

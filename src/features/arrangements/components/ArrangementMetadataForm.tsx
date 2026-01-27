@@ -4,6 +4,10 @@
  * Form for editing arrangement metadata (key, tempo, capo, time signature)
  * Replaces manual ChordPro directive editing with structured UI
  * Auto-saves changes with debouncing
+ *
+ * Exports:
+ * - ArrangementMetadataForm: Full component with Card wrapper (for standalone use)
+ * - ArrangementMetadataContent: Content only (for use in accordion)
  */
 
 import { useState, useEffect, useMemo } from 'react'
@@ -51,12 +55,14 @@ interface ArrangementMetadataFormProps {
   className?: string;
 }
 
-export default function ArrangementMetadataForm({
-  metadata,
-  onChange,
-  disabled = false,
-  className
-}: ArrangementMetadataFormProps) {
+/**
+ * Hook for metadata form state and handlers
+ */
+function useMetadataForm(
+  metadata: ArrangementMetadata,
+  onChange?: (metadata: ArrangementMetadata) => void,
+  disabled = false
+) {
   // Local form state
   const [formState, setFormState] = useState<ArrangementMetadata>({
     key: metadata?.key || 'C',
@@ -124,6 +130,137 @@ export default function ArrangementMetadataForm({
     }
   }
 
+  return {
+    formState,
+    errors,
+    isDirty,
+    disabled,
+    handleFieldChange,
+  }
+}
+
+/**
+ * ArrangementMetadataContent - Content without Card wrapper
+ * For use in accordion or other container layouts
+ */
+export function ArrangementMetadataContent({
+  metadata,
+  onChange,
+  disabled = false,
+}: Omit<ArrangementMetadataFormProps, 'className'>) {
+  const {
+    formState,
+    errors,
+    isDirty,
+    disabled: isDisabled,
+    handleFieldChange,
+  } = useMetadataForm(metadata, onChange, disabled)
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Key Selector */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="key-content" className="text-sm font-medium">
+            Key
+          </Label>
+          <KeySelector
+            value={formState.key}
+            onChange={(key) => handleFieldChange('key', key)}
+            disabled={isDisabled}
+            id="key-content"
+          />
+          {errors.key && (
+            <p className="text-xs text-destructive">{errors.key}</p>
+          )}
+        </div>
+
+        {/* Tempo Input */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="tempo-content" className="text-sm font-medium">
+            Tempo
+          </Label>
+          <TempoInput
+            value={formState.tempo}
+            onChange={(tempo) => handleFieldChange('tempo', typeof tempo === 'string' ? parseInt(tempo, 10) || 120 : tempo)}
+            disabled={isDisabled}
+            error={errors.tempo}
+          />
+        </div>
+
+        {/* Capo Selector */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="capo-content" className="text-sm font-medium">
+            Capo
+          </Label>
+          <CapoSelector
+            value={formState.capo}
+            onChange={(capo) => handleFieldChange('capo', capo)}
+            disabled={isDisabled}
+            id="capo-content"
+          />
+          {errors.capo && (
+            <p className="text-xs text-destructive">{errors.capo}</p>
+          )}
+        </div>
+
+        {/* Time Signature Selector */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="timeSignature-content" className="text-sm font-medium">
+            Time Signature
+          </Label>
+          <TimeSignatureSelector
+            value={formState.timeSignature}
+            onChange={(ts) => handleFieldChange('timeSignature', ts)}
+            disabled={isDisabled}
+            id="timeSignature-content"
+          />
+          {errors.timeSignature && (
+            <p className="text-xs text-destructive">{errors.timeSignature}</p>
+          )}
+        </div>
+
+        {/* Difficulty Selector */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="difficulty-content" className="text-sm font-medium">
+            Difficulty
+          </Label>
+          <DifficultySelector
+            value={formState.difficulty as DifficultyOption | undefined}
+            onChange={(difficulty) => handleFieldChange('difficulty', difficulty)}
+            disabled={isDisabled}
+          />
+        </div>
+      </div>
+
+      {/* Save status indicator */}
+      {isDirty && (
+        <div className="text-xs text-muted-foreground">
+          Saving changes...
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * ArrangementMetadataForm - Full component with Card wrapper
+ * For standalone use
+ */
+export default function ArrangementMetadataForm({
+  metadata,
+  onChange,
+  disabled = false,
+  className
+}: ArrangementMetadataFormProps) {
+  const {
+    formState,
+    errors,
+    isDirty,
+    disabled: isDisabled,
+    handleFieldChange,
+  } = useMetadataForm(metadata, onChange, disabled)
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -143,7 +280,7 @@ export default function ArrangementMetadataForm({
             <KeySelector
               value={formState.key}
               onChange={(key) => handleFieldChange('key', key)}
-              disabled={disabled}
+              disabled={isDisabled}
               id="key"
             />
             {errors.key && (
@@ -159,7 +296,7 @@ export default function ArrangementMetadataForm({
             <TempoInput
               value={formState.tempo}
               onChange={(tempo) => handleFieldChange('tempo', typeof tempo === 'string' ? parseInt(tempo, 10) || 120 : tempo)}
-              disabled={disabled}
+              disabled={isDisabled}
               error={errors.tempo}
             />
           </div>
@@ -172,7 +309,7 @@ export default function ArrangementMetadataForm({
             <CapoSelector
               value={formState.capo}
               onChange={(capo) => handleFieldChange('capo', capo)}
-              disabled={disabled}
+              disabled={isDisabled}
               id="capo"
             />
             {errors.capo && (
@@ -188,7 +325,7 @@ export default function ArrangementMetadataForm({
             <TimeSignatureSelector
               value={formState.timeSignature}
               onChange={(ts) => handleFieldChange('timeSignature', ts)}
-              disabled={disabled}
+              disabled={isDisabled}
               id="timeSignature"
             />
             {errors.timeSignature && (
@@ -204,7 +341,7 @@ export default function ArrangementMetadataForm({
             <DifficultySelector
               value={formState.difficulty as DifficultyOption | undefined}
               onChange={(difficulty) => handleFieldChange('difficulty', difficulty)}
-              disabled={disabled}
+              disabled={isDisabled}
             />
           </div>
         </div>

@@ -99,9 +99,10 @@ function AppearanceSettingsLocked() {
 }
 
 /**
- * Full settings for authenticated users
+ * Shared hook for appearance settings handlers
+ * Used by both content and full component versions
  */
-function AppearanceSettingsAuthenticated() {
+function useAppearanceHandlers() {
   const {
     preferences,
     isLoading,
@@ -159,137 +160,179 @@ function AppearanceSettingsAuthenticated() {
     [updatePreference]
   );
 
-  const handleChordFontFamilyChange = useCallback(
-    (fontId: string) => {
-      updatePreference("chordFontFamily", fontId);
-    },
-    [updatePreference]
-  );
+  return {
+    preferences,
+    isLoading,
+    currentPrimaryId,
+    currentAccentId,
+    resetToDefaults,
+    handlePresetSelect,
+    handlePrimaryChange,
+    handleAccentChange,
+    handleFontFamilyChange,
+    handleFontSizeChange,
+  };
+}
 
-  const handleChordFontSizeChange = useCallback(
-    (size: number) => {
-      updatePreference("chordFontSize", size);
-    },
-    [updatePreference]
-  );
-
-  const handleChordFontWeightChange = useCallback(
-    (weight: "normal" | "medium" | "bold") => {
-      updatePreference("chordFontWeight", weight);
-    },
-    [updatePreference]
-  );
-
-  const handleChordColorIdChange = useCallback(
-    (colorId: string | null) => {
-      updatePreference("chordColorId", colorId ?? undefined);
-    },
-    [updatePreference]
-  );
-
-  const handleChordHighlightChange = useCallback(
-    (highlight: boolean) => {
-      updatePreference("chordHighlight", highlight);
-    },
-    [updatePreference]
-  );
+/**
+ * Authenticated content for appearance settings (no Card wrapper)
+ * For use in accordion or other container layouts
+ */
+function AppearanceSettingsAuthenticatedContent() {
+  const {
+    preferences,
+    isLoading,
+    currentPrimaryId,
+    currentAccentId,
+    resetToDefaults,
+    handlePresetSelect,
+    handlePrimaryChange,
+    handleAccentChange,
+    handleFontFamilyChange,
+    handleFontSizeChange,
+  } = useAppearanceHandlers();
 
   return (
     <div className="space-y-6">
-      {/* Appearance Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle>Appearance</CardTitle>
-              <CardDescription>
-                Customize colors and fonts
-              </CardDescription>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={resetToDefaults}
-              disabled={isLoading}
-              className="text-muted-foreground"
-            >
-              <RotateCcw className="mr-1 h-4 w-4" />
-              Reset
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Theme Mode */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Theme Mode</Label>
-              <p className="text-sm text-muted-foreground">
-                Light, dark, or match your system
-              </p>
-            </div>
-            <ThemeToggle />
-          </div>
+      {/* Reset button at top */}
+      <div className="flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={resetToDefaults}
+          disabled={isLoading}
+          className="text-muted-foreground"
+        >
+          <RotateCcw className="mr-1 h-4 w-4" />
+          Reset All
+        </Button>
+      </div>
 
-          <Separator />
+      {/* Theme Mode */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-0.5">
+          <Label>Theme Mode</Label>
+          <p className="text-sm text-muted-foreground">
+            Light, dark, or match your system
+          </p>
+        </div>
+        <ThemeToggle />
+      </div>
 
-          {/* Color Theme */}
-          <div className="space-y-4">
-            <ThemePresetPicker
-              selectedPresetId={preferences.colorPreset}
-              onSelectPreset={handlePresetSelect}
-              disabled={isLoading}
-            />
+      <Separator />
 
-            <ColorPalettePicker
-              primaryColorId={currentPrimaryId}
-              accentColorId={currentAccentId}
-              onPrimaryChange={handlePrimaryChange}
-              onAccentChange={handleAccentChange}
-              disabled={isLoading}
-            />
-          </div>
+      {/* Color Theme */}
+      <div className="space-y-4">
+        <ThemePresetPicker
+          selectedPresetId={preferences.colorPreset}
+          onSelectPreset={handlePresetSelect}
+          disabled={isLoading}
+        />
 
-          <Separator />
+        <ColorPalettePicker
+          primaryColorId={currentPrimaryId}
+          accentColorId={currentAccentId}
+          onPrimaryChange={handlePrimaryChange}
+          onAccentChange={handleAccentChange}
+          disabled={isLoading}
+        />
+      </div>
 
-          {/* Font Settings */}
-          <FontSelector
-            fontFamily={preferences.fontFamily}
-            fontSize={preferences.fontSize}
-            onFontFamilyChange={handleFontFamilyChange}
-            onFontSizeChange={handleFontSizeChange}
-            disabled={isLoading}
-          />
-        </CardContent>
-      </Card>
+      <Separator />
 
-      {/* Chord Display Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Chord Display</CardTitle>
-          <CardDescription>
-            Customize how chords appear in songs
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChordStyleSettings
-            chordFontFamily={preferences.chordFontFamily}
-            chordFontSize={preferences.chordFontSize}
-            chordFontWeight={preferences.chordFontWeight}
-            chordColorId={preferences.chordColorId}
-            chordHighlight={preferences.chordHighlight}
-            accentColorId={currentAccentId}
-            onChordFontFamilyChange={handleChordFontFamilyChange}
-            onChordFontSizeChange={handleChordFontSizeChange}
-            onChordFontWeightChange={handleChordFontWeightChange}
-            onChordColorIdChange={handleChordColorIdChange}
-            onChordHighlightChange={handleChordHighlightChange}
-            disabled={isLoading}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Live Preview */}
-      <LivePreview className="sticky bottom-4" />
+      {/* Font Settings */}
+      <FontSelector
+        fontFamily={preferences.fontFamily}
+        fontSize={preferences.fontSize}
+        onFontFamilyChange={handleFontFamilyChange}
+        onFontSizeChange={handleFontSizeChange}
+        disabled={isLoading}
+      />
     </div>
+  );
+}
+
+/**
+ * Full settings for authenticated users (with Card wrapper)
+ */
+function AppearanceSettingsAuthenticated() {
+  const {
+    preferences,
+    isLoading,
+    currentPrimaryId,
+    currentAccentId,
+    resetToDefaults,
+    handlePresetSelect,
+    handlePrimaryChange,
+    handleAccentChange,
+    handleFontFamilyChange,
+    handleFontSizeChange,
+  } = useAppearanceHandlers();
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle>Appearance</CardTitle>
+            <CardDescription>
+              Customize colors and fonts
+            </CardDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={resetToDefaults}
+            disabled={isLoading}
+            className="text-muted-foreground"
+          >
+            <RotateCcw className="mr-1 h-4 w-4" />
+            Reset
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Theme Mode */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>Theme Mode</Label>
+            <p className="text-sm text-muted-foreground">
+              Light, dark, or match your system
+            </p>
+          </div>
+          <ThemeToggle />
+        </div>
+
+        <Separator />
+
+        {/* Color Theme */}
+        <div className="space-y-4">
+          <ThemePresetPicker
+            selectedPresetId={preferences.colorPreset}
+            onSelectPreset={handlePresetSelect}
+            disabled={isLoading}
+          />
+
+          <ColorPalettePicker
+            primaryColorId={currentPrimaryId}
+            accentColorId={currentAccentId}
+            onPrimaryChange={handlePrimaryChange}
+            onAccentChange={handleAccentChange}
+            disabled={isLoading}
+          />
+        </div>
+
+        <Separator />
+
+        {/* Font Settings */}
+        <FontSelector
+          fontFamily={preferences.fontFamily}
+          fontSize={preferences.fontSize}
+          onFontFamilyChange={handleFontFamilyChange}
+          onFontSizeChange={handleFontSizeChange}
+          disabled={isLoading}
+        />
+      </CardContent>
+    </Card>
   );
 }

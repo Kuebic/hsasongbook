@@ -1,3 +1,13 @@
+/**
+ * BrowseByTheme Component
+ *
+ * Displays theme cards for browsing songs by theme.
+ *
+ * Exports:
+ * - BrowseByTheme: Full component with section wrapper (for standalone use)
+ * - BrowseByThemeContent: Content only (for use in accordion)
+ */
+
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,6 +18,46 @@ interface BrowseByThemeProps {
   limit?: number;
 }
 
+/**
+ * BrowseByThemeContent - Content without section wrapper
+ * For use in accordion or other container layouts
+ */
+export function BrowseByThemeContent({ limit = 6 }: BrowseByThemeProps) {
+  const themes = useQuery(api.songs.getThemesWithCounts, { limit });
+  const isLoading = themes === undefined;
+
+  // Show empty state if no themes
+  if (!isLoading && (!themes || themes.length === 0)) {
+    return (
+      <p className="text-sm text-muted-foreground text-center py-4">
+        No themes available yet
+      </p>
+    );
+  }
+
+  if (isLoading) {
+    return <BrowseByThemeSkeleton />;
+  }
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+      {themes.map((item, index) => (
+        <div
+          key={item.theme}
+          className="animate-in fade-in-0 slide-in-from-bottom-2"
+          style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
+        >
+          <ThemeCard theme={item.theme} count={item.count} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * BrowseByTheme - Full component with section wrapper
+ * For standalone use on search page
+ */
 export default function BrowseByTheme({ limit = 6 }: BrowseByThemeProps) {
   const themes = useQuery(api.songs.getThemesWithCounts, { limit });
   const isLoading = themes === undefined;

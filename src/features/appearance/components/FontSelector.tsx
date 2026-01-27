@@ -43,7 +43,7 @@ export function FontSelector({
   const currentSizeId = getFontSizeIdFromScale(currentSize);
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {/* Font Family */}
       <div className="space-y-2">
         <Label htmlFor="app-font">App Font</Label>
@@ -52,7 +52,7 @@ export function FontSelector({
           onValueChange={onFontFamilyChange}
           disabled={disabled}
         >
-          <SelectTrigger id="app-font" className="w-full">
+          <SelectTrigger id="app-font">
             <SelectValue placeholder="Select a font" />
           </SelectTrigger>
           <SelectContent>
@@ -79,7 +79,7 @@ export function FontSelector({
               onClick={() => onFontSizeChange(option.scale)}
               disabled={disabled}
               className={cn(
-                "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex-1 rounded-md px-2 sm:px-3 py-2 text-sm font-medium transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 currentSizeId === option.id
                   ? "bg-primary text-primary-foreground"
