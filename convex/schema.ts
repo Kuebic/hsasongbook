@@ -19,6 +19,7 @@ export default defineSchema({
     displayName: v.optional(v.string()), // Optional "real name" shown on contributions
     avatarKey: v.optional(v.string()), // R2 object key for profile picture
     showRealName: v.optional(v.boolean()), // Toggle to show displayName instead of username
+    showRecentlyViewed: v.optional(v.boolean()), // Toggle to make recently viewed public (defaults to false/private)
   })
     .index("email", ["email"])
     .index("by_username", ["username"])

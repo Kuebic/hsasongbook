@@ -29,6 +29,8 @@ import { useAuthState } from '@/features/auth/hooks/useAuth';
 import SignInModal from '@/features/auth/components/SignInModal';
 import { MyArrangementsList } from '../components/MyArrangementsList';
 import { MyFavoritesList } from '../components/MyFavoritesList';
+import { MyRecentlyViewedList } from '../components/MyRecentlyViewedList';
+import { RecentlyViewedVisibilityToggle } from '../components/RecentlyViewedVisibilityToggle';
 import UserAvatar from '@/components/UserAvatar';
 import { formatDateString } from '../../shared/utils/dateFormatter';
 import type { Id } from '../../../../convex/_generated/dataModel';
@@ -186,6 +188,15 @@ export function ProfilePage() {
             <div className="mt-8">
               <h2 className="text-xl font-semibold mb-4">My Favorites</h2>
               <MyFavoritesList />
+            </div>
+          )}
+
+          {/* Recently Viewed Section - only for authenticated users, only visible to self */}
+          {!isAnonymous && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">Recently Viewed</h2>
+              <RecentlyViewedVisibilityToggle />
+              <MyRecentlyViewedList />
             </div>
           )}
 

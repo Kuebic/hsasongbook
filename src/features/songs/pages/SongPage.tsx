@@ -74,6 +74,9 @@ export function SongPage() {
       lyrics: convexSong.lyrics ? { en: convexSong.lyrics } : undefined,
       createdAt: new Date(convexSong._creationTime).toISOString(),
       updatedAt: new Date(convexSong._creationTime).toISOString(),
+      notes: convexSong.notes,
+      bibleVerses: convexSong.bibleVerses,
+      quotes: convexSong.quotes,
     };
   }, [convexSong]);
 
@@ -218,6 +221,9 @@ export function SongPage() {
                       themes: song.themes,
                       copyright: song.copyright,
                       lyrics: convexSong?.lyrics,
+                      notes: convexSong?.notes,
+                      bibleVerses: convexSong?.bibleVerses,
+                      quotes: convexSong?.quotes,
                     }}
                     onSuccess={() => setIsEditMode(false)}
                     onCancel={() => setIsEditMode(false)}

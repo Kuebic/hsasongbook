@@ -218,6 +218,21 @@ export const updateShowRealName = mutation({
   },
 });
 
+/**
+ * Update current user's recently viewed visibility preference
+ * Access: Authenticated users only
+ */
+export const updateRecentlyViewedVisibility = mutation({
+  args: { showRecentlyViewed: v.boolean() },
+  handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(ctx);
+
+    await ctx.db.patch(userId, { showRecentlyViewed: args.showRecentlyViewed });
+
+    return { success: true };
+  },
+});
+
 // ============ INTERNAL MUTATIONS ============
 
 /**
