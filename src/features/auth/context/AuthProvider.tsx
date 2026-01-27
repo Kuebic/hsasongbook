@@ -86,6 +86,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       username: convexUser.username,
       displayName: convexUser.displayName,
       showRealName: convexUser.showRealName,
+      showRecentlyViewed: convexUser.showRecentlyViewed,
       isAnonymous: !hasEmail,
       createdAt: new Date(convexUser._creationTime).toISOString(),
     };

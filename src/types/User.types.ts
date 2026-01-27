@@ -13,6 +13,7 @@ export interface User {
   username?: string;                   // Unique public username
   displayName?: string;                // Optional real name
   showRealName?: boolean;              // Toggle to show displayName on contributions
+  showRecentlyViewed?: boolean;        // Toggle to make recently viewed list public
   isAnonymous: boolean;                // True for anonymous users
   createdAt: string;                   // ISO timestamp
   lastSignInAt?: string;               // ISO timestamp (last sign-in time)

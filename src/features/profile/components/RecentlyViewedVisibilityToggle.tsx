@@ -5,29 +5,24 @@
  * Allows users to make their recently viewed list public or keep it private.
  */
 
-import { useState } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Info } from 'lucide-react';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useAuthState } from '@/features/auth/hooks/useAuth';
 
 export function RecentlyViewedVisibilityToggle() {
-  const { user } = useAuth();
+  const { user } = useAuthState();
   const updateVisibility = useMutation(api.users.updateRecentlyViewedVisibility);
-  const [isUpdating, setIsUpdating] = useState(false);
 
   const isPublic = user?.showRecentlyViewed ?? false;
 
   const handleToggle = async (checked: boolean) => {
-    setIsUpdating(true);
     try {
       await updateVisibility({ showRecentlyViewed: checked });
     } catch (error) {
       console.error('Failed to update visibility:', error);
-    } finally {
-      setIsUpdating(false);
     }
   };
 
@@ -54,7 +49,6 @@ export function RecentlyViewedVisibilityToggle() {
           id="recently-viewed-visibility"
           checked={isPublic}
           onCheckedChange={handleToggle}
-          disabled={isUpdating}
         />
       </div>
     </div>
