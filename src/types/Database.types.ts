@@ -104,10 +104,18 @@ export interface Setlist {
   updatedAt: string;
   // Phase 5 fields (Authentication)
   userId?: string;                     // Owner user ID (optional for backward compatibility)
-  // Note: Setlists are always private (no isPublic field)
   // Phase 5 fields (Sync support)
   syncStatus?: 'pending' | 'synced' | 'conflict';
   version?: number;
+  // Phase 6 fields (Sharing & Privacy)
+  privacyLevel?: 'private' | 'unlisted' | 'public';
+  tags?: string[];
+  estimatedDuration?: number;          // Minutes
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  duplicatedFrom?: string;             // Source setlist ID if duplicated
+  duplicatedFromName?: string;         // Cached name of source setlist
+  showAttribution?: boolean;           // Whether to show duplication attribution
+  favorites?: number;                  // Denormalized favorite count
 }
 
 export interface SetlistSong {

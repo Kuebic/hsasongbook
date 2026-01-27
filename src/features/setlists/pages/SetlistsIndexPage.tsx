@@ -5,9 +5,10 @@
  * Pattern: Follows SearchPage.tsx
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useSetlists } from '../hooks/useSetlists';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import SetlistList from '../components/SetlistList';
 import SetlistForm from '../components/SetlistForm';
 import Breadcrumbs from '@/features/shared/components/Breadcrumbs';
@@ -16,12 +17,26 @@ import { SimplePageTransition } from '@/features/shared/components/PageTransitio
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, ListMusic } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, ListMusic, Users } from 'lucide-react';
 import type { SetlistFormData } from '../types';
 
 export function SetlistsIndexPage() {
   const { setlists, loading, error, createSetlist, isAuthenticated } = useSetlists();
+  const { user } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  // Separate setlists into owned and shared
+  const { ownedSetlists, sharedSetlists } = useMemo(() => {
+    if (!setlists || !user?.id) {
+      return { ownedSetlists: [], sharedSetlists: [] };
+    }
+
+    const owned = setlists.filter(s => s.userId === user.id);
+    const shared = setlists.filter(s => s.userId !== user.id);
+
+    return { ownedSetlists: owned, sharedSetlists: shared };
+  }, [setlists, user?.id]);
 
   const handleCreateSetlist = async (data: SetlistFormData): Promise<void> => {
     await createSetlist(data);
@@ -82,7 +97,44 @@ export function SetlistsIndexPage() {
             </Button>
           </div>
 
-          <SetlistList setlists={setlists} isLoading={loading} />
+          <Tabs defaultValue="my-setlists" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="my-setlists">
+                My Setlists ({ownedSetlists.length})
+              </TabsTrigger>
+              <TabsTrigger value="shared">
+                Shared With Me ({sharedSetlists.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="my-setlists">
+              <SetlistList
+                setlists={ownedSetlists}
+                isLoading={loading}
+                isOwnerView={true}
+              />
+            </TabsContent>
+
+            <TabsContent value="shared">
+              {sharedSetlists.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Shared Setlists</h3>
+                    <p className="text-muted-foreground text-sm">
+                      No setlists have been shared with you yet.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <SetlistList
+                  setlists={sharedSetlists}
+                  isLoading={loading}
+                  isOwnerView={false}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
 
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogContent>

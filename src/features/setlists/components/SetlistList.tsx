@@ -18,11 +18,13 @@ import type { Setlist, SetlistSortOption } from '../types';
 interface SetlistListProps {
   setlists: Setlist[];
   isLoading?: boolean;
+  isOwnerView?: boolean;
 }
 
 export default function SetlistList({
   setlists,
-  isLoading = false
+  isLoading = false,
+  isOwnerView = true
 }: SetlistListProps) {
   const [sortBy, setSortBy] = useState<SetlistSortOption['value']>('recent');
 
@@ -89,7 +91,12 @@ export default function SetlistList({
       {/* Setlist grid - responsive */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {sortedSetlists.map(setlist => (
-          <SetlistCard key={setlist.id} setlist={setlist} />
+          <SetlistCard
+            key={setlist.id}
+            setlist={setlist}
+            isOwner={isOwnerView}
+            showPrivacyBadge={isOwnerView}
+          />
         ))}
       </div>
     </div>

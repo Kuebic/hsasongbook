@@ -41,6 +41,11 @@ export interface SetlistFormData {
   name: string;
   description?: string;
   performanceDate?: string;
+  // Phase 6 fields
+  privacyLevel?: 'private' | 'unlisted' | 'public';
+  tags?: string[];
+  estimatedDuration?: number;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
 }
 
 /**

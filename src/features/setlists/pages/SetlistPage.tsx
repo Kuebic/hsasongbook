@@ -11,17 +11,31 @@ import { useSensor, useSensors, PointerSensor, KeyboardSensor } from '@dnd-kit/c
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import type { DragEndEvent } from '@dnd-kit/core';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
+import type { Id } from '../../../../convex/_generated/dataModel';
 import { useSetlistData } from '../hooks/useSetlistData';
 import { useSetlistSongs } from '../hooks/useSetlistSongs';
 import { useDragReorder } from '../hooks/useDragReorder';
 import SetlistSongItem from '../components/SetlistSongItem';
 import { AddArrangementModal } from '../components/AddArrangementModal';
+import SetlistPrivacyBadge from '../components/SetlistPrivacyBadge';
+import SetlistFavoriteButton from '../components/SetlistFavoriteButton';
+import SetlistSharedBadge from '../components/SetlistSharedBadge';
+import SetlistAttribution from '../components/SetlistAttribution';
 import Breadcrumbs from '@/features/shared/components/Breadcrumbs';
 import { PageSpinner } from '@/features/shared/components/LoadingStates';
 import { SimplePageTransition } from '@/features/shared/components/PageTransition';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Play, ListMusic } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Plus, Play, ListMusic, Copy, Share2, MoreVertical } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function SetlistPage() {
   const { setlistId } = useParams<{ setlistId: string }>();
@@ -37,6 +51,16 @@ export function SetlistPage() {
     updateSetlist,
     isAuthenticated
   } = useSetlistData(setlistId);
+
+  // Get sharing info for permission checks
+  const sharingInfo = useQuery(
+    api.setlists.getSharingInfo,
+    setlistId ? { setlistId: setlistId as Id<'setlists'> } : 'skip'
+  );
+
+  // Mutations for setlist actions
+  const duplicateSetlist = useMutation(api.setlists.duplicate);
+  const toggleAttribution = useMutation(api.setlists.toggleAttribution);
 
   const { addSong, removeSong, reorderSongs, updateSongKey } = useSetlistSongs(
     setlist,
@@ -65,6 +89,35 @@ export function SetlistPage() {
       handleReorder(oldIndex, newIndex, (reorderedItems) => reorderSongs(reorderedItems));
     }
   };
+
+  const handleDuplicate = async (): Promise<void> => {
+    if (!setlistId) return;
+    try {
+      const newId = await duplicateSetlist({
+        setlistId: setlistId as Id<'setlists'>
+      });
+      toast.success('Setlist duplicated!');
+      navigate(`/setlist/${newId}`);
+    } catch (err) {
+      toast.error('Failed to duplicate setlist');
+      console.error('Failed to duplicate:', err);
+    }
+  };
+
+  const handleToggleAttribution = async (): Promise<void> => {
+    if (!setlistId) return;
+    try {
+      await toggleAttribution({
+        setlistId: setlistId as Id<'setlists'>
+      });
+    } catch (err) {
+      toast.error('Failed to update attribution');
+      console.error('Failed to toggle attribution:', err);
+    }
+  };
+
+  // Determine if user can edit
+  const canEdit = sharingInfo?.canEdit ?? sharingInfo?.isOwner ?? false;
 
   // Auth gating: Show sign-in prompt for anonymous users
   if (!isAuthenticated) {
@@ -117,9 +170,26 @@ export function SetlistPage() {
             ]} />
           </div>
 
+          {/* Header */}
           <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{setlist.name}</h1>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <h1 className="text-3xl font-bold">{setlist.name}</h1>
+              </div>
+
+              {/* Badges */}
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                {sharingInfo && (
+                  <>
+                    <SetlistPrivacyBadge privacyLevel={sharingInfo.privacyLevel} />
+                    <SetlistSharedBadge
+                      isOwner={sharingInfo.isOwner}
+                      canEdit={sharingInfo.canEdit}
+                    />
+                  </>
+                )}
+              </div>
+
               {setlist.description && (
                 <p className="text-muted-foreground">{setlist.description}</p>
               )}
@@ -128,26 +198,72 @@ export function SetlistPage() {
                   {new Date(setlist.performanceDate).toLocaleDateString()}
                 </p>
               )}
+
+              {/* Attribution */}
+              {setlist.duplicatedFrom && (
+                <SetlistAttribution
+                  setlistId={setlist.id}
+                  showAttribution={setlist.showAttribution ?? true}
+                  isOwner={sharingInfo?.isOwner ?? false}
+                  onToggleAttribution={handleToggleAttribution}
+                  className="mt-2"
+                />
+              )}
             </div>
-            {setlist.songs.length > 0 && (
-              <Button
-                onClick={() => navigate(`/setlist/${setlist.id}/performance/0`)}
-                variant="default"
-              >
-                <Play className="mr-2 h-4 w-4" />
-                Performance Mode
-              </Button>
-            )}
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <SetlistFavoriteButton
+                setlistId={setlist.id}
+                favoriteCount={setlist.favorites ?? 0}
+                variant="ghost"
+              />
+
+              {setlist.songs.length > 0 && (
+                <Button
+                  onClick={() => navigate(`/setlist/${setlist.id}/performance/0`)}
+                  variant="default"
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  Performance Mode
+                </Button>
+              )}
+
+              {/* More actions dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="h-4 w-4" />
+                    <span className="sr-only">More actions</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleDuplicate}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  {sharingInfo?.isOwner && (
+                    <DropdownMenuItem disabled>
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share (coming soon)
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
-          <Button onClick={() => setShowAddModal(true)} className="mb-6">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Song
-          </Button>
+          {/* Add Song button - only if user can edit */}
+          {canEdit && (
+            <Button onClick={() => setShowAddModal(true)} className="mb-6">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Song
+            </Button>
+          )}
 
           {dragItems.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p>No songs in this setlist yet. Add songs to get started.</p>
+              <p>No songs in this setlist yet.{canEdit && ' Add songs to get started.'}</p>
             </div>
           ) : (
             <DndContext
@@ -170,8 +286,8 @@ export function SetlistPage() {
                         arrangement={arrangement}
                         parentSong={parentSong}
                         index={index}
-                        onRemove={removeSong}
-                        onKeyChange={updateSongKey}
+                        onRemove={canEdit ? removeSong : () => {}}
+                        onKeyChange={canEdit ? updateSongKey : () => {}}
                       />
                     );
                   })}
