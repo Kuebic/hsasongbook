@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Edit, Music, Plus, X } from 'lucide-react';
-import { SongOwnershipActions } from '../components/SongOwnershipActions';
+import { SongOwnershipMenu } from '../components/SongOwnershipMenu';
 import type { Song } from '@/types/Song.types';
 import type { ArrangementWithCreator } from '@/types/Arrangement.types';
 
@@ -170,9 +170,9 @@ export function SongPage() {
             <div className="flex items-center gap-2">
               {/* Ownership transfer/reclaim (only for original creator) */}
               {isAuthenticated && (
-                <SongOwnershipActions
+                <SongOwnershipMenu
                   songId={song?.id ?? ''}
-                  isOwner={isOriginalCreator}
+                  isOriginalCreator={isOriginalCreator}
                   isCommunityOwned={isCommunityOwned}
                   ownerType={convexSong?.ownerType}
                   groupName={convexSong?.owner?.type === 'group' ? convexSong.owner.name : undefined}

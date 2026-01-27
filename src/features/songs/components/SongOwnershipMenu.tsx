@@ -1,16 +1,23 @@
 /**
- * SongOwnershipActions Component
+ * SongOwnershipMenu Component
  *
- * Allows the original song creator to:
- * - Transfer their song to any group they admin/own
- * - Transfer their song to Community (crowdsourced editing)
- * - Reclaim their song from any group back to personal ownership
+ * A dropdown menu consolidating song ownership actions:
+ * - Transfer to Group (original creator only)
+ * - Move to Community (original creator only)
+ * - Reclaim from Group (original creator only)
+ * - Reclaim from Community (original creator only)
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,31 +35,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Globe, User, Users, Loader2 } from 'lucide-react';
+import { MoreVertical, Globe, User, Users, Loader2 } from 'lucide-react';
 import type { Id } from '../../../../convex/_generated/dataModel';
 
-interface SongOwnershipActionsProps {
+interface SongOwnershipMenuProps {
   songId: string;
-  isOwner: boolean;
+  isOriginalCreator: boolean;
   isCommunityOwned: boolean;
   ownerType?: 'user' | 'group';
   groupName?: string;
 }
 
-export function SongOwnershipActions({
+type DialogType = 'transfer-group' | 'move-community' | 'reclaim-group' | 'reclaim-community' | null;
+
+export function SongOwnershipMenu({
   songId,
-  isOwner,
+  isOriginalCreator,
   isCommunityOwned,
   ownerType,
   groupName,
-}: SongOwnershipActionsProps) {
+}: SongOwnershipMenuProps) {
+  const [activeDialog, setActiveDialog] = useState<DialogType>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [isTransferring, setIsTransferring] = useState(false);
   const [isReclaiming, setIsReclaiming] = useState(false);
-  const [showTransferDialog, setShowTransferDialog] = useState(false);
-  const [showTransferToGroupDialog, setShowTransferToGroupDialog] = useState(false);
-  const [showReclaimDialog, setShowReclaimDialog] = useState(false);
-  const [showReclaimFromGroupDialog, setShowReclaimFromGroupDialog] = useState(false);
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
 
   const transferToCommunity = useMutation(api.songs.transferToCommunity);
   const reclaimFromCommunity = useMutation(api.songs.reclaimFromCommunity);
@@ -67,18 +73,70 @@ export function SongOwnershipActions({
       !g.isSystemGroup // Exclude Community
   ) ?? [];
 
-  // Only show for the original creator
-  if (!isOwner) return null;
-
   // Determine ownership state
   const isGroupOwned = ownerType === 'group' && !isCommunityOwned;
   const isPersonalOwned = !ownerType || ownerType === 'user';
+
+  // Compute available actions based on ownership state
+  const availableActions = useMemo(() => {
+    const actions = [];
+
+    if (!isOriginalCreator) return actions;
+
+    // Personal or Group owned (not Community system group)
+    if ((isPersonalOwned || isGroupOwned) && eligibleGroups.length > 0) {
+      actions.push({
+        type: 'transfer-group' as const,
+        label: isPersonalOwned ? 'Transfer to Group' : 'Transfer to Another Group',
+        icon: Users,
+      });
+    }
+
+    // Personal owned only
+    if (isPersonalOwned) {
+      actions.push({
+        type: 'move-community' as const,
+        label: 'Move to Community',
+        icon: Globe,
+      });
+    }
+
+    // Group owned (not Community)
+    if (isGroupOwned) {
+      actions.push({
+        type: 'reclaim-group' as const,
+        label: 'Reclaim from Group',
+        icon: User,
+      });
+    }
+
+    // Community owned
+    if (isCommunityOwned) {
+      if (eligibleGroups.length > 0) {
+        actions.push({
+          type: 'transfer-group' as const,
+          label: 'Transfer to Group',
+          icon: Users,
+        });
+      }
+      actions.push({
+        type: 'reclaim-community' as const,
+        label: 'Reclaim from Community',
+        icon: User,
+      });
+    }
+
+    return actions;
+  }, [ownerType, isCommunityOwned, isOriginalCreator, eligibleGroups.length, isPersonalOwned, isGroupOwned]);
+
+  // Don't show menu if no actions available
+  if (availableActions.length === 0) return null;
 
   const handleTransferToCommunity = async () => {
     setIsTransferring(true);
     try {
       await transferToCommunity({ id: songId as Id<'songs'> });
-      setShowTransferDialog(false);
+      setActiveDialog(null);
     } catch (error) {
       console.error('Failed to transfer song:', error);
     } finally {
@@ -94,7 +152,7 @@ export function SongOwnershipActions({
         id: songId as Id<'songs'>,
         targetGroupId: selectedGroupId
       });
-      setShowTransferToGroupDialog(false);
+      setActiveDialog(null);
       setSelectedGroupId('');
     } catch (error) {
       console.error('Failed to transfer song:', error);
@@ -107,7 +165,7 @@ export function SongOwnershipActions({
     setIsReclaiming(true);
     try {
       await reclaimFromCommunity({ id: songId as Id<'songs'> });
-      setShowReclaimDialog(false);
+      setActiveDialog(null);
     } catch (error) {
       console.error('Failed to reclaim song:', error);
     } finally {
@@ -119,7 +177,7 @@ export function SongOwnershipActions({
     setIsReclaiming(true);
     try {
       await reclaimFromGroup({ id: songId as Id<'songs'> });
-      setShowReclaimFromGroupDialog(false);
+      setActiveDialog(null);
     } catch (error) {
       console.error('Failed to reclaim song:', error);
     } finally {
@@ -127,62 +185,37 @@ export function SongOwnershipActions({
     }
   };
 
+  const closeDialog = () => {
+    setActiveDialog(null);
+    setSelectedGroupId('');
+  };
+
   return (
-    <div className="flex flex-col gap-2">
-      {/* Transfer to regular group - show for personal OR non-Community group */}
-      {(isPersonalOwned || isGroupOwned) && eligibleGroups.length > 0 && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowTransferToGroupDialog(true)}
-          className="min-h-[44px]"
-        >
-          <Users className="mr-2 h-4 w-4" />
-          {isPersonalOwned ? 'Transfer to Group' : 'Transfer to Another Group'}
-        </Button>
-      )}
-
-      {/* Move to Community - show only for personal */}
-      {isPersonalOwned && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowTransferDialog(true)}
-          className="min-h-[44px]"
-        >
-          <Globe className="mr-2 h-4 w-4" />
-          Move to Community
-        </Button>
-      )}
-
-      {/* Reclaim from regular group */}
-      {isGroupOwned && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowReclaimFromGroupDialog(true)}
-          className="min-h-[44px]"
-        >
-          <User className="mr-2 h-4 w-4" />
-          Reclaim Song
-        </Button>
-      )}
-
-      {/* Reclaim from Community */}
-      {isCommunityOwned && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowReclaimDialog(true)}
-          className="min-h-[44px]"
-        >
-          <User className="mr-2 h-4 w-4" />
-          Reclaim Song
-        </Button>
-      )}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          {availableActions.map((action) => (
+            <DropdownMenuItem
+              key={action.type}
+              onClick={() => setActiveDialog(action.type)}
+            >
+              <action.icon className="h-4 w-4 mr-2" />
+              {action.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Transfer to Community Dialog */}
-      <AlertDialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
+      <AlertDialog
+        open={activeDialog === 'move-community'}
+        onOpenChange={(open) => !open && closeDialog()}
+      >
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Transfer to Community?</AlertDialogTitle>
@@ -213,7 +246,10 @@ export function SongOwnershipActions({
       </AlertDialog>
 
       {/* Transfer to Group Dialog */}
-      <AlertDialog open={showTransferToGroupDialog} onOpenChange={setShowTransferToGroupDialog}>
+      <AlertDialog
+        open={activeDialog === 'transfer-group'}
+        onOpenChange={(open) => !open && closeDialog()}
+      >
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Transfer Song to Group</AlertDialogTitle>
@@ -268,7 +304,10 @@ export function SongOwnershipActions({
       </AlertDialog>
 
       {/* Reclaim from Community Dialog */}
-      <AlertDialog open={showReclaimDialog} onOpenChange={setShowReclaimDialog}>
+      <AlertDialog
+        open={activeDialog === 'reclaim-community'}
+        onOpenChange={(open) => !open && closeDialog()}
+      >
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Reclaim this song?</AlertDialogTitle>
@@ -299,7 +338,10 @@ export function SongOwnershipActions({
       </AlertDialog>
 
       {/* Reclaim from Group Dialog */}
-      <AlertDialog open={showReclaimFromGroupDialog} onOpenChange={setShowReclaimFromGroupDialog}>
+      <AlertDialog
+        open={activeDialog === 'reclaim-group'}
+        onOpenChange={(open) => !open && closeDialog()}
+      >
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Reclaim Song</AlertDialogTitle>
@@ -328,6 +370,6 @@ export function SongOwnershipActions({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
