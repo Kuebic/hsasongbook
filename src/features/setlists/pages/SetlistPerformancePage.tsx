@@ -9,9 +9,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useRef, useEffect } from 'react';
 import { usePerformanceMode } from '../hooks/usePerformanceMode';
 import { useSetlistData } from '../hooks/useSetlistData';
+import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import ChordProViewer from '@/features/chordpro';
-import PerformanceControls from '../components/PerformanceControls';
-import PerformanceProgressBar from '../components/PerformanceProgressBar';
+import PerformanceLayout from '../components/PerformanceLayout';
 import { PageSpinner } from '@/features/shared/components/LoadingStates';
 import type { Arrangement } from '@/types';
 
@@ -33,15 +33,20 @@ export function SetlistPerformancePage() {
   const {
     currentIndex,
     currentArrangement,
-    isFullscreen,
     nextArrangement,
-    previousArrangement,
-    goToArrangement,
-    toggleFullscreen
+    previousArrangement
   } = usePerformanceMode(containerRef, {
     arrangements: arrangementArray,
     initialIndex: parseInt(arrangementIndex || '0', 10),
-    onExit: () => navigate(`/setlist/${setlistId}`)
+    onExit: () => navigate(`/setlist/${setlistId}`),
+    autoFullscreen: true // Auto-enter fullscreen on load
+  });
+
+  // Add swipe navigation
+  useSwipeNavigation(containerRef, {
+    onSwipeLeft: nextArrangement,
+    onSwipeRight: previousArrangement,
+    enabled: true
   });
 
   // Get the current setlist song to access customKey
@@ -76,33 +81,25 @@ export function SetlistPerformancePage() {
       ref={containerRef}
       role="application"
       aria-label="Setlist performance mode"
-      className="performance-mode-container min-h-screen bg-background"
+      className="performance-mode-container"
     >
       {/* Screen reader instructions */}
       <div className="sr-only">
         Use arrow keys to navigate between arrangements.
-        Press F to toggle fullscreen.
+        Swipe left or right to change songs.
         Press Escape to exit performance mode.
       </div>
 
-      <PerformanceControls
-        isFullscreen={isFullscreen}
-        onToggleFullscreen={toggleFullscreen}
-        onExit={() => navigate(`/setlist/${setlistId}`)}
-        canGoNext={currentIndex < arrangementArray.length - 1}
-        canGoPrevious={currentIndex > 0}
-        onNext={nextArrangement}
-        onPrevious={previousArrangement}
-      />
-
-      <PerformanceProgressBar
+      <PerformanceLayout
         currentIndex={currentIndex}
         total={arrangementArray.length}
-        onNavigate={goToArrangement}
-      />
-
-      {currentArrangement && (
-        <div className="performance-content p-8">
+        canGoPrevious={currentIndex > 0}
+        canGoNext={currentIndex < arrangementArray.length - 1}
+        onPrevious={previousArrangement}
+        onNext={nextArrangement}
+        onExit={() => navigate(`/setlist/${setlistId}`)}
+      >
+        {currentArrangement && (
           <ChordProViewer
             content={currentArrangement.chordProContent}
             arrangementMetadata={{
@@ -113,10 +110,10 @@ export function SetlistPerformancePage() {
             }}
             showChords={true}
             showToggle={false}
-            showTranspose={true}
+            showTranspose={false}
           />
-        </div>
-      )}
+        )}
+      </PerformanceLayout>
     </div>
   );
 }

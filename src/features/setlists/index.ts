@@ -14,8 +14,8 @@ export { default as SetlistCard } from './components/SetlistCard';
 export { default as SetlistList } from './components/SetlistList';
 export { default as SetlistForm } from './components/SetlistForm';
 export { default as SetlistSongItem } from './components/SetlistSongItem';
-export { default as PerformanceControls } from './components/PerformanceControls';
-export { default as PerformanceProgressBar } from './components/PerformanceProgressBar';
+export { default as PerformanceLayout } from './components/PerformanceLayout';
+export { default as ProgressPill } from './components/ProgressPill';
 
 // Hooks
 export { useSetlists } from './hooks/useSetlists';
@@ -25,6 +25,7 @@ export { useSetlistSearch } from './hooks/useSetlistSearch';
 export { useFullscreen } from './hooks/useFullscreen';
 export { useArrowKeyNavigation } from './hooks/useArrowKeyNavigation';
 export { usePerformanceMode } from './hooks/usePerformanceMode';
+export { useSwipeNavigation } from './hooks/useSwipeNavigation';
 
 // Utils
 export { sortSetlists } from './utils/setlistSorter';

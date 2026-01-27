@@ -33,15 +33,24 @@ function mapConvexSetlist(convexSetlist: {
   name: string;
   description?: string;
   performanceDate?: string;
-  arrangementIds: Id<'arrangements'>[];
+  arrangementIds?: Id<'arrangements'>[];
+  songs?: Array<{
+    arrangementId: Id<'arrangements'>;
+    customKey?: string;
+  }>;
   userId: Id<'users'>;
   updatedAt?: number;
 }): Setlist {
-  // Map arrangementIds to SetlistSong array
-  const songs: SetlistSong[] = convexSetlist.arrangementIds.map((arrId, index) => ({
-    id: arrId, // Stable ID for dnd-kit (index-based IDs break animations)
+  // Get songs data (prefer new format, fallback to legacy arrangementIds)
+  const songsData = convexSetlist.songs ??
+    convexSetlist.arrangementIds?.map((id) => ({ arrangementId: id })) ??
+    [];
+
+  // Map to SetlistSong array
+  const songs: SetlistSong[] = songsData.map((songEntry, index) => ({
+    id: songEntry.arrangementId, // Stable ID for dnd-kit (index-based IDs break animations)
     songId: '', // Populated when loading full setlist data
-    arrangementId: arrId,
+    arrangementId: songEntry.arrangementId,
     order: index,
   }));
 

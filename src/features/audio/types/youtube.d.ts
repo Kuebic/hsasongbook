@@ -5,7 +5,7 @@
  * @see https://developers.google.com/youtube/iframe_api_reference
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 declare namespace YT {
   /** YouTube player state constants */
   enum PlayerState {

@@ -5,7 +5,7 @@
  * for performance mode functionality.
  */
 
-import { useState, useCallback, RefObject } from 'react';
+import { useState, useCallback, useEffect, RefObject } from 'react';
 import { useFullscreen } from './useFullscreen';
 import { useArrowKeyNavigation } from './useArrowKeyNavigation';
 import type { Arrangement } from '@/types';
@@ -14,6 +14,7 @@ export interface UsePerformanceModeOptions {
   arrangements: Arrangement[];
   initialIndex?: number;
   onExit?: () => void;
+  autoFullscreen?: boolean;
 }
 
 export interface UsePerformanceModeReturn {
@@ -32,7 +33,7 @@ export function usePerformanceMode(
   containerRef: RefObject<HTMLElement>,
   options: UsePerformanceModeOptions
 ): UsePerformanceModeReturn {
-  const { arrangements, initialIndex = 0, onExit } = options;
+  const { arrangements, initialIndex = 0, onExit, autoFullscreen = false } = options;
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
   const {
@@ -44,11 +45,25 @@ export function usePerformanceMode(
     onClose: onExit
   });
 
+  // Auto-enter fullscreen on mount if requested
+  useEffect(() => {
+    if (autoFullscreen && containerRef.current && !isFullscreen) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        enterFullscreen().catch((err) => {
+          // Silently fail if fullscreen blocked by browser
+          console.warn('Auto-fullscreen blocked:', err);
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [autoFullscreen, enterFullscreen, containerRef, isFullscreen]);
+
   useArrowKeyNavigation(
     currentIndex,
     arrangements.length,
     setCurrentIndex,
-    { enabled: isFullscreen }
+    { enabled: true } // Enable keyboard nav even outside fullscreen
   );
 
   const nextArrangement = useCallback((): void => {
