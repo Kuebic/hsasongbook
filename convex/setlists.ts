@@ -185,3 +185,46 @@ export const remove = mutation({
     await ctx.db.delete(args.id);
   },
 });
+
+/**
+ * Add an arrangement to a setlist
+ * Access: Owner only
+ */
+export const addArrangement = mutation({
+  args: {
+    setlistId: v.id("setlists"),
+    arrangementId: v.id("arrangements"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const setlist = await ctx.db.get(args.setlistId);
+    if (!setlist) {
+      throw new Error("Setlist not found");
+    }
+
+    // Check ownership
+    if (setlist.userId !== userId) {
+      throw new Error("You can only add to your own setlists");
+    }
+
+    // Check if arrangement exists
+    const arrangement = await ctx.db.get(args.arrangementId);
+    if (!arrangement) {
+      throw new Error("Arrangement not found");
+    }
+
+    // Check if already in setlist
+    if (setlist.arrangementIds.includes(args.arrangementId)) {
+      throw new Error("Arrangement is already in this setlist");
+    }
+
+    // Add to end of setlist
+    await ctx.db.patch(args.setlistId, {
+      arrangementIds: [...setlist.arrangementIds, args.arrangementId],
+      updatedAt: Date.now(),
+    });
+
+    return args.setlistId;
+  },
+});

@@ -1,5 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
+import { useMutation } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
 import { useArrangementData } from '../hooks/useArrangementData';
 import { useArrangementPermissions } from '../hooks/useArrangementPermissions';
 import { useArrangementCoAuthors } from '../hooks/useArrangementCoAuthors';
@@ -24,6 +26,7 @@ import { ArrowLeft, Music, Printer, Play, Youtube } from 'lucide-react';
 import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSanitizer';
 import { extractYoutubeVideoId } from '../validation/audioSchemas';
 import type { ArrangementMetadata } from '@/types/Arrangement.types';
+import type { Id } from '../../../../convex/_generated/dataModel';
 
 export function ArrangementPage() {
   const navigate = useNavigate();
@@ -120,6 +123,17 @@ export function ArrangementPage() {
       setIsEditMode(true);
     }
   }, [arrangement, canEdit]);
+
+  // Track view for "Recently Viewed" section (only for authenticated users)
+  const recordView = useMutation(api.userViews.recordView);
+  useEffect(() => {
+    if (arrangement?.id && isAuthenticated) {
+      // Fire and forget - don't block on this
+      recordView({ arrangementId: arrangement.id as Id<'arrangements'> }).catch(() => {
+        // Silently ignore errors - view tracking is non-critical
+      });
+    }
+  }, [arrangement?.id, isAuthenticated, recordView]);
 
   // Loading state (include permissions loading)
   if (loading || permissionsLoading) {

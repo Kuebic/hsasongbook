@@ -205,6 +205,16 @@ export default defineSchema({
     .index("by_target", ["targetType", "targetId"])
     .index("by_user_and_target", ["userId", "targetType", "targetId"]),
 
+  // User Views - Track recently viewed arrangements
+  // Read: Owner only | Write: Authenticated users only
+  userViews: defineTable({
+    userId: v.id("users"),
+    arrangementId: v.id("arrangements"),
+    viewedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_arrangement", ["userId", "arrangementId"]),
+
   // User Appearance Preferences - Synced across devices
   userAppearancePreferences: defineTable({
     userId: v.id("users"),

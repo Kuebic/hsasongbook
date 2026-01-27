@@ -481,6 +481,29 @@ export const getDistinctOrigins = query({
 });
 
 /**
+ * Get origins with song counts for homepage browsing
+ * Access: Everyone
+ */
+export const getOriginsWithCounts = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const songs = await ctx.db.query("songs").collect();
+    const originCounts: Record<string, number> = {};
+
+    for (const song of songs) {
+      if (song.origin) {
+        originCounts[song.origin] = (originCounts[song.origin] || 0) + 1;
+      }
+    }
+
+    return Object.entries(originCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, args.limit || 10)
+      .map(([origin, count]) => ({ origin, count }));
+  },
+});
+
+/**
  * List songs with arrangement summary for browse page
  * Supports filtering by song-level and arrangement-level criteria
  * Access: Everyone

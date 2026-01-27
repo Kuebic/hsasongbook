@@ -289,6 +289,29 @@ export const getDistinctTags = query({
 });
 
 /**
+ * Get styles with arrangement counts for homepage browsing
+ * Access: Everyone
+ */
+export const getStylesWithCounts = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const arrangements = await ctx.db.query("arrangements").collect();
+    const styleCounts: Record<string, number> = {};
+
+    for (const arr of arrangements) {
+      if (arr.style) {
+        styleCounts[arr.style] = (styleCounts[arr.style] || 0) + 1;
+      }
+    }
+
+    return Object.entries(styleCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, args.limit || 10)
+      .map(([style, count]) => ({ style, count }));
+  },
+});
+
+/**
  * Get arrangement IDs where the current user is a collaborator
  * Used for filtering "my arrangements" on song pages
  * Access: Authenticated users only

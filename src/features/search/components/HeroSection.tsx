@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SearchBar from './SearchBar';
+import { TypeFilterChips } from './TypeFilterChips';
 
 interface HeroSectionProps {
   searchValue: string;
@@ -57,8 +58,13 @@ export default function HeroSection({
         </div>
 
         {/* Search section */}
-        <div className="max-w-xl mx-auto mb-6">
+        <div className="max-w-xl mx-auto mb-4">
           <SearchBar value={searchValue} onChange={onSearchChange} />
+        </div>
+
+        {/* Quick filter chips */}
+        <div className="flex justify-center mb-6">
+          <TypeFilterChips />
         </div>
 
         {/* Action area */}
