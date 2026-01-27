@@ -230,10 +230,10 @@ export default defineSchema({
     userId: v.id("users"),
 
     // Color theme
-    colorPreset: v.optional(v.string()), // "earth-tones", "ocean", etc. or null for custom mix
+    colorPreset: v.optional(v.union(v.string(), v.null())), // "earth-tones", "ocean", etc. or null for custom mix
     // For custom mix (when colorPreset is null), store selected palette IDs
-    primaryColorId: v.optional(v.string()), // ID from curated primary palette
-    accentColorId: v.optional(v.string()), // ID from curated accent palette
+    primaryColorId: v.optional(v.union(v.string(), v.null())), // ID from curated primary palette
+    accentColorId: v.optional(v.union(v.string(), v.null())), // ID from curated accent palette
 
     // App-wide fonts
     fontFamily: v.optional(v.string()), // "system", "inter", "lora", etc.
