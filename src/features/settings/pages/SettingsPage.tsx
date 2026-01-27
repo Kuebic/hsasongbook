@@ -7,7 +7,7 @@
 
 import { useNavigation } from '@/features/shared/hooks/useNavigation';
 import Breadcrumbs from '@/features/shared/components/Breadcrumbs';
-import AppearanceSection from '../components/AppearanceSection';
+import { AppearanceSettings } from '@/features/appearance';
 import AboutSection from '../components/AboutSection';
 import AccountSection from '../components/AccountSection';
 
@@ -53,7 +53,7 @@ export default function SettingsPage() {
 
       {/* Settings Sections */}
       <div className="space-y-6">
-        <AppearanceSection />
+        <AppearanceSettings />
         <AboutSection />
         <AccountSection />
       </div>

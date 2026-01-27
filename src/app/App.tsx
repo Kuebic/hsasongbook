@@ -32,6 +32,9 @@ import { ThemeProvider } from '@/lib/theme/ThemeProvider'
 // Auth imports
 import { AuthProvider } from '../features/auth/context/AuthProvider'
 
+// Appearance imports
+import { UserAppearanceProvider } from '../features/appearance'
+
 // Audio imports
 import { AudioPlayerProvider, GlobalAudioPlayer } from '../features/audio'
 
@@ -151,7 +154,8 @@ function App() {
     <ConvexAuthProvider client={convex}>
       <ThemeProvider defaultTheme="system" storageKey="hsasongbook-theme">
         <AuthProvider>
-          <AudioPlayerProvider>
+          <UserAppearanceProvider>
+            <AudioPlayerProvider>
             <ErrorBoundary
               FallbackComponent={ErrorFallback}
               onReset={() => {
@@ -164,6 +168,7 @@ function App() {
               </BrowserRouter>
             </ErrorBoundary>
           </AudioPlayerProvider>
+          </UserAppearanceProvider>
         </AuthProvider>
       </ThemeProvider>
     </ConvexAuthProvider>

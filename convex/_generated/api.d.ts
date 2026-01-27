@@ -21,6 +21,7 @@ import type * as seed from "../seed.js";
 import type * as seedCarpSongs from "../seedCarpSongs.js";
 import type * as setlists from "../setlists.js";
 import type * as songs from "../songs.js";
+import type * as userAppearancePreferences from "../userAppearancePreferences.js";
 import type * as users from "../users.js";
 import type * as versions from "../versions.js";
 
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   seedCarpSongs: typeof seedCarpSongs;
   setlists: typeof setlists;
   songs: typeof songs;
+  userAppearancePreferences: typeof userAppearancePreferences;
   users: typeof users;
   versions: typeof versions;
 }>;

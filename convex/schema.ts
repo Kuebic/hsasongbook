@@ -197,4 +197,28 @@ export default defineSchema({
     .index("by_user_and_type", ["userId", "targetType"])
     .index("by_target", ["targetType", "targetId"])
     .index("by_user_and_target", ["userId", "targetType", "targetId"]),
+
+  // User Appearance Preferences - Synced across devices
+  userAppearancePreferences: defineTable({
+    userId: v.id("users"),
+
+    // Color theme
+    colorPreset: v.optional(v.string()), // "earth-tones", "ocean", etc. or null for custom mix
+    // For custom mix (when colorPreset is null), store selected palette IDs
+    primaryColorId: v.optional(v.string()), // ID from curated primary palette
+    accentColorId: v.optional(v.string()), // ID from curated accent palette
+
+    // App-wide fonts
+    fontFamily: v.optional(v.string()), // "system", "inter", "lora", etc.
+    fontSize: v.optional(v.number()), // Scale multiplier: 0.85-1.25
+
+    // Chord-specific styling
+    chordFontFamily: v.optional(v.string()), // "inherit", "mono", etc.
+    chordFontSize: v.optional(v.number()), // Relative scale: 0.8-1.4
+    chordFontWeight: v.optional(v.string()), // "normal", "medium", "bold"
+    chordColorId: v.optional(v.string()), // ID from curated palette, or null = use accent
+    chordHighlight: v.optional(v.boolean()), // Show background highlight
+
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
 });
