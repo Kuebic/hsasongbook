@@ -174,6 +174,8 @@ export function SongPage() {
                   songId={song?.id ?? ''}
                   isOwner={isOriginalCreator}
                   isCommunityOwned={isCommunityOwned}
+                  ownerType={convexSong?.ownerType}
+                  groupName={convexSong?.owner?.type === 'group' ? convexSong.owner.name : undefined}
                 />
               )}
 

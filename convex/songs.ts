@@ -350,6 +350,124 @@ export const reclaimFromCommunity = mutation({
   },
 });
 
+/**
+ * Transfer a song to a regular group (non-Community)
+ * Access: Original creator only
+ *
+ * Allows the original creator to transfer their song to any group
+ * where they have admin/owner permissions. This enables users to
+ * move songs to groups they joined after creating the song, or
+ * transfer between regular groups.
+ */
+export const transferToGroup = mutation({
+  args: {
+    id: v.id("songs"),
+    targetGroupId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    // Fetch song
+    const song = await ctx.db.get(args.id);
+    if (!song) {
+      throw new Error("Song not found");
+    }
+
+    // Verify user is original creator
+    if (song.createdBy !== userId) {
+      throw new Error("Only the original creator can transfer this song");
+    }
+
+    // Fetch target group
+    const targetGroupId = ctx.db.normalizeId("groups", args.targetGroupId);
+    if (!targetGroupId) {
+      throw new Error("Invalid group ID");
+    }
+    const targetGroup = await ctx.db.get(targetGroupId);
+    if (!targetGroup) {
+      throw new Error("Group not found");
+    }
+
+    // Prevent direct transfer to Community (use existing transferToCommunity)
+    if (targetGroup.isSystemGroup) {
+      throw new Error(
+        "Cannot transfer to Community group. Use 'Move to Community' instead."
+      );
+    }
+
+    // Verify user is owner/admin of target group
+    const isAdminOrOwner = await isGroupAdminOrOwner(
+      ctx,
+      targetGroupId,
+      userId
+    );
+    if (!isAdminOrOwner) {
+      throw new Error("You must be an admin or owner of the target group");
+    }
+
+    // Update song ownership
+    await ctx.db.patch(args.id, {
+      ownerType: "group",
+      ownerId: args.targetGroupId,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Reclaim a song from a regular group (non-Community) back to personal ownership
+ * Access: Original creator only
+ *
+ * Allows the original creator to take back a song that was transferred
+ * to a regular group. This will remove the song from the group and return
+ * it to personal ownership.
+ */
+export const reclaimFromGroup = mutation({
+  args: { id: v.id("songs") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    // Fetch song
+    const song = await ctx.db.get(args.id);
+    if (!song) {
+      throw new Error("Song not found");
+    }
+
+    // Verify user is original creator
+    if (song.createdBy !== userId) {
+      throw new Error("Only the original creator can reclaim this song");
+    }
+
+    // Verify song is group-owned
+    if (song.ownerType !== "group" || !song.ownerId) {
+      throw new Error("Song is not owned by a group");
+    }
+
+    // Fetch the group to check if it's Community
+    const groupId = ctx.db.normalizeId("groups", song.ownerId);
+    if (!groupId) {
+      throw new Error("Invalid group ID");
+    }
+    const group = await ctx.db.get(groupId);
+
+    // Prevent reclaiming from Community (use existing reclaimFromCommunity)
+    if (group?.isSystemGroup) {
+      throw new Error("Use 'Reclaim from Community' button instead");
+    }
+
+    // Update song to personal ownership
+    await ctx.db.patch(args.id, {
+      ownerType: undefined,
+      ownerId: undefined,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
 // ============ BROWSE QUERIES ============
 
 /**
