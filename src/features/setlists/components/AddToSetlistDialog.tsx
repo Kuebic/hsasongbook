@@ -9,7 +9,6 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import type { Id } from '../../../../convex/_generated/dataModel';
@@ -48,8 +47,6 @@ export function AddToSetlistDialog({
   open,
   onOpenChange,
 }: AddToSetlistDialogProps) {
-  const navigate = useNavigate();
-
   // Dialog mode state
   const [mode, setMode] = useState<DialogMode>('list');
 
@@ -90,7 +87,12 @@ export function AddToSetlistDialog({
       });
       setAddedTo((prev) => new Set([...prev, setlistId]));
     } catch (error) {
-      console.error('Failed to add to setlist:', error);
+      // If already in setlist, treat as success (just mark as added)
+      if (error instanceof Error && error.message.includes('already in this setlist')) {
+        setAddedTo((prev) => new Set([...prev, setlistId]));
+      } else {
+        console.error('Failed to add to setlist:', error);
+      }
     } finally {
       setIsAdding(null);
     }
@@ -116,9 +118,10 @@ export function AddToSetlistDialog({
         arrangementIds: [arrangementId],
       });
 
-      // Close dialog and navigate to the new setlist
-      onOpenChange(false);
-      navigate(`/setlist/${setlistId}`);
+      // Mark as added and switch back to list view (stay on current page)
+      setAddedTo((prev) => new Set([...prev, setlistId]));
+      setMode('list');
+      setFormData({ name: '', description: '', performanceDate: '' });
     } catch (error) {
       console.error('Failed to create setlist:', error);
       setFormErrors({ name: 'Failed to create setlist. Please try again.' });
@@ -213,7 +216,11 @@ export function AddToSetlistDialog({
                   ) : (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
                       {filteredSetlists.map((setlist) => {
-                        const isInSetlist = addedTo.has(setlist._id);
+                        // Check both new `songs` array and legacy `arrangementIds`
+                        const songCount = setlist.songs?.length ?? setlist.arrangementIds?.length ?? 0;
+                        const isInSetlist = addedTo.has(setlist._id) ||
+                          setlist.songs?.some((s) => s.arrangementId === arrangementId) ||
+                          setlist.arrangementIds?.includes(arrangementId);
                         const isCurrentlyAdding = isAdding === setlist._id;
 
                         return (
@@ -224,8 +231,8 @@ export function AddToSetlistDialog({
                             <div className="flex-1 min-w-0">
                               <h4 className="font-medium truncate">{setlist.name}</h4>
                               <p className="text-xs text-muted-foreground">
-                                {setlist.arrangementIds.length} song
-                                {setlist.arrangementIds.length !== 1 ? 's' : ''}
+                                {songCount} song
+                                {songCount !== 1 ? 's' : ''}
                               </p>
                             </div>
                             <Button

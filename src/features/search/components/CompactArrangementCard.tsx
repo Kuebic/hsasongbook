@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { AddToSetlistDialog } from '@/features/setlists/components/AddToSetlistDialog';
+import FavoriteButton from '@/features/shared/components/FavoriteButton';
 import type { Id } from '../../../../convex/_generated/dataModel';
 
 interface CompactArrangementCardProps {
@@ -108,7 +109,7 @@ export function CompactArrangementCard({
             )}
           </div>
 
-          {/* Bottom row: timestamp + action */}
+          {/* Bottom row: timestamp + actions */}
           <div className="flex items-center justify-between gap-2 mt-1">
             {timestamp && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -117,25 +118,35 @@ export function CompactArrangementCard({
               </span>
             )}
 
-            {/* Add to Setlist button - visible on hover/tap */}
-            {isAuthenticated && (
-              <Button
-                variant="ghost"
+            {/* Actions: Favorite + Add to Setlist */}
+            <div className="flex items-center gap-1 ml-auto">
+              <FavoriteButton
+                targetType="arrangement"
+                targetId={arrangement._id}
+                count={arrangement.favorites || 0}
                 size="sm"
-                className={cn(
-                  'h-7 px-2 text-xs gap-1 ml-auto transition-opacity',
-                  isHovered ? 'opacity-100' : 'opacity-0 md:opacity-0'
-                )}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowAddToSetlist(true);
-                }}
-              >
-                <Plus className="h-3 w-3" />
-                Add to Set
-              </Button>
-            )}
+              />
+
+              {/* Add to Setlist button - visible on hover/tap */}
+              {isAuthenticated && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    'h-7 px-2 text-xs gap-1 transition-opacity',
+                    isHovered ? 'opacity-100' : 'opacity-0 md:opacity-0'
+                  )}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowAddToSetlist(true);
+                  }}
+                >
+                  <Plus className="h-3 w-3" />
+                  Add to Set
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </Link>

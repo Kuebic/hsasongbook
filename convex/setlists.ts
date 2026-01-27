@@ -261,9 +261,9 @@ export const addArrangement = mutation({
       setlist.arrangementIds?.map((id) => ({ arrangementId: id })) ??
       [];
 
-    // Check if already in setlist
+    // If already in setlist, just return (idempotent operation)
     if (currentSongs.some((s) => s.arrangementId === args.arrangementId)) {
-      throw new Error("Arrangement is already in this setlist");
+      return args.setlistId;
     }
 
     // Add to end of setlist with optional customKey

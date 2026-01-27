@@ -11,11 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Music, Clock, Guitar, Hash, Users, Globe, MoreVertical, Copy, Trash2, Play, Pause, Loader2 } from 'lucide-react'
+import { Music, Clock, Guitar, Hash, Users, Globe, MoreVertical, Copy, Trash2, Play, Pause, Loader2, ListPlus } from 'lucide-react'
 import FavoriteButton from '../../shared/components/FavoriteButton'
 import { getCreatorDisplayName } from '../../shared/utils/userDisplay'
 import { DuplicateArrangementDialog } from './DuplicateArrangementDialog'
 import { DeleteArrangementDialog } from './DeleteArrangementDialog'
+import { AddToSetlistDialog } from '@/features/setlists/components/AddToSetlistDialog'
 import { useAudioPlayer } from '@/features/audio'
 import { api } from '../../../../convex/_generated/api'
 import type { Id } from '../../../../convex/_generated/dataModel'
@@ -33,6 +34,7 @@ function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDe
   const navigate = useNavigate()
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showAddToSetlist, setShowAddToSetlist] = useState(false)
   const [isLoadingAudio, setIsLoadingAudio] = useState(false)
 
   // Audio player integration
@@ -188,6 +190,21 @@ function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDe
               count={arrangement.favorites}
               size="sm"
             />
+            {/* Add to Setlist button - direct access like homepage */}
+            {isAuthenticated && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs gap-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAddToSetlist(true);
+                }}
+              >
+                <ListPlus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add to Set</span>
+              </Button>
+            )}
           {isAuthenticated && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -293,6 +310,13 @@ function ArrangementCard({ arrangement, songSlug, isOwner, isAuthenticated, onDe
           open={showDeleteDialog}
           onOpenChange={setShowDeleteDialog}
           showTrigger={false}
+        />
+        <AddToSetlistDialog
+          arrangementId={arrangement.id}
+          arrangementName={arrangement.name}
+          songTitle={resolvedSongTitle || 'Unknown Song'}
+          open={showAddToSetlist}
+          onOpenChange={setShowAddToSetlist}
         />
       </>
     )}
