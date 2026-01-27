@@ -7,26 +7,46 @@ import {
   requireAuthenticatedUser,
   canViewSetlist,
   canEditSetlist,
+  canChangeSetlistPrivacy,
 } from "./permissions";
 
 // ============ QUERIES ============
 
 /**
- * Get user's setlists
+ * Get user's setlists (owned and shared with user)
  * Access: Owner only (returns empty for unauthenticated)
  */
 export const list = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      return [];
-    }
+    if (!userId) return [];
 
-    return await ctx.db
+    // Get setlists owned by user (efficient - uses index)
+    const ownedSetlists = await ctx.db
       .query("setlists")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
+
+    // Get setlists shared WITH user (efficient - uses setlistShares index)
+    const shares = await ctx.db
+      .query("setlistShares")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    // Fetch the shared setlists by ID
+    const sharedSetlists = await Promise.all(
+      shares.map((share) => ctx.db.get(share.setlistId))
+    );
+
+    // Filter out any null results (deleted setlists) and combine
+    const validSharedSetlists = sharedSetlists.filter(
+      (s): s is NonNullable<typeof s> => s !== null
+    );
+
+    return [...ownedSetlists, ...validSharedSetlists].sort(
+      (a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0)
+    );
   },
 });
 
@@ -100,6 +120,70 @@ export const getWithArrangements = query({
       // Return songs array with customKey for frontend
       songs: songsData,
       arrangements: arrangements.filter((a) => a !== null),
+    };
+  },
+});
+
+/**
+ * Get sharing info for a setlist (who has access, what permissions)
+ * Access: Anyone who can view the setlist
+ */
+export const getSharingInfo = query({
+  args: { setlistId: v.id("setlists") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const setlist = await ctx.db.get(args.setlistId);
+    if (!setlist) return null;
+
+    const isOwner = setlist.userId === userId;
+    const canView = await canViewSetlist(ctx, args.setlistId, userId);
+
+    if (!canView) return null;
+
+    // Get user details for shared users (if owner or has edit access)
+    const canEdit = await canEditSetlist(ctx, args.setlistId, userId);
+    const sharedUsers: {
+      userId: typeof userId;
+      username: string | undefined;
+      displayName: string | undefined;
+      canEdit: boolean;
+      addedAt: number;
+    }[] = [];
+
+    if (isOwner || canEdit) {
+      // Show full collaborator list from setlistShares table
+      const shares = await ctx.db
+        .query("setlistShares")
+        .withIndex("by_setlist", (q) => q.eq("setlistId", args.setlistId))
+        .collect();
+
+      for (const share of shares) {
+        const user = await ctx.db.get(share.userId);
+        if (user) {
+          sharedUsers.push({
+            userId: share.userId,
+            username: user.username,
+            displayName: user.displayName,
+            canEdit: share.canEdit,
+            addedAt: share.addedAt,
+          });
+        }
+      }
+    }
+
+    return {
+      isOwner,
+      canEdit,
+      canChangePrivacy: isOwner,
+      privacyLevel: setlist.privacyLevel ?? "private", // Default to private
+      sharedUsers: isOwner || canEdit ? sharedUsers : [], // Only show if owner or editor
+      ownerInfo: isOwner
+        ? null
+        : {
+            userId: setlist.userId,
+          },
     };
   },
 });
@@ -347,5 +431,161 @@ export const updateSongKey = mutation({
     });
 
     return args.setlistId;
+  },
+});
+
+// ============ SHARING MUTATIONS ============
+
+/**
+ * Add a user to a setlist's shared access list
+ * Access: Owner only
+ */
+export const addSharedUser = mutation({
+  args: {
+    setlistId: v.id("setlists"),
+    userIdToAdd: v.id("users"),
+    canEdit: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+    const setlist = await ctx.db.get(args.setlistId);
+
+    if (!setlist) throw new Error("Setlist not found");
+    if (setlist.userId !== userId) {
+      throw new Error("Only owner can share setlists");
+    }
+
+    // Prevent sharing with self
+    if (args.userIdToAdd === userId) {
+      throw new Error("You cannot share with yourself");
+    }
+
+    // Validate target user exists and is not anonymous
+    const targetUser = await ctx.db.get(args.userIdToAdd);
+    if (!targetUser) {
+      throw new Error("User not found");
+    }
+    if (!targetUser.email) {
+      throw new Error("Cannot share with anonymous users");
+    }
+
+    // Check if already shared (using setlistShares table)
+    const existingShare = await ctx.db
+      .query("setlistShares")
+      .withIndex("by_user_setlist", (q) =>
+        q.eq("userId", args.userIdToAdd).eq("setlistId", args.setlistId)
+      )
+      .first();
+
+    if (existingShare) {
+      throw new Error("User already has access");
+    }
+
+    // Create share record in setlistShares table
+    await ctx.db.insert("setlistShares", {
+      setlistId: args.setlistId,
+      userId: args.userIdToAdd,
+      canEdit: args.canEdit,
+      addedBy: userId,
+      addedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Remove a user from a setlist's shared access list
+ * Access: Owner only
+ */
+export const removeSharedUser = mutation({
+  args: {
+    setlistId: v.id("setlists"),
+    userIdToRemove: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+    const setlist = await ctx.db.get(args.setlistId);
+
+    if (!setlist) throw new Error("Setlist not found");
+    if (setlist.userId !== userId) {
+      throw new Error("Only owner can manage sharing");
+    }
+
+    // Find and delete the share record
+    const share = await ctx.db
+      .query("setlistShares")
+      .withIndex("by_user_setlist", (q) =>
+        q.eq("userId", args.userIdToRemove).eq("setlistId", args.setlistId)
+      )
+      .first();
+
+    if (share) {
+      await ctx.db.delete(share._id);
+    }
+  },
+});
+
+/**
+ * Update a setlist's privacy level
+ * Access: Owner only
+ */
+export const updatePrivacy = mutation({
+  args: {
+    setlistId: v.id("setlists"),
+    privacyLevel: v.union(
+      v.literal("private"),
+      v.literal("unlisted"),
+      v.literal("public")
+    ),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const canChange = await canChangeSetlistPrivacy(ctx, args.setlistId, userId);
+    if (!canChange) {
+      throw new Error("Only owner can change privacy level");
+    }
+
+    await ctx.db.patch(args.setlistId, {
+      privacyLevel: args.privacyLevel,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Update shared user's permission (upgrade view → edit or downgrade edit → view)
+ * Access: Owner only
+ */
+export const updateSharedUserPermission = mutation({
+  args: {
+    setlistId: v.id("setlists"),
+    targetUserId: v.id("users"),
+    canEdit: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+    const setlist = await ctx.db.get(args.setlistId);
+
+    if (!setlist) throw new Error("Setlist not found");
+    if (setlist.userId !== userId) {
+      throw new Error("Only owner can manage permissions");
+    }
+
+    // Find the share record
+    const share = await ctx.db
+      .query("setlistShares")
+      .withIndex("by_user_setlist", (q) =>
+        q.eq("userId", args.targetUserId).eq("setlistId", args.setlistId)
+      )
+      .first();
+
+    if (!share) {
+      throw new Error("User doesn't have access to this setlist");
+    }
+
+    // Update the permission
+    await ctx.db.patch(share._id, {
+      canEdit: args.canEdit,
+    });
   },
 });
