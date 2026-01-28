@@ -19,6 +19,7 @@ import SkipLink from '../features/shared/components/SkipLink'
 import { useKeyboardShortcuts } from '../features/shared/hooks/useKeyboardShortcuts'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Toaster } from '@/components/ui/sonner'
 import { AlertCircle } from 'lucide-react'
 import logger from '@/lib/logger'
 
@@ -146,6 +147,9 @@ function AppWithFeatures() {
           onUpdate={updateServiceWorker}
         />
       )}
+
+      {/* Toast notifications */}
+      <Toaster />
     </div>
   )
 }

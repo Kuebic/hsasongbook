@@ -3,14 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { RefreshCw, X, Download } from 'lucide-react';
 import { getZIndexClass } from '@/lib/config/zIndex';
-import React from 'react';
 
 type NotificationPosition = 'top' | 'bottom';
 
 interface UpdateNotificationProps {
   show?: boolean;
   onUpdate: () => void;
-  onDismiss: () => void;
+  onDismiss?: () => void;
   position?: NotificationPosition;
   persistent?: boolean;
 }
