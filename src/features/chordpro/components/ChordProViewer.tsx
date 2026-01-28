@@ -452,7 +452,7 @@ export default function ChordProViewer({
                       className="text-xs"
                     >
                       <Edit3 className="h-3 w-3 mr-1" />
-                      Edit
+                      Edit Chords
                     </Button>
                   )}
                 </div>
