@@ -50,6 +50,7 @@ export function useSetlistPlaylist({
     playlist,
     loadPlaylist,
     setFetchAudioUrl,
+    isPlaying,
   } = useAudioPlayer();
 
   // Build playlist items from setlist data
@@ -120,8 +121,8 @@ export function useSetlistPlaylist({
       return false;
     }
     const currentItem = playlist.items[playlist.currentIndex];
-    return currentItem?.arrangementId === arrangementId;
-  }, [playlist]);
+    return currentItem?.arrangementId === arrangementId && isPlaying;
+  }, [playlist, isPlaying]);
 
   // Check if this setlist is currently playing
   const isSetlistPlaying = useMemo(() => {

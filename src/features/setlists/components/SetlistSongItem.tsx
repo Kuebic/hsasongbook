@@ -7,6 +7,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,10 +53,6 @@ export default function SetlistSongItem({
   const MUSICAL_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const currentKey = song.customKey || arrangement?.key || 'C';
 
-  // Display name: "Song Title - Arrangement Name"
-  const displayName = parentSong && arrangement
-    ? `${parentSong.title} - ${arrangement.name}`
-    : arrangement?.name || 'Unknown';
   const {
     attributes,
     listeners,
@@ -129,7 +126,18 @@ export default function SetlistSongItem({
       {/* Song info */}
       <div className="flex-1 min-w-0">
         <div className="font-medium truncate">
-          {index + 1}. {displayName}
+          {index + 1}.{' '}
+          {parentSong && arrangement ? (
+            <Link
+              to={`/song/${parentSong.slug}/${arrangement.slug}`}
+              className="hover:underline hover:text-primary"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {parentSong.title} - {arrangement.name}
+            </Link>
+          ) : (
+            arrangement?.name || 'Unknown'
+          )}
         </div>
         <div className="flex items-center gap-2 mt-1">
           <span className="text-sm text-muted-foreground">Key:</span>
