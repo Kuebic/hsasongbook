@@ -1,4 +1,5 @@
 export { ArrangementPage } from './pages/ArrangementPage'
+export { ArrangementEditDialog } from './components/ArrangementEditDialog'
 export { default as ArrangementHeader } from './components/ArrangementHeader'
 export { default as ArrangementList } from './components/ArrangementList'
 export { default as ArrangementCard } from './components/ArrangementCard'

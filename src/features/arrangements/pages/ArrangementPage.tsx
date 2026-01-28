@@ -9,7 +9,7 @@ import { useArrangementAudio } from '../hooks/useArrangementAudio';
 import { useArrangementAttachments } from '../hooks/useArrangementAttachments';
 import ChordProViewer, { type TranspositionState } from '@/features/chordpro';
 import ArrangementHeader from '../components/ArrangementHeader';
-import { EditModeAccordion } from '../components/EditModeAccordion';
+import { ArrangementEditDialog } from '../components/ArrangementEditDialog';
 import CollaboratorsDialog from '../components/CollaboratorsDialog';
 import CoAuthorsList from '../components/CoAuthorsList';
 import { ArrangementActionsMenu } from '../components/ArrangementActionsMenu';
@@ -24,10 +24,9 @@ import { VersionHistoryPanel } from '@/features/versions';
 import { Button } from '@/components/ui/button';
 import logger from '@/lib/logger';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Music, Printer, Play, Youtube } from 'lucide-react';
+import { ArrowLeft, Music, Printer, Play, Youtube, Edit3 } from 'lucide-react';
 import { sanitizeChordProContent } from '@/features/chordpro/utils/contentSanitizer';
 import { extractYoutubeVideoId } from '../validation/audioSchemas';
-import type { ArrangementMetadata } from '@/types/Arrangement.types';
 import type { Id } from '../../../../convex/_generated/dataModel';
 
 export function ArrangementPage() {
@@ -36,7 +35,8 @@ export function ArrangementPage() {
   const { breadcrumbs } = useNavigation();
   const { user } = useAuth();
   const isAuthenticated = user && !user.isAnonymous;
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isChordProEditMode, setIsChordProEditMode] = useState(false);
+  const [isMetadataDialogOpen, setIsMetadataDialogOpen] = useState(false);
   const [showCollaboratorsDialog, setShowCollaboratorsDialog] = useState(false);
   const [showChords, _setShowChords] = useState(true);
   const [transposition, setTransposition] = useState<TranspositionState | null>(null);
@@ -82,7 +82,7 @@ export function ArrangementPage() {
   const hasYoutube = !!arrangement?.youtubeUrl;
 
   // File attachments
-  const { attachments, attachmentCount } = useArrangementAttachments(arrangement?.id ?? null);
+  const { attachments } = useArrangementAttachments(arrangement?.id ?? null);
 
   // Check if this arrangement's audio is currently playing in the global player
   const isThisTrackPlaying =
@@ -122,10 +122,10 @@ export function ArrangementPage() {
     });
   }, [arrangement?.youtubeUrl, arrangement?.name, song, songSlug, arrangementSlug, playTrack]);
 
-  // Auto-enable edit mode when arrangement has no content AND user can edit
+  // Auto-enable ChordPro edit mode when arrangement has no content AND user can edit
   useEffect(() => {
     if (arrangement && !arrangement.chordProContent && canEdit) {
-      setIsEditMode(true);
+      setIsChordProEditMode(true);
     }
   }, [arrangement, canEdit]);
 
@@ -203,6 +203,18 @@ export function ArrangementPage() {
                 </Button>
               )}
 
+              {/* Edit Metadata Button */}
+              {canEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsMetadataDialogOpen(true)}
+                >
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              )}
+
               {/* Print Button */}
               <Button
                 variant="outline"
@@ -253,34 +265,6 @@ export function ArrangementPage() {
           </div>
         )}
 
-        {/* Edit Mode Accordion - Collapsed forms for metadata and audio */}
-        {isEditMode && canEdit && (
-          <div className="mb-6 no-print">
-            <EditModeAccordion
-              metadata={{
-                key: arrangement.key,
-                tempo: arrangement.tempo,
-                timeSignature: arrangement.timeSignature,
-                capo: arrangement.capo,
-                difficulty: arrangement.difficulty
-              }}
-              onMetadataChange={async (newMetadata: ArrangementMetadata) => {
-                logger.debug('Metadata changed, saving to Convex:', newMetadata);
-                const result = await updateArrangement(newMetadata);
-                if (result.success) {
-                  logger.debug('Metadata saved to Convex successfully');
-                } else {
-                  logger.error('Failed to save metadata:', result.error);
-                }
-              }}
-              arrangementId={arrangement.id}
-              youtubeUrl={arrangement.youtubeUrl}
-              hasAudio={!!arrangement.audioFileKey}
-              attachmentCount={attachmentCount}
-            />
-          </div>
-        )}
-
         {/* ChordPro Content */}
         <div className="mb-8">
           <ChordProViewer
@@ -288,8 +272,8 @@ export function ArrangementPage() {
             showChords={showChords}
             showToggle={true}
             editable={canEdit}
-            editMode={isEditMode && canEdit}
-            onEditModeChange={setIsEditMode}
+            editMode={isChordProEditMode && canEdit}
+            onEditModeChange={setIsChordProEditMode}
             arrangementMetadata={{
               key: arrangement.key,
               tempo: arrangement.tempo,
@@ -320,8 +304,8 @@ export function ArrangementPage() {
           />
         </div>
 
-        {/* File Attachments (read-only view when not in edit mode) */}
-        {!isEditMode && attachments.length > 0 && (
+        {/* File Attachments (read-only view) */}
+        {attachments.length > 0 && (
           <div className="mb-8 no-print">
             <AttachmentsDisplay attachments={attachments} />
           </div>
@@ -354,6 +338,15 @@ export function ArrangementPage() {
         onOpenChange={setShowCollaboratorsDialog}
         arrangementId={arrangement.id}
         arrangementName={arrangement.name}
+      />
+    )}
+
+    {/* Arrangement Edit Dialog (metadata, audio, attachments) */}
+    {canEdit && arrangement && (
+      <ArrangementEditDialog
+        arrangementId={arrangement.id}
+        open={isMetadataDialogOpen}
+        onOpenChange={setIsMetadataDialogOpen}
       />
     )}
 
