@@ -98,14 +98,14 @@ export function SetlistsIndexPage() {
           </div>
 
           <Tabs defaultValue="my-setlists" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
-              <TabsTrigger value="my-setlists">
+            <TabsList className="flex flex-wrap h-auto gap-1 mb-6">
+              <TabsTrigger value="my-setlists" className="text-xs sm:text-sm">
                 My Setlists ({ownedSetlists.length})
               </TabsTrigger>
-              <TabsTrigger value="shared">
+              <TabsTrigger value="shared" className="text-xs sm:text-sm">
                 Shared With Me ({sharedSetlists.length})
               </TabsTrigger>
-              <TabsTrigger value="browse">
+              <TabsTrigger value="browse" className="text-xs sm:text-sm">
                 Browse
               </TabsTrigger>
             </TabsList>

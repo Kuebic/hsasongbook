@@ -21,7 +21,6 @@ import { useSetlistPlaylist } from '../hooks/useSetlistPlaylist';
 import SetlistSongItem from '../components/SetlistSongItem';
 import { AddArrangementModal } from '../components/AddArrangementModal';
 import SetlistPrivacyBadge from '../components/SetlistPrivacyBadge';
-import SetlistFavoriteButton from '../components/SetlistFavoriteButton';
 import SetlistSharedBadge from '../components/SetlistSharedBadge';
 import SetlistAttribution from '../components/SetlistAttribution';
 import SetlistShareDialog from '../components/SetlistShareDialog';
@@ -273,13 +272,7 @@ export function SetlistPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2">
-              <SetlistFavoriteButton
-                setlistId={setlist.id}
-                favoriteCount={setlist.favorites ?? 0}
-                variant="ghost"
-              />
-
+            <div className="flex flex-wrap items-center gap-2">
               {setlist.songs.length > 0 && (
                 <Button
                   onClick={() => {
@@ -287,9 +280,10 @@ export function SetlistPage() {
                     navigate(url);
                   }}
                   variant="default"
+                  size="sm"
                 >
-                  <Play className="mr-2 h-4 w-4" />
-                  Performance Mode
+                  <Play className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Performance Mode</span>
                 </Button>
               )}
 
@@ -300,8 +294,8 @@ export function SetlistPage() {
                   size="sm"
                   onClick={() => setShowEditDialog(true)}
                 >
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit
+                  <Pencil className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Edit</span>
                 </Button>
               )}
 
