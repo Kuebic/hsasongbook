@@ -25,7 +25,7 @@ export function SetlistPerformancePage() {
   const [searchParams] = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { setlist, arrangements, loading, error } = useSetlistData(setlistId);
+  const { setlist, arrangements, songs, loading, error } = useSetlistData(setlistId);
 
   // Parse temporary key overrides from URL (for viewers who set session-only keys)
   const tempKeyOverrides = useMemo(() => {
@@ -88,6 +88,11 @@ export function SetlistPerformancePage() {
   // This ensures currentIndex correctly maps to the song data
   const currentSetlistSong = validSongsWithArrangements[currentIndex]?.song;
 
+  // Get the song title from the songs map using the arrangement's songId
+  const currentSongTitle = currentArrangement
+    ? songs.get(currentArrangement.songId)?.title
+    : undefined;
+
   // Determine the effective key: temp override > persisted customKey > arrangement default
   const effectiveCustomKey = useMemo(() => {
     if (!currentSetlistSong) return currentArrangement?.key;
@@ -148,6 +153,7 @@ export function SetlistPerformancePage() {
       <PerformanceLayout
         currentIndex={currentIndex}
         total={arrangementArray.length}
+        songTitle={currentSongTitle}
         canGoPrevious={currentIndex > 0}
         canGoNext={currentIndex < arrangementArray.length - 1}
         onPrevious={previousArrangement}

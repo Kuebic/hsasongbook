@@ -24,6 +24,7 @@ interface PerformanceLayoutProps {
   children: React.ReactNode;
   currentIndex: number;
   total: number;
+  songTitle?: string;
   canGoPrevious: boolean;
   canGoNext: boolean;
   onPrevious: () => void;
@@ -35,6 +36,7 @@ export default function PerformanceLayout({
   children,
   currentIndex,
   total,
+  songTitle,
   canGoPrevious,
   canGoNext,
   onPrevious,
@@ -63,11 +65,6 @@ export default function PerformanceLayout({
       >
         <X className="h-5 w-5" />
       </Button>
-
-      {/* Progress pill - top center, fixed */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40">
-        <ProgressPill current={currentIndex + 1} total={total} />
-      </div>
 
       {/* Mobile overlay navigation buttons - shown on < md breakpoint */}
       <div className="md:hidden">
@@ -121,7 +118,18 @@ export default function PerformanceLayout({
       </div>
 
       {/* Mobile content area - full width, no horizontal padding for maximum space */}
-      <div ref={mobileContentRef} className="md:hidden w-full h-full overflow-y-auto pt-16 pb-8">
+      <div ref={mobileContentRef} className="md:hidden w-full h-full overflow-y-auto pb-8">
+        {/* Header bar - aligned with content */}
+        <div className="sticky top-0 z-40 flex items-center justify-between px-4 py-4 pr-14">
+          {songTitle && (
+            <div className="bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm shadow-lg truncate max-w-[70%]">
+              {songTitle}
+            </div>
+          )}
+          <div className={songTitle ? '' : 'ml-auto'}>
+            <ProgressPill current={currentIndex + 1} total={total} />
+          </div>
+        </div>
         {children}
       </div>
 
@@ -149,7 +157,18 @@ export default function PerformanceLayout({
         </button>
 
         {/* Content area - 60% width, scrollable */}
-        <div ref={desktopContentRef} className="w-[60%] flex-shrink-0 overflow-y-auto pt-16 pb-8">
+        <div ref={desktopContentRef} className="w-[60%] flex-shrink-0 overflow-y-auto pb-8">
+          {/* Header bar - aligned with content */}
+          <div className="sticky top-0 z-40 flex items-center justify-between py-4 pr-14">
+            {songTitle && (
+              <div className="bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm shadow-lg truncate max-w-[70%]">
+                {songTitle}
+              </div>
+            )}
+            <div className={songTitle ? '' : 'ml-auto'}>
+              <ProgressPill current={currentIndex + 1} total={total} />
+            </div>
+          </div>
           {children}
         </div>
 
