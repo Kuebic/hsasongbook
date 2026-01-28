@@ -1,6 +1,6 @@
 # HSA Songbook - Post-MVP Roadmap
 
-**Last Updated**: 2026-01-27
+**Last Updated**: 2026-01-28
 
 Features and improvements planned after MVP, organized by priority and effort.
 
@@ -33,9 +33,21 @@ Features and improvements planned after MVP, organized by priority and effort.
 - Recently added content section
 - Horizontal scroll sections for discovery
 
-**Phase 10: Setlist Enhancements** (Partial) ✅
+**Phase 10: Setlist Enhancements** ✅
 - Custom keys per setlist entry
 - Quick add to setlist dialog with fuzzy search
+- Public/unlisted/private setlist privacy levels
+- Setlist sharing with view/edit permissions
+- Browse public setlists page with search and filters
+- Setlist favorites system
+- Duplicate setlists with attribution tracking
+- Performance mode with fullscreen, swipe navigation, keyboard controls
+
+**Song Enhancements** ✅
+- Notes field for songs (performance tips, spiritual themes)
+- Bible verses attachment (reference, text, version)
+- Quotes attachment (text, source, reference)
+- Ownership transfer to/from groups
 
 ### Database Schema Additions
 ```typescript
@@ -49,6 +61,20 @@ youtubeUrl: v.optional(v.string())      // YouTube video URL
 
 // New fields on setlist songs
 customKey: v.optional(v.string())       // Per-song key override
+
+// New setlist fields
+privacyLevel: v.optional(v.union("private", "unlisted", "public"))
+tags: v.optional(v.array(v.string()))
+duplicatedFrom: v.optional(v.id("setlists"))
+favorites: v.optional(v.number())
+
+// New tables
+setlistShares                          // Sharing relationships
+
+// New song fields
+notes: v.optional(v.string())          // Performance/spiritual notes
+bibleVerses: v.optional(v.array(...))  // Scripture references
+quotes: v.optional(v.array(...))       // Spiritual quotes
 ```
 
 ---
@@ -268,12 +294,18 @@ Only implement if planning App Store release or significant iOS user base.
 
 ---
 
-## Priority 10: Setlist Enhancements
+## Priority 10: Setlist Enhancements ✅ COMPLETE
 
 | Feature | Description | Effort | Status |
 |---------|-------------|--------|--------|
 | ~~**Custom key per entry**~~ | ~~Override arrangement key for specific songs~~ | ~~Medium~~ | ✅ Done |
 | ~~**Quick add to setlist**~~ | ~~Searchable dialog for adding arrangements to setlists~~ | ~~Medium~~ | ✅ Done |
+| ~~**Privacy levels**~~ | ~~Private/unlisted/public visibility settings~~ | ~~Medium~~ | ✅ Done |
+| ~~**Setlist sharing**~~ | ~~Share with users, view/edit permissions~~ | ~~Medium~~ | ✅ Done |
+| ~~**Browse public setlists**~~ | ~~Discover community setlists with search/filters~~ | ~~Medium~~ | ✅ Done |
+| ~~**Setlist favorites**~~ | ~~Heart setlists, favorites count~~ | ~~Medium~~ | ✅ Done |
+| ~~**Duplicate setlists**~~ | ~~Copy setlists with attribution~~ | ~~Low~~ | ✅ Done |
+| ~~**Performance mode**~~ | ~~Fullscreen with swipe/keyboard navigation~~ | ~~Medium~~ | ✅ Done |
 | **Notes per entry** | Add performance notes to individual songs | Low | |
 | **Offline caching** | "Download for Offline" for performance mode | High | |
 
@@ -324,6 +356,8 @@ Only implement if planning App Store release or significant iOS user base.
 
 | Date | Change |
 |------|--------|
+| 2026-01-28 | **Priority 10 complete**: Public setlists with privacy, sharing, favorites, browse page, duplication, performance mode |
+| 2026-01-28 | **Song enhancements**: Notes field, bible verses, quotes, ownership transfer |
 | 2026-01-27 | **Priority 10 updates**: Marked custom key per entry and quick add to setlist as complete |
 | 2026-01-27 | **Priority 4 complete**: Full theme customization system - 5 preset themes + custom color mixing, app-wide and chord-specific font controls, live preview |
 | 2026-01-27 | **Audio features complete**: MP3 uploads, YouTube videos, global audio player with mini-bar and full controls, Picture-in-Picture support |

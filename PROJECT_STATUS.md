@@ -1,6 +1,6 @@
 # HSA Songbook - Project Status & MVP Roadmap
 
-**Last Updated**: 2026-01-27
+**Last Updated**: 2026-01-28
 **Current Phase**: MVP Complete + Post-MVP Enhancements
 **Status**: Production-ready with ongoing feature development
 
@@ -59,6 +59,9 @@ HSA Songbook is a Progressive Web App (PWA) for managing worship songs and chord
 | Email/password auth | ✅ |
 | Add Song/Arrangement forms with auth gating | ✅ |
 | Setlists wired to Convex | ✅ |
+| Public setlists with sharing | ✅ |
+| Setlist favorites system | ✅ |
+| Performance mode with swipe nav | ✅ |
 | Seed script for initial data | ✅ |
 | User profiles with avatars | ✅ |
 | Groups & permissions system | ✅ |
@@ -254,6 +257,12 @@ users: defineTable({
 | Compact Arrangement Card | `src/features/search/components/CompactArrangementCard.tsx` |
 | Horizontal Scroll Section | `src/features/search/components/HorizontalScrollSection.tsx` |
 | Add to Setlist Dialog | `src/features/setlists/components/AddToSetlistDialog.tsx` |
+| Setlist Browse Page | `src/features/setlists/pages/SetlistsBrowsePage.tsx` |
+| Setlist Performance Page | `src/features/setlists/pages/SetlistPerformancePage.tsx` |
+| Performance Layout | `src/features/setlists/components/PerformanceLayout.tsx` |
+| Setlist Privacy Selector | `src/features/setlists/components/SetlistPrivacySelector.tsx` |
+| Setlist Favorite Button | `src/features/setlists/components/SetlistFavoriteButton.tsx` |
+| Setlist Attribution | `src/features/setlists/components/SetlistAttribution.tsx` |
 | Convex User Appearance API | `convex/userAppearancePreferences.ts` |
 | Convex User Views API | `convex/userViews.ts` |
 
@@ -475,11 +484,13 @@ userViews: defineTable({
 
 ---
 
-## Phase 10: Setlist Enhancements ✅ PARTIAL
+## Phase 10: Setlist Enhancements ✅ COMPLETE
 
-**Goal**: Enhance setlist functionality for performance preparation.
+**Goal**: Enhance setlist functionality for performance preparation and community sharing.
 
 ### Completed Features
+
+#### Core Features (Phase 10.1)
 - [x] **Custom Keys per Entry**
   - `customKey` field on individual setlist songs
   - Override arrangement key for specific performances
@@ -492,18 +503,74 @@ userViews: defineTable({
   - Fuzzy search in setlist selector
   - `useSetlistSearch.ts` hook for search functionality
 
+#### Public Setlists & Sharing (Phase 10.2) ✅ NEW
+- [x] **Privacy Levels**
+  - Private (default): Only owner can view
+  - Unlisted: Shareable via link, not in browse
+  - Public: Discoverable in browse/search
+  - `SetlistPrivacySelector.tsx` and `SetlistPrivacyBadge.tsx` components
+
+- [x] **Setlist Sharing**
+  - Share setlists with specific users
+  - View-only or edit permissions
+  - `setlistShares` table for sharing relationships
+  - "Shared with me" view in setlist index
+
+- [x] **Browse Public Setlists**
+  - `/setlists/browse` - Discover community setlists
+  - Search by name, filter by tags
+  - Sort by popular (favorites), recent, or name
+  - Stats display (total setlists, songs, favorites)
+
+- [x] **Setlist Favorites**
+  - Heart/favorite public and unlisted setlists
+  - Favorites count displayed on cards
+  - `SetlistFavoriteButton.tsx` component
+  - Anonymous favorites warning
+
+- [x] **Setlist Duplication**
+  - Duplicate any viewable setlist to your collection
+  - Attribution tracking (`duplicatedFrom`, `duplicatedFromName`)
+  - Toggle attribution visibility
+  - `SetlistAttribution.tsx` component
+
+- [x] **Performance Mode Improvements**
+  - Fullscreen chord sheet display
+  - Swipe navigation between songs
+  - Keyboard navigation (arrow keys)
+  - Progress indicator with song count
+  - `PerformanceLayout.tsx`, `ProgressPill.tsx` components
+
 **Schema Changes:**
 ```typescript
 setlists: {
-  songs: v.optional(
-    v.array(
-      v.object({
-        arrangementId: v.id("arrangements"),
-        customKey: v.optional(v.string()),  // Per-song key override
-      })
-    )
-  ),
+  songs: v.optional(v.array(v.object({
+    arrangementId: v.id("arrangements"),
+    customKey: v.optional(v.string()),
+  }))),
+  privacyLevel: v.optional(v.union(
+    v.literal("private"),
+    v.literal("unlisted"),
+    v.literal("public")
+  )),
+  tags: v.optional(v.array(v.string())),
+  estimatedDuration: v.optional(v.number()),
+  difficulty: v.optional(v.union(...)),
+  duplicatedFrom: v.optional(v.id("setlists")),
+  duplicatedFromName: v.optional(v.string()),
+  showAttribution: v.optional(v.boolean()),
+  favorites: v.optional(v.number()),
+  createdAt: v.optional(v.number()),
 }
+.index("by_privacy", ["privacyLevel"])
+
+setlistShares: defineTable({
+  setlistId: v.id("setlists"),
+  userId: v.id("users"),
+  canEdit: v.boolean(),
+  addedBy: v.id("users"),
+  addedAt: v.number(),
+})
 ```
 
 ### Still TODO
@@ -529,6 +596,8 @@ See [POST_MVP_ROADMAP.md](POST_MVP_ROADMAP.md) for:
 
 | Date | Change |
 |------|--------|
+| 2026-01-28 | **Phase 10 complete**: Public setlists with privacy levels, sharing, favorites, browse page, duplication with attribution, improved performance mode with swipe navigation |
+| 2026-01-28 | **Song enhancements**: Notes field with bible verses and quotes, ownership transfer to/from groups |
 | 2026-01-27 | **Phase 10 partial**: Custom keys per setlist entry, add to setlist dialog with search |
 | 2026-01-27 | **Phase 9 complete**: Discovery-oriented homepage with recently viewed, browse by theme/origin/style, hero section |
 | 2026-01-27 | **Phase 8 complete**: Full theme customization system - color themes (5 presets + custom), font customization (app-wide + chord-specific), appearance settings with live preview |

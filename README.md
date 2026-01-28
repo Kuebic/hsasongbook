@@ -76,6 +76,9 @@ src/
 │   ├── browse/    # Song browsing with filters
 │   ├── search/    # Search and discovery
 │   ├── settings/  # User settings
+│   ├── favorites/ # Favorites system
+│   ├── audio/     # Audio player and media
+│   ├── appearance/# Theme and font customization
 │   ├── pwa/       # PWA/offline functionality
 │   └── shared/    # Shared components
 ├── lib/           # Utilities, theme config
@@ -91,6 +94,8 @@ convex/
 ├── versions.ts    # Version history
 ├── permissions.ts # Permission helpers
 ├── files.ts       # R2 file storage
+├── favorites.ts   # Favorites (arrangements & setlists)
+├── userAppearancePreferences.ts # Theme/font settings
 └── seed.ts        # Seed scripts
 ```
 
@@ -99,14 +104,18 @@ convex/
 - **PWA** - Installable app with offline UI caching
 - **Real-time sync** - Changes sync instantly across devices via Convex
 - **Authentication** - Anonymous (view-only) or email/password (full access)
-- **Song management** - Add songs with themes, origin, lyrics, and metadata
+- **Song management** - Add songs with themes, origin, lyrics, notes, bible verses, and quotes
 - **Chord arrangements** - ChordPro editor with syntax highlighting and transposition
-- **Setlists** - Create and manage setlists with drag-drop ordering
+- **Setlists** - Create and manage setlists with drag-drop ordering and custom keys per song
+- **Public setlists** - Share setlists publicly or via link, browse community setlists
+- **Performance mode** - Fullscreen chord display with swipe/keyboard navigation
 - **Groups & permissions** - Share content with groups, collaborators, and the Community
 - **Version history** - Rollback Community-owned content to previous versions
-- **Favorites** - Heart arrangements to build your collection
+- **Favorites** - Heart arrangements and setlists to build your collection
 - **User profiles** - Profile pages with avatars and arrangement history
 - **Theme discovery** - Browse songs by worship themes (praise, thanksgiving, etc.)
+- **Audio/media** - Attach MP3 files or YouTube videos to arrangements
+- **Appearance customization** - Theme colors, fonts, and chord styling preferences
 - **Dark/light mode** - System-aware theme with manual toggle
 
 ## Scripts
