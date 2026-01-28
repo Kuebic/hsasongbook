@@ -206,7 +206,7 @@ export default function AttachmentPreviewDialog({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="max-w-none w-screen h-screen sm:max-w-[90vw] sm:max-h-[90vh] sm:h-auto p-0 gap-0 bg-background/95 backdrop-blur-sm"
+        className="max-w-none w-screen h-screen sm:max-w-[90vw] sm:max-h-[90vh] sm:h-auto p-0 gap-0 bg-background/95 backdrop-blur-sm [&>button]:hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
