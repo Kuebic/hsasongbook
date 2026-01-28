@@ -43,6 +43,7 @@ export default function YouTubePip() {
     setVolume,
     toggleMute,
     close,
+    onYouTubeEnded,
   } = useAudioPlayer();
 
   const { isReady: isAPIReady, YT } = useYouTubeAPI();
@@ -106,11 +107,11 @@ export default function YouTubePip() {
               if (dur > 0) {
                 setYouTubeDuration(dur);
               }
-            } else if (
-              state === YT.PlayerState.PAUSED ||
-              state === YT.PlayerState.ENDED
-            ) {
+            } else if (state === YT.PlayerState.PAUSED) {
               setYouTubeIsPlaying(false);
+            } else if (state === YT.PlayerState.ENDED) {
+              setYouTubeIsPlaying(false);
+              onYouTubeEnded();
             }
           },
           onError: () => {
@@ -142,6 +143,7 @@ export default function YouTubePip() {
     unregisterYouTubePlayer,
     setYouTubeDuration,
     setYouTubeIsPlaying,
+    onYouTubeEnded,
   ]);
 
   // Don't render if conditions aren't met

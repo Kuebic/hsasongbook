@@ -17,6 +17,7 @@ import type { Id } from '../../../../convex/_generated/dataModel';
 import { useSetlistData } from '../hooks/useSetlistData';
 import { useSetlistSongs } from '../hooks/useSetlistSongs';
 import { useDragReorder } from '../hooks/useDragReorder';
+import { useSetlistPlaylist } from '../hooks/useSetlistPlaylist';
 import SetlistSongItem from '../components/SetlistSongItem';
 import { AddArrangementModal } from '../components/AddArrangementModal';
 import SetlistPrivacyBadge from '../components/SetlistPrivacyBadge';
@@ -36,7 +37,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, Play, ListMusic, Copy, Share2, MoreVertical, Pencil } from 'lucide-react';
+import { Plus, Play, ListMusic, Copy, Share2, MoreVertical, Pencil, ListOrdered } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function SetlistPage() {
@@ -73,6 +74,19 @@ export function SetlistPage() {
 
   // Use local state during drag to prevent animation glitches from Convex reactivity
   const { items: dragItems, handleReorder } = useDragReorder(setlist?.songs ?? []);
+
+  // Playlist functionality for media playback
+  const {
+    playlistItems,
+    playAll,
+    playArrangement,
+    isArrangementPlaying,
+    hasPlayableItems,
+  } = useSetlistPlaylist({
+    songs: setlist?.songs ?? [],
+    arrangements,
+    parentSongs: songs,
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -263,13 +277,21 @@ export function SetlistPage() {
             </div>
           </div>
 
-          {/* Add Song button - only if user can edit */}
-          {canEdit && (
-            <Button onClick={() => setShowAddModal(true)} className="mb-6">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Song
-            </Button>
-          )}
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 mb-6">
+            {canEdit && (
+              <Button onClick={() => setShowAddModal(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Song
+              </Button>
+            )}
+            {hasPlayableItems && (
+              <Button onClick={playAll} variant="outline">
+                <ListOrdered className="mr-2 h-4 w-4" />
+                Play All
+              </Button>
+            )}
+          </div>
 
           {dragItems.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
@@ -289,6 +311,7 @@ export function SetlistPage() {
                   {dragItems.map((song, index) => {
                     const arrangement = arrangements.get(song.arrangementId);
                     const parentSong = arrangement ? songs.get(arrangement.songId) : undefined;
+                    const playlistItem = playlistItems.find(p => p.arrangementId === song.arrangementId);
                     return (
                       <SetlistSongItem
                         key={song.id}
@@ -298,6 +321,10 @@ export function SetlistPage() {
                         index={index}
                         onRemove={canEdit ? removeSong : () => {}}
                         onKeyChange={canEdit ? updateSongKey : () => {}}
+                        hasAudio={playlistItem?.hasAudio ?? false}
+                        hasYoutube={playlistItem?.hasYoutube ?? false}
+                        isPlaying={isArrangementPlaying(song.arrangementId)}
+                        onPlay={() => playArrangement(song.arrangementId)}
                       />
                     );
                   })}

@@ -75,6 +75,8 @@ export function useSetlistData(setlistId: string | undefined): UseSetlistDataRet
         rating: arr.rating,
         favorites: arr.favorites,
         chordProContent: arr.chordProContent,
+        audioFileKey: arr.audioFileKey,
+        youtubeUrl: arr.youtubeUrl,
         createdAt: new Date(arr._creationTime).toISOString(),
         updatedAt: new Date(arr._creationTime).toISOString(),
       });

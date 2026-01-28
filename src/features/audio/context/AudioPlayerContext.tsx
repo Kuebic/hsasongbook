@@ -22,6 +22,23 @@ import {
 export type MediaType = 'mp3' | 'youtube';
 export type YouTubePipSize = 'small' | 'medium' | 'large';
 
+// Playlist item for queue functionality
+export interface PlaylistItem {
+  arrangementId: string;
+  songTitle: string;
+  arrangementName: string;
+  arrangementSlug: string;
+  songSlug: string;
+  hasAudio: boolean;      // Has audioFileKey (MP3)
+  hasYoutube: boolean;    // Has youtubeUrl
+  youtubeVideoId?: string; // Pre-extracted if available
+}
+
+export interface PlaylistState {
+  items: PlaylistItem[];
+  currentIndex: number;   // -1 if not in playlist mode
+}
+
 // Legacy type for backwards compatibility
 export interface AudioTrack {
   audioUrl: string;
@@ -56,7 +73,13 @@ interface MediaPlayerState {
   // YouTube-specific
   youtubePlayerReady: boolean;
   youtubePipSize: YouTubePipSize;
+  // Playlist state
+  playlist: PlaylistState;
+  isQueueVisible: boolean;
 }
+
+// Callback for lazy audio URL fetching
+export type FetchAudioUrlFn = (arrangementId: string) => Promise<string | null>;
 
 interface MediaPlayerActions {
   playTrack: (track: MediaTrack | AudioTrack) => void;
@@ -76,6 +99,15 @@ interface MediaPlayerActions {
   setYoutubePipSize: (size: YouTubePipSize) => void;
   setYouTubeDuration: (duration: number) => void;
   setYouTubeIsPlaying: (playing: boolean) => void;
+  onYouTubeEnded: () => void;
+  // Playlist actions
+  loadPlaylist: (items: PlaylistItem[], startIndex?: number) => void;
+  playNext: () => void;
+  playPrevious: () => void;
+  skipToIndex: (index: number) => void;
+  clearPlaylist: () => void;
+  toggleQueueVisibility: () => void;
+  setFetchAudioUrl: (fn: FetchAudioUrlFn) => void;
 }
 
 interface MediaPlayerRefs {
@@ -120,10 +152,16 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
   const [youtubePlayerReady, setYoutubePlayerReady] = useState(false);
   const [youtubePipSize, setYoutubePipSizeState] = useState<YouTubePipSize>('medium');
 
+  // Playlist state
+  const [playlist, setPlaylist] = useState<PlaylistState>({ items: [], currentIndex: -1 });
+  const [isQueueVisible, setIsQueueVisible] = useState(false);
+
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const youtubePlayerRef = useRef<YT.Player | null>(null);
   const youtubeTimeUpdateRef = useRef<number | null>(null);
+  const fetchAudioUrlRef = useRef<FetchAudioUrlFn | null>(null);
+  const onTrackEndedRef = useRef<(() => void) | null>(null);
 
   // Create audio element on mount
   useEffect(() => {
@@ -150,6 +188,8 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     const handleEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
+      // Trigger playlist auto-advance if callback is set
+      onTrackEndedRef.current?.();
     };
 
     const handleError = () => {
@@ -394,6 +434,130 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     setIsPlaying(playing);
   }, []);
 
+  const onYouTubeEnded = useCallback(() => {
+    // Trigger playlist auto-advance if callback is set
+    onTrackEndedRef.current?.();
+  }, []);
+
+  // Playlist actions
+  const setFetchAudioUrl = useCallback((fn: FetchAudioUrlFn) => {
+    fetchAudioUrlRef.current = fn;
+  }, []);
+
+  const playPlaylistItem = useCallback(async (item: PlaylistItem) => {
+    // Priority: MP3 first, then YouTube
+    if (item.hasAudio && fetchAudioUrlRef.current) {
+      const audioUrl = await fetchAudioUrlRef.current(item.arrangementId);
+      if (audioUrl) {
+        playTrack({
+          songTitle: item.songTitle,
+          arrangementName: item.arrangementName,
+          arrangementSlug: item.arrangementSlug,
+          songSlug: item.songSlug,
+          mediaType: 'mp3',
+          audioUrl,
+        });
+        return true;
+      }
+    }
+    // Fall back to YouTube
+    if (item.hasYoutube && item.youtubeVideoId) {
+      playTrack({
+        songTitle: item.songTitle,
+        arrangementName: item.arrangementName,
+        arrangementSlug: item.arrangementSlug,
+        songSlug: item.songSlug,
+        mediaType: 'youtube',
+        youtubeVideoId: item.youtubeVideoId,
+      });
+      return true;
+    }
+    return false;
+  }, [playTrack]);
+
+  const findNextPlayableIndex = useCallback((items: PlaylistItem[], startIndex: number): number => {
+    for (let i = startIndex; i < items.length; i++) {
+      if (items[i].hasAudio || items[i].hasYoutube) {
+        return i;
+      }
+    }
+    return -1;
+  }, []);
+
+  const findPreviousPlayableIndex = useCallback((items: PlaylistItem[], startIndex: number): number => {
+    for (let i = startIndex; i >= 0; i--) {
+      if (items[i].hasAudio || items[i].hasYoutube) {
+        return i;
+      }
+    }
+    return -1;
+  }, []);
+
+  const loadPlaylist = useCallback(async (items: PlaylistItem[], startIndex = 0) => {
+    if (items.length === 0) return;
+
+    // Find first playable item from startIndex
+    const playableIndex = findNextPlayableIndex(items, startIndex);
+    if (playableIndex === -1) return; // No playable items
+
+    setPlaylist({ items, currentIndex: playableIndex });
+    await playPlaylistItem(items[playableIndex]);
+  }, [findNextPlayableIndex, playPlaylistItem]);
+
+  const playNext = useCallback(async () => {
+    if (playlist.currentIndex < 0 || playlist.items.length === 0) return;
+
+    const nextIndex = findNextPlayableIndex(playlist.items, playlist.currentIndex + 1);
+    if (nextIndex === -1) {
+      // End of playlist
+      setPlaylist(prev => ({ ...prev, currentIndex: -1 }));
+      return;
+    }
+
+    setPlaylist(prev => ({ ...prev, currentIndex: nextIndex }));
+    await playPlaylistItem(playlist.items[nextIndex]);
+  }, [playlist, findNextPlayableIndex, playPlaylistItem]);
+
+  const playPrevious = useCallback(async () => {
+    if (playlist.currentIndex < 0 || playlist.items.length === 0) return;
+
+    const prevIndex = findPreviousPlayableIndex(playlist.items, playlist.currentIndex - 1);
+    if (prevIndex === -1) return; // Already at start
+
+    setPlaylist(prev => ({ ...prev, currentIndex: prevIndex }));
+    await playPlaylistItem(playlist.items[prevIndex]);
+  }, [playlist, findPreviousPlayableIndex, playPlaylistItem]);
+
+  const skipToIndex = useCallback(async (index: number) => {
+    if (index < 0 || index >= playlist.items.length) return;
+
+    const item = playlist.items[index];
+    if (!item.hasAudio && !item.hasYoutube) return; // Can't play this item
+
+    setPlaylist(prev => ({ ...prev, currentIndex: index }));
+    await playPlaylistItem(item);
+  }, [playlist.items, playPlaylistItem]);
+
+  const clearPlaylist = useCallback(() => {
+    setPlaylist({ items: [], currentIndex: -1 });
+    setIsQueueVisible(false);
+  }, []);
+
+  const toggleQueueVisibility = useCallback(() => {
+    setIsQueueVisible(prev => !prev);
+  }, []);
+
+  // Set up auto-advance callback when playlist is active
+  useEffect(() => {
+    if (playlist.currentIndex >= 0) {
+      onTrackEndedRef.current = () => {
+        playNext();
+      };
+    } else {
+      onTrackEndedRef.current = null;
+    }
+  }, [playlist.currentIndex, playNext]);
+
   // Add to context value so YouTubePip can use it
   const value: AudioPlayerContextValue = {
     // State
@@ -407,6 +571,8 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     isExpanded,
     youtubePlayerReady,
     youtubePipSize,
+    playlist,
+    isQueueVisible,
     // Actions
     playTrack,
     pause,
@@ -424,6 +590,14 @@ export function AudioPlayerProvider({ children }: AudioPlayerProviderProps) {
     setYoutubePipSize,
     setYouTubeDuration,
     setYouTubeIsPlaying,
+    onYouTubeEnded,
+    loadPlaylist,
+    playNext,
+    playPrevious,
+    skipToIndex,
+    clearPlaylist,
+    toggleQueueVisibility,
+    setFetchAudioUrl,
     // Refs
     youtubePlayerRef,
   };

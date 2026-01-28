@@ -36,6 +36,7 @@ export { useFullscreen } from './hooks/useFullscreen';
 export { useArrowKeyNavigation } from './hooks/useArrowKeyNavigation';
 export { usePerformanceMode } from './hooks/usePerformanceMode';
 export { useSwipeNavigation } from './hooks/useSwipeNavigation';
+export { useSetlistPlaylist } from './hooks/useSetlistPlaylist';
 
 // Utils
 export { sortSetlists } from './utils/setlistSorter';

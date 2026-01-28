@@ -24,11 +24,15 @@ import {
   ChevronDown,
   X,
   ExternalLink,
+  SkipBack,
+  SkipForward,
+  ListMusic,
 } from 'lucide-react';
 import { Youtube } from 'lucide-react';
 import { cn, formatTime } from '@/lib/utils';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import YouTubePip from './YouTubePip';
+import PlaylistQueueView from './PlaylistQueueView';
 
 export default function GlobalAudioPlayer() {
   const {
@@ -40,6 +44,7 @@ export default function GlobalAudioPlayer() {
     isMuted,
     isVisible,
     isExpanded,
+    playlist,
     togglePlay,
     seek,
     setVolume,
@@ -47,7 +52,13 @@ export default function GlobalAudioPlayer() {
     expand,
     collapse,
     close,
+    playNext,
+    playPrevious,
+    toggleQueueVisibility,
   } = useAudioPlayer();
+
+  // Check if we're in playlist mode
+  const isPlaylistMode = playlist.currentIndex >= 0 && playlist.items.length > 0;
 
   const handleSeek = useCallback(
     (value: number[]) => {
@@ -100,6 +111,20 @@ export default function GlobalAudioPlayer() {
         <div
           className={cn('flex items-center gap-3 px-4 py-3', isExpanded && 'border-b')}
         >
+          {/* Skip Previous - only show in playlist mode */}
+          {isPlaylistMode && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={playPrevious}
+              disabled={playlist.currentIndex === 0}
+              aria-label="Previous track"
+            >
+              <SkipBack className="h-4 w-4" />
+            </Button>
+          )}
+
           {/* Play/Pause button - styled differently for YouTube */}
           <Button
             variant="ghost"
@@ -125,6 +150,20 @@ export default function GlobalAudioPlayer() {
             )}
           </Button>
 
+          {/* Skip Next - only show in playlist mode */}
+          {isPlaylistMode && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={playNext}
+              disabled={playlist.currentIndex === playlist.items.length - 1}
+              aria-label="Next track"
+            >
+              <SkipForward className="h-4 w-4" />
+            </Button>
+          )}
+
           {/* Title and seek */}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{track.arrangementName}</p>
@@ -146,6 +185,22 @@ export default function GlobalAudioPlayer() {
               </span>
             </div>
           </div>
+
+          {/* Queue toggle - only show in playlist mode */}
+          {isPlaylistMode && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 relative"
+              onClick={toggleQueueVisibility}
+              aria-label="Show queue"
+            >
+              <ListMusic className="h-4 w-4" />
+              <span className="absolute -top-1 -right-1 text-[10px] bg-primary text-primary-foreground rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                {playlist.currentIndex + 1}/{playlist.items.length}
+              </span>
+            </Button>
+          )}
 
           {/* Expand/Collapse toggle */}
           <Button
@@ -213,6 +268,9 @@ export default function GlobalAudioPlayer() {
           </div>
         )}
       </div>
+
+      {/* Playlist Queue View (renders as a sheet/drawer) */}
+      <PlaylistQueueView />
     </>
   );
 }

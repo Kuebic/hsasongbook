@@ -2,7 +2,7 @@
  * SetlistSongItem Component
  *
  * Draggable song item using @dnd-kit/sortable.
- * Features: drag handle, song display, remove button.
+ * Features: drag handle, song display, media indicators, play button, remove button.
  */
 
 import { useSortable } from '@dnd-kit/sortable';
@@ -15,7 +15,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { GripVertical, X } from 'lucide-react';
+import { GripVertical, X, Music, Youtube, Play, Pause } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { SetlistSong, Arrangement, Song } from '@/types';
 
 interface SetlistSongItemProps {
@@ -25,6 +26,14 @@ interface SetlistSongItemProps {
   index: number;
   onRemove: (songId: string) => void;
   onKeyChange: (songId: string, newKey: string) => void;
+  /** Whether arrangement has MP3 audio */
+  hasAudio?: boolean;
+  /** Whether arrangement has YouTube video */
+  hasYoutube?: boolean;
+  /** Whether this arrangement is currently playing */
+  isPlaying?: boolean;
+  /** Callback when play button is clicked */
+  onPlay?: () => void;
 }
 
 export default function SetlistSongItem({
@@ -33,7 +42,11 @@ export default function SetlistSongItem({
   parentSong,
   index,
   onRemove,
-  onKeyChange
+  onKeyChange,
+  hasAudio = false,
+  hasYoutube = false,
+  isPlaying = false,
+  onPlay,
 }: SetlistSongItemProps) {
   // Musical keys for dropdown
   const MUSICAL_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -145,6 +158,43 @@ export default function SetlistSongItem({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+      </div>
+
+      {/* Media indicators and play button */}
+      <div className="flex items-center gap-1">
+        {/* MP3 indicator */}
+        <Music
+          className={cn(
+            'h-4 w-4',
+            hasAudio ? 'text-primary' : 'text-muted-foreground/30'
+          )}
+          aria-label={hasAudio ? 'Has MP3 audio' : 'No MP3 audio'}
+        />
+        {/* YouTube indicator */}
+        <Youtube
+          className={cn(
+            'h-4 w-4',
+            hasYoutube ? 'text-[#FF0000]' : 'text-muted-foreground/30'
+          )}
+          aria-label={hasYoutube ? 'Has YouTube video' : 'No YouTube video'}
+        />
+        {/* Play button - only show if arrangement has media */}
+        {(hasAudio || hasYoutube) && onPlay && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 ml-1"
+            onClick={onPlay}
+            aria-label={isPlaying ? 'Now playing' : 'Play'}
+            type="button"
+          >
+            {isPlaying ? (
+              <Pause className="h-4 w-4 text-primary" />
+            ) : (
+              <Play className="h-4 w-4" />
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Remove button */}

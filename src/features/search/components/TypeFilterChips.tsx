@@ -17,19 +17,19 @@ interface TypeFilterChipsProps {
 const typeFilters = [
   {
     label: 'Traditional',
-    origin: 'traditional-holy-songs',
+    origins: ['traditional-holy-songs', 'pioneer-songs', 'traditional-hymns'],
     icon: BookOpen,
     description: 'Classic hymns and holy songs',
   },
   {
     label: 'Modern',
-    origin: 'new-holy-songs',
+    origins: ['new-holy-songs', 'contemporary-christian'],
     icon: Music,
     description: 'Contemporary worship songs',
   },
   {
     label: 'Original',
-    origin: 'original',
+    origins: ['original'],
     icon: Sparkles,
     description: 'Community compositions',
   },
@@ -42,8 +42,8 @@ export function TypeFilterChips({ className }: TypeFilterChipsProps) {
         const Icon = filter.icon;
         return (
           <Link
-            key={filter.origin}
-            to={`/songs?origin=${encodeURIComponent(filter.origin)}`}
+            key={filter.label}
+            to={`/songs?origins=${encodeURIComponent(filter.origins.join(','))}`}
             title={filter.description}
           >
             <Badge
