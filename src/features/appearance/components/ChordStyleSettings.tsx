@@ -116,7 +116,7 @@ export function ChordStyleSettings({
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       {/* Chord Font Family */}
       <div className="space-y-2">
         <Label htmlFor="chord-font">Chord Font</Label>
@@ -203,8 +203,8 @@ export function ChordStyleSettings({
         </div>
       </div>
 
-      {/* Chord Color - spans both columns */}
-      <div className="space-y-3 sm:col-span-2">
+      {/* Chord Color - spans all columns */}
+      <div className="space-y-3 sm:col-span-3">
         <Label>Chord Color</Label>
 
         {/* "Use accent color" option */}
@@ -260,8 +260,8 @@ export function ChordStyleSettings({
         </div>
       </div>
 
-      {/* Chord Highlight - spans both columns */}
-      <div className="flex items-center justify-between sm:col-span-2">
+      {/* Chord Highlight - spans all columns */}
+      <div className="flex items-center justify-between sm:col-span-3">
         <div className="space-y-0.5">
           <Label htmlFor="chord-highlight">Highlight Chords</Label>
           <p className="text-xs text-muted-foreground">
