@@ -13,7 +13,7 @@ import { ArrangementEditDialog } from '../components/ArrangementEditDialog';
 import CollaboratorsDialog from '../components/CollaboratorsDialog';
 import CoAuthorsList from '../components/CoAuthorsList';
 import { ArrangementActionsMenu } from '../components/ArrangementActionsMenu';
-import { AttachmentsDisplay } from '../components/attachments';
+import { AttachmentsDisplay, AttachmentsSidebar } from '../components/attachments';
 import { useAuth } from '@/features/auth';
 import { useAudioPlayer } from '@/features/audio';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
@@ -241,27 +241,44 @@ export function ArrangementPage() {
             </div>
           </div>
 
-        {/* Arrangement Header */}
-        <div className="mb-6">
-          <ArrangementHeader
-            arrangement={arrangement}
-            songTitle={song.title}
-            artist={song.artist}
-            creator={creator}
-            owner={owner}
-            transposedKey={transposition?.currentKey}
-            transpositionOffset={transposition?.transpositionOffset}
-            isOwner={isOwner}
-            onNameChange={async (newName: string) => {
-              await updateArrangement({ name: newName });
-            }}
-          />
+        {/* Header Section - responsive grid for desktop sidebar */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] md:gap-8 md:items-start mb-6">
+          {/* Left: Arrangement Header */}
+          <div className="space-y-4">
+            <ArrangementHeader
+              arrangement={arrangement}
+              songTitle={song.title}
+              artist={song.artist}
+              creator={creator}
+              owner={owner}
+              transposedKey={transposition?.currentKey}
+              transpositionOffset={transposition?.transpositionOffset}
+              isOwner={isOwner}
+              onNameChange={async (newName: string) => {
+                await updateArrangement({ name: newName });
+              }}
+            />
+
+            {/* Co-authors list (for group-owned arrangements) */}
+            {coAuthors.length > 0 && (
+              <div className="no-print">
+                <CoAuthorsList coAuthors={coAuthors} />
+              </div>
+            )}
+          </div>
+
+          {/* Right: Attachments sidebar (desktop only) */}
+          {attachments.length > 0 && (
+            <div className="hidden md:block w-56 no-print">
+              <AttachmentsSidebar attachments={attachments} />
+            </div>
+          )}
         </div>
 
-        {/* Phase 2: Co-authors list (for group-owned arrangements) */}
-        {coAuthors.length > 0 && (
-          <div className="mb-6 no-print">
-            <CoAuthorsList coAuthors={coAuthors} />
+        {/* Mobile: Attachments below header */}
+        {attachments.length > 0 && (
+          <div className="md:hidden mb-6 no-print">
+            <AttachmentsDisplay attachments={attachments} />
           </div>
         )}
 
@@ -303,13 +320,6 @@ export function ArrangementPage() {
             }}
           />
         </div>
-
-        {/* File Attachments (read-only view) */}
-        {attachments.length > 0 && (
-          <div className="mb-8 no-print">
-            <AttachmentsDisplay attachments={attachments} />
-          </div>
-        )}
 
         {/* Version History Panel (Community group moderators only) */}
         <VersionHistoryPanel

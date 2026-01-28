@@ -4,6 +4,7 @@
 
 export { default as AttachmentsSection } from "./AttachmentsSection";
 export { default as AttachmentsDisplay } from "./AttachmentsDisplay";
+export { default as AttachmentsSidebar } from "./AttachmentsSidebar";
 export { default as AttachmentUpload } from "./AttachmentUpload";
 export { default as AttachmentList } from "./AttachmentList";
 export { default as AttachmentItem } from "./AttachmentItem";
