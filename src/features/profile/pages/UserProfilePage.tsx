@@ -32,6 +32,7 @@ import { ArrowLeft, User, Music } from 'lucide-react';
 import type { ArrangementWithSongAndCreator } from '@/types/Arrangement.types';
 import type { Setlist, SetlistSong } from '@/types';
 import SetlistCard from '@/features/setlists/components/SetlistCard';
+import { normalizeSetlistSongs } from '@/features/setlists/utils/normalizeSetlistSongs';
 
 export function UserProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -99,15 +100,14 @@ export function UserProfilePage() {
   const setlists: Setlist[] = useMemo(() => {
     if (!userSetlists) return [];
     return userSetlists.map((s) => {
-      // Map songs array
-      const songs: SetlistSong[] = (s.songs ?? s.arrangementIds?.map((id) => ({ arrangementId: id })) ?? [])
-        .map((songData, index) => ({
-          id: songData.arrangementId,
-          songId: '',
-          arrangementId: songData.arrangementId,
-          order: index,
-          customKey: 'customKey' in songData ? songData.customKey : undefined,
-        }));
+      // Map songs array (prefer new format, fallback to legacy)
+      const songs: SetlistSong[] = normalizeSetlistSongs(s).map((songData, index) => ({
+        id: songData.arrangementId,
+        songId: '',
+        arrangementId: songData.arrangementId,
+        order: index,
+        customKey: songData.customKey,
+      }));
 
       return {
         id: s._id,

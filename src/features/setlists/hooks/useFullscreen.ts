@@ -21,11 +21,18 @@ export interface UseFullscreenReturn {
   toggleFullscreen: () => Promise<void>;
 }
 
+/**
+ * IMPORTANT: If passing callbacks in options, wrap them in useCallback
+ * to prevent unnecessary effect re-runs.
+ */
 export function useFullscreen(
   elementRef: RefObject<HTMLElement>,
   options: UseFullscreenOptions = {}
 ): UseFullscreenReturn {
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Destructure options to use individual callbacks in dependency arrays
+  const { onOpen, onClose, onError } = options;
 
   // Listen to fullscreenchange events for accurate state tracking
   useEffect(() => {
@@ -34,15 +41,15 @@ export function useFullscreen(
       setIsFullscreen(isActive);
 
       if (isActive) {
-        options.onOpen?.();
+        onOpen?.();
       } else {
-        options.onClose?.();
+        onClose?.();
       }
     };
 
     const handleError = (): void => {
       const error = new Error('Fullscreen request failed');
-      options.onError?.(error);
+      onError?.(error);
     };
 
     document.addEventListener('fullscreenchange', handleChange);
@@ -52,13 +59,13 @@ export function useFullscreen(
       document.removeEventListener('fullscreenchange', handleChange);
       document.removeEventListener('fullscreenerror', handleError);
     };
-  }, [elementRef, options]);
+  }, [elementRef, onOpen, onClose, onError]);
 
   const enterFullscreen = useCallback(async (): Promise<void> => {
     if (!document.fullscreenEnabled || !elementRef.current) {
       const error = new Error('Fullscreen not supported');
       logger.error('Fullscreen not supported');
-      options.onError?.(error);
+      onError?.(error);
       throw error;
     }
 
@@ -66,10 +73,10 @@ export function useFullscreen(
       await elementRef.current.requestFullscreen();
     } catch (error) {
       logger.error('Failed to enter fullscreen:', error);
-      options.onError?.(error as Error);
+      onError?.(error as Error);
       throw error;
     }
-  }, [elementRef, options]);
+  }, [elementRef, onError]);
 
   const exitFullscreen = useCallback(async (): Promise<void> => {
     if (!document.fullscreenElement) return;
@@ -78,10 +85,10 @@ export function useFullscreen(
       await document.exitFullscreen();
     } catch (error) {
       logger.error('Failed to exit fullscreen:', error);
-      options.onError?.(error as Error);
+      onError?.(error as Error);
       throw error;
     }
-  }, [options]);
+  }, [onError]);
 
   const toggleFullscreen = useCallback(async (): Promise<void> => {
     if (isFullscreen) {

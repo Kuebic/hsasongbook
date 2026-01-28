@@ -8,7 +8,7 @@
  * @see https://github.com/clauderic/dnd-kit/discussions/1522
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { SetlistSong } from '@/types';
 
 interface UseDragReorderReturn {
@@ -40,16 +40,19 @@ export function useDragReorder(sourceItems: SetlistSong[]): UseDragReorderReturn
 
   // Check if source items have been updated (Convex synced)
   // If so, clear temp state since we have fresh data
-  if (
-    tempItems !== null &&
-    sourceItems !== lastSourceRef.current &&
-    arraysMatch(sourceItems, tempItems)
-  ) {
-    // Source now matches our temp state - Convex has synced
-    setTempItems(null);
-    setIsReordering(false);
-  }
-  lastSourceRef.current = sourceItems;
+  // Using useEffect to avoid state updates during render
+  useEffect(() => {
+    if (
+      tempItems !== null &&
+      sourceItems !== lastSourceRef.current &&
+      arraysMatch(sourceItems, tempItems)
+    ) {
+      // Source now matches our temp state - Convex has synced
+      setTempItems(null);
+      setIsReordering(false);
+    }
+    lastSourceRef.current = sourceItems;
+  }, [sourceItems, tempItems]);
 
   const handleReorder = useCallback(
     async (
@@ -81,8 +84,9 @@ export function useDragReorder(sourceItems: SetlistSong[]): UseDragReorderReturn
       // The temp state will clear when Convex syncs back with matching data
       try {
         await persistFn(updatedItems);
-      } catch {
+      } catch (error) {
         // On error, revert to source items
+        console.error('Failed to persist reorder:', error);
         setTempItems(null);
         setIsReordering(false);
       }

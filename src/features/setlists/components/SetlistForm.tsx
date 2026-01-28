@@ -105,7 +105,14 @@ export default function SetlistForm({
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Morning service setlist"
+          aria-invalid={errors?.description ? 'true' : 'false'}
+          aria-describedby={errors?.description ? 'description-error' : undefined}
         />
+        {errors?.description && (
+          <p id="description-error" className="text-sm text-destructive mt-1">
+            {errors.description}
+          </p>
+        )}
       </div>
 
       <div>
@@ -183,10 +190,15 @@ export default function SetlistForm({
         <Label htmlFor="difficulty">Difficulty</Label>
         <Select
           value={formData.difficulty ?? ''}
-          onValueChange={(value) => setFormData({
-            ...formData,
-            difficulty: value as 'beginner' | 'intermediate' | 'advanced' | undefined
-          })}
+          onValueChange={(value) => {
+            // Type-safe difficulty validation
+            const validDifficulties = ['beginner', 'intermediate', 'advanced'] as const;
+            type Difficulty = typeof validDifficulties[number];
+            const difficulty = validDifficulties.includes(value as Difficulty)
+              ? (value as Difficulty)
+              : undefined;
+            setFormData({ ...formData, difficulty });
+          }}
         >
           <SelectTrigger id="difficulty">
             <SelectValue placeholder="Select difficulty..." />

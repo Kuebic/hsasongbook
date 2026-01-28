@@ -12,6 +12,7 @@ import type { Id } from '../../../../convex/_generated/dataModel';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { Setlist, Arrangement, Song, SetlistSong } from '@/types';
 import logger from '@/lib/logger';
+import { normalizeSetlistSongs } from '../utils/normalizeSetlistSongs';
 
 export interface UseSetlistDataReturn {
   setlist: Setlist | null;
@@ -94,10 +95,7 @@ export function useSetlistData(setlistId: string | undefined): UseSetlistDataRet
 
     // Build songs array from Convex songs field (with customKey support)
     // Falls back to legacy arrangementIds if songs field not present
-    const convexSongs =
-      convexData.songs ??
-      convexData.arrangementIds?.map((id: string) => ({ arrangementId: id })) ??
-      [];
+    const convexSongs = normalizeSetlistSongs(convexData);
 
     const setlistSongs: SetlistSong[] = convexSongs.map(
       (songData: { arrangementId: string; customKey?: string }, index: number) => {
@@ -169,6 +167,9 @@ export function useSetlistData(setlistId: string | undefined): UseSetlistDataRet
   }, []);
 
   // Determine error state
+  // Note: Convex useQuery throws on server errors, which are caught by
+  // ConvexProvider's error boundary. We only handle client-side error
+  // states (auth required, not found) here.
   const error = !loading && !isAuthenticated && setlistId
     ? 'Sign in to view setlists'
     : !loading && isAuthenticated && !convexData && setlistId

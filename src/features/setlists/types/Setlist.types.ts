@@ -30,6 +30,7 @@ export const SETLIST_SORT_OPTIONS: Record<string, SetlistSortOption> = {
  */
 export interface SetlistValidationErrors {
   name?: string;
+  description?: string;
   performanceDate?: string;
   songs?: string;
 }

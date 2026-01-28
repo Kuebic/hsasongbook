@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, ListMusic, Plus, Check, Search, ArrowLeft } from 'lucide-react';
 import { useSetlistSearch } from '../hooks/useSetlistSearch';
 import { validateSetlist } from '../utils/setlistValidation';
+import { normalizeSetlistSongs } from '../utils/normalizeSetlistSongs';
 import type { SetlistFormData, SetlistValidationErrors } from '../types';
 
 /** Threshold for showing search input */
@@ -216,11 +217,11 @@ export function AddToSetlistDialog({
                   ) : (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
                       {filteredSetlists.map((setlist) => {
-                        // Check both new `songs` array and legacy `arrangementIds`
-                        const songCount = setlist.songs?.length ?? setlist.arrangementIds?.length ?? 0;
+                        // Get normalized songs array (handles legacy format)
+                        const normalizedSongs = normalizeSetlistSongs(setlist);
+                        const songCount = normalizedSongs.length;
                         const isInSetlist = addedTo.has(setlist._id) ||
-                          setlist.songs?.some((s) => s.arrangementId === arrangementId) ||
-                          setlist.arrangementIds?.includes(arrangementId);
+                          normalizedSongs.some((s) => s.arrangementId === arrangementId);
                         const isCurrentlyAdding = isAdding === setlist._id;
 
                         return (

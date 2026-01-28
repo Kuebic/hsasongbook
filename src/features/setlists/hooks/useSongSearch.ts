@@ -36,6 +36,8 @@ export interface UseSongSearchReturn {
   results: Song[];
   isLoading: boolean;
   isEmpty: boolean;
+  /** Error state - null in normal operation. Convex handles errors at provider level. */
+  error: string | null;
 }
 
 /**
@@ -97,6 +99,8 @@ export function useSongSearch(initialQuery = ''): UseSongSearchReturn {
     results: filteredResults,
     isLoading,
     isEmpty,
+    // Convex handles server errors via ConvexProvider's error boundary
+    error: null,
   };
 }
 

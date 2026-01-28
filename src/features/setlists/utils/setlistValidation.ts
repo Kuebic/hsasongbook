@@ -36,7 +36,7 @@ export function validateSetlist(
 
   // Description length validation (optional)
   if (data.description && data.description.length > 500) {
-    errors.name = 'Description must be less than 500 characters';
+    errors.description = 'Description must be less than 500 characters';
   }
 
   return Object.keys(errors).length > 0 ? errors : null;

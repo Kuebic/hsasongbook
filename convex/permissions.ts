@@ -88,6 +88,27 @@ export function filterUndefined<T extends Record<string, unknown>>(
   return result;
 }
 
+/**
+ * Normalize setlist songs array, handling legacy arrangementIds format.
+ * Returns the songs array in the new format, falling back to converting
+ * legacy arrangementIds if needed.
+ *
+ * @param setlist - Object with optional songs and arrangementIds fields
+ * @returns Normalized array of song entries with arrangementId and optional customKey
+ */
+export function normalizeSetlistSongs(
+  setlist: {
+    songs?: Array<{ arrangementId: Id<"arrangements">; customKey?: string }>;
+    arrangementIds?: Id<"arrangements">[];
+  }
+): Array<{ arrangementId: Id<"arrangements">; customKey?: string }> {
+  return (
+    setlist.songs ??
+    setlist.arrangementIds?.map((id) => ({ arrangementId: id })) ??
+    []
+  );
+}
+
 // ============ USER INFO FORMATTING ============
 
 /**

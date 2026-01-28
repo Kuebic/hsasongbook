@@ -13,6 +13,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { Setlist, SetlistSong } from '@/types';
 import type { SetlistFormData } from '../types';
 import logger from '@/lib/logger';
+import { normalizeSetlistSongs } from '../utils/normalizeSetlistSongs';
 
 export interface UseSetlistsReturn {
   setlists: Setlist[];
@@ -41,10 +42,7 @@ function mapConvexSetlist(convexSetlist: {
   updatedAt?: number;
 }): Setlist {
   // Prefer new `songs` field, fallback to legacy `arrangementIds`
-  const convexSongs: Array<{ arrangementId: Id<'arrangements'>; customKey?: string }> =
-    convexSetlist.songs ??
-    convexSetlist.arrangementIds?.map((id) => ({ arrangementId: id })) ??
-    [];
+  const convexSongs = normalizeSetlistSongs(convexSetlist);
 
   const songs: SetlistSong[] = convexSongs.map((songData, index) => ({
     id: songData.arrangementId, // Stable ID for dnd-kit

@@ -3,6 +3,7 @@ import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import {
   filterUndefined,
+  normalizeSetlistSongs,
   requireAuth,
   requireAuthenticatedUser,
   canViewSetlist,
@@ -87,10 +88,7 @@ export const getWithArrangements = query({
     if (!canView) return null;
 
     // Get songs array (prefer new format, fallback to legacy arrangementIds)
-    const songsData =
-      setlist.songs ??
-      setlist.arrangementIds?.map((id) => ({ arrangementId: id })) ??
-      [];
+    const songsData = normalizeSetlistSongs(setlist);
 
     // Load arrangements with their songs
     const arrangements = await Promise.all(
@@ -372,10 +370,7 @@ export const create = mutation({
     const { userId } = await requireAuthenticatedUser(ctx);
 
     // Prefer songs array, fallback to arrangementIds for backwards compat
-    const songs =
-      args.songs ??
-      args.arrangementIds?.map((id) => ({ arrangementId: id })) ??
-      [];
+    const songs = normalizeSetlistSongs(args);
 
     const setlistId = await ctx.db.insert("setlists", {
       name: args.name,
@@ -537,10 +532,7 @@ export const addArrangement = mutation({
     }
 
     // Get current songs (prefer new format, fallback to legacy)
-    const currentSongs =
-      setlist.songs ??
-      setlist.arrangementIds?.map((id) => ({ arrangementId: id })) ??
-      [];
+    const currentSongs = normalizeSetlistSongs(setlist);
 
     // If already in setlist, just return (idempotent operation)
     if (currentSongs.some((s) => s.arrangementId === args.arrangementId)) {
@@ -589,10 +581,7 @@ export const updateSongKey = mutation({
     }
 
     // Get current songs (prefer new format, fallback to legacy)
-    const currentSongs =
-      setlist.songs ??
-      setlist.arrangementIds?.map((id) => ({ arrangementId: id })) ??
-      [];
+    const currentSongs = normalizeSetlistSongs(setlist);
 
     // Find and update the matching song's customKey
     const songIndex = currentSongs.findIndex(
