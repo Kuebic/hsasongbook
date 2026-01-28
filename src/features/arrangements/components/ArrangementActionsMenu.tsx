@@ -29,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { MoreVertical, Copy, Users, Globe, User, Trash2, Loader2 } from 'lucide-react';
+import { MoreVertical, Copy, Users, Globe, User, Trash2, Loader2, Pencil } from 'lucide-react';
 import { DeleteArrangementDialog } from './DeleteArrangementDialog';
 import { DuplicateArrangementDialog } from './DuplicateArrangementDialog';
 import type { Id } from '../../../../convex/_generated/dataModel';
@@ -48,6 +48,7 @@ interface ArrangementActionsMenuProps {
   isCommunityOwned: boolean;
   isAuthenticated: boolean;
   onShowCollaborators: () => void;
+  onEdit?: () => void;
   onDeleted?: () => void;
 }
 
@@ -59,6 +60,7 @@ export function ArrangementActionsMenu({
   isCommunityOwned,
   isAuthenticated,
   onShowCollaborators,
+  onEdit,
   onDeleted,
 }: ArrangementActionsMenuProps) {
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
@@ -105,7 +107,15 @@ export function ArrangementActionsMenu({
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-56">
+          {/* Edit - owner only */}
+          {isOwner && onEdit && (
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </DropdownMenuItem>
+          )}
+
           {/* Duplicate - available to all authenticated users */}
           {isAuthenticated && (
             <DropdownMenuItem onClick={() => setShowDuplicateDialog(true)}>
@@ -200,10 +210,13 @@ export function ArrangementActionsMenu({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isTransferring}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isTransferring} className="min-h-[44px]">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={isCommunityOwned ? handleReclaim : handleTransfer}
               disabled={isTransferring}
+              className="min-h-[44px]"
             >
               {isTransferring ? (
                 <>

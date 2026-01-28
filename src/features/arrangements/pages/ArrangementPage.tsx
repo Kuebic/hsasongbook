@@ -225,7 +225,7 @@ export function ArrangementPage() {
                 Print
               </Button>
 
-              {/* Actions Menu (Duplicate, Collaborators, Transfer, Delete) */}
+              {/* Actions Menu (Edit, Duplicate, Collaborators, Transfer, Delete) */}
               {arrangement && song && (
                 <ArrangementActionsMenu
                   arrangement={arrangement}
@@ -235,6 +235,7 @@ export function ArrangementPage() {
                   isCommunityOwned={isCommunityOwned}
                   isAuthenticated={!!isAuthenticated}
                   onShowCollaborators={() => setShowCollaboratorsDialog(true)}
+                  onEdit={canEdit ? () => setIsMetadataDialogOpen(true) : undefined}
                   onDeleted={() => navigate(`/song/${song.slug}`)}
                 />
               )}

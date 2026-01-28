@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import SongMetadata from '../components/SongMetadata';
-import SongEditForm from '../components/SongEditForm';
 import { useSongPermissions } from '../hooks/useSongPermissions';
 import ArrangementList from '../../arrangements/components/ArrangementList';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
@@ -13,12 +12,13 @@ import { useNavigation } from '../../shared/hooks/useNavigation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import AddArrangementDialog from '@/features/arrangements/components/AddArrangementDialog';
 import { VersionHistoryPanel } from '@/features/versions';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Edit, Music, Plus, X } from 'lucide-react';
-import { SongOwnershipMenu } from '../components/SongOwnershipMenu';
+import { ArrowLeft, Edit, Music, Plus } from 'lucide-react';
+import { SongActionsMenu } from '../components/SongActionsMenu';
+import { SongEditDialog } from '../components/SongEditDialog';
 import type { Song } from '@/types/Song.types';
 import type { ArrangementWithCreator } from '@/types/Arrangement.types';
 
@@ -27,7 +27,7 @@ export function SongPage() {
   const navigate = useNavigate();
   const { breadcrumbs } = useNavigation();
   const [addArrangementDialogOpen, setAddArrangementDialogOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showOnlyMine, setShowOnlyMine] = useState(false);
   const { user } = useAuth();
   const isAuthenticated = user && !user.isAnonymous;
@@ -39,7 +39,7 @@ export function SongPage() {
   );
 
   // Check if user can edit this song
-  const { canEdit, isOriginalCreator, loading: permissionsLoading } = useSongPermissions(
+  const { canEdit, isOwner, isOriginalCreator, loading: permissionsLoading } = useSongPermissions(
     convexSong?._id ?? null
   );
 
@@ -171,68 +171,57 @@ export function SongPage() {
 
             {/* Action buttons */}
             <div className="flex items-center gap-2">
-              {/* Ownership transfer/reclaim (only for original creator) */}
-              {isAuthenticated && (
-                <SongOwnershipMenu
-                  songId={song?.id ?? ''}
-                  isOriginalCreator={isOriginalCreator}
-                  isCommunityOwned={isCommunityOwned}
-                  ownerType={convexSong?.ownerType}
-                  groupName={convexSong?.owner?.type === 'group' ? convexSong.owner.name : undefined}
-                />
-              )}
-
               {/* Edit button (only if user can edit) */}
-              {canEdit && !isEditMode && (
+              {canEdit && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsEditMode(true)}
+                  onClick={() => setIsEditDialogOpen(true)}
                 >
                   <Edit className="h-4 w-4 mr-2" />
-                  Edit Song
+                  Edit
                 </Button>
+              )}
+
+              {/* Actions menu (authenticated users) */}
+              {isAuthenticated && (
+                <SongActionsMenu
+                  songId={song?.id ?? ''}
+                  songTitle={song?.title ?? ''}
+                  isOwner={isOwner}
+                  isOriginalCreator={isOriginalCreator}
+                  isCommunityOwned={isCommunityOwned}
+                  isAuthenticated={isAuthenticated}
+                  ownerType={convexSong?.ownerType}
+                  groupName={convexSong?.owner?.type === 'group' ? convexSong.owner.name : undefined}
+                  onEdit={() => setIsEditDialogOpen(true)}
+                  onDeleted={() => navigate('/')}
+                />
               )}
             </div>
           </div>
 
-          {/* Song Metadata or Edit Form */}
+          {/* Song Edit Dialog */}
+          <SongEditDialog
+            songId={song.id}
+            initialData={{
+              title: song.title,
+              artist: song.artist,
+              themes: song.themes,
+              copyright: song.copyright,
+              lyrics: convexSong?.lyrics,
+              origin: convexSong?.origin,
+              notes: convexSong?.notes,
+              bibleVerses: convexSong?.bibleVerses,
+              quotes: convexSong?.quotes,
+            }}
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+          />
+
+          {/* Song Metadata */}
           <div className="mb-8">
-            {isEditMode && canEdit ? (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Edit Song</CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditMode(false)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <SongEditForm
-                    songId={song.id}
-                    initialData={{
-                      title: song.title,
-                      artist: song.artist,
-                      themes: song.themes,
-                      copyright: song.copyright,
-                      lyrics: convexSong?.lyrics,
-                      notes: convexSong?.notes,
-                      bibleVerses: convexSong?.bibleVerses,
-                      quotes: convexSong?.quotes,
-                    }}
-                    onSuccess={() => setIsEditMode(false)}
-                    onCancel={() => setIsEditMode(false)}
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <SongMetadata song={song} owner={convexSong?.owner} />
-            )}
+            <SongMetadata song={song} owner={convexSong?.owner} />
           </div>
 
           {/* Version History Panel (Community group moderators only) */}

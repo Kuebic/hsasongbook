@@ -488,6 +488,144 @@ export const reclaimFromGroup = mutation({
   },
 });
 
+/**
+ * Duplicate a song
+ * Access: Any authenticated user
+ *
+ * Creates a copy of the song with the current user as owner.
+ * Does NOT copy arrangements - those must be duplicated separately.
+ */
+export const duplicate = mutation({
+  args: {
+    sourceSongId: v.id("songs"),
+    newTitle: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(ctx);
+
+    const original = await ctx.db.get(args.sourceSongId);
+    if (!original) {
+      throw new Error("Song not found");
+    }
+
+    // Generate a unique slug for the copy
+    const baseTitle = args.newTitle ?? `${original.title} (Copy)`;
+    let baseSlug = baseTitle
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    // Ensure slug uniqueness
+    let slug = baseSlug;
+    let counter = 1;
+    while (true) {
+      const existing = await ctx.db
+        .query("songs")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .unique();
+      if (!existing) break;
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    // Create the duplicate (always personal ownership)
+    const duplicateId = await ctx.db.insert("songs", {
+      title: baseTitle,
+      artist: original.artist,
+      themes: original.themes ?? [],
+      copyright: original.copyright,
+      lyrics: original.lyrics,
+      origin: original.origin,
+      slug,
+      createdBy: userId,
+      notes: original.notes,
+      bibleVerses: original.bibleVerses,
+      quotes: original.quotes,
+      // Don't copy ownership - always personal
+      ownerType: undefined,
+      ownerId: undefined,
+      // Don't copy arrangement count
+      arrangementCount: 0,
+    });
+
+    return { id: duplicateId, slug };
+  },
+});
+
+/**
+ * Delete a song
+ * Access: Song owner only
+ *
+ * Warning: This will also delete all arrangements under this song!
+ */
+export const remove = mutation({
+  args: { id: v.id("songs") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const song = await ctx.db.get(args.id);
+    if (!song) {
+      throw new Error("Song not found");
+    }
+
+    // Check ownership
+    const canDelete = await isSongOwner(ctx, args.id, userId);
+    if (!canDelete) {
+      throw new Error("You can only delete songs you own");
+    }
+
+    // Find and delete all arrangements under this song
+    const arrangements = await ctx.db
+      .query("arrangements")
+      .withIndex("by_songId", (q) => q.eq("songId", args.id))
+      .collect();
+
+    for (const arrangement of arrangements) {
+      // Delete arrangement attachments first
+      const attachments = await ctx.db
+        .query("attachments")
+        .withIndex("by_arrangementId", (q) => q.eq("arrangementId", arrangement._id))
+        .collect();
+      for (const attachment of attachments) {
+        // Delete the file from storage
+        if (attachment.storageId) {
+          await ctx.storage.delete(attachment.storageId);
+        }
+        await ctx.db.delete(attachment._id);
+      }
+
+      // Delete arrangement audio if exists
+      if (arrangement.audioStorageId) {
+        await ctx.storage.delete(arrangement.audioStorageId);
+      }
+
+      // Delete the arrangement
+      await ctx.db.delete(arrangement._id);
+    }
+
+    // Delete the song
+    await ctx.db.delete(args.id);
+
+    return { success: true, deletedArrangements: arrangements.length };
+  },
+});
+
+/**
+ * Get arrangements that will be affected by deleting a song
+ * Used by DeleteSongDialog to show a warning
+ */
+export const getArrangementCount = query({
+  args: { songId: v.id("songs") },
+  handler: async (ctx, args) => {
+    const arrangements = await ctx.db
+      .query("arrangements")
+      .withIndex("by_songId", (q) => q.eq("songId", args.songId))
+      .collect();
+
+    return arrangements.length;
+  },
+});
+
 // ============ BROWSE QUERIES ============
 
 /**

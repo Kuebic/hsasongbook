@@ -31,13 +31,8 @@ import { PageSpinner } from '@/features/shared/components/LoadingStates';
 import { SimplePageTransition } from '@/features/shared/components/PageTransition';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Plus, Play, ListMusic, Copy, Share2, MoreVertical, Pencil, ListOrdered } from 'lucide-react';
+import { Plus, Play, ListMusic, ListOrdered, Pencil } from 'lucide-react';
+import { SetlistActionsMenu } from '../components/SetlistActionsMenu';
 import { toast } from 'sonner';
 
 export function SetlistPage() {
@@ -298,33 +293,29 @@ export function SetlistPage() {
                 </Button>
               )}
 
-              {/* More actions dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">More actions</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {sharingInfo?.isOwner && (
-                    <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={handleDuplicate}>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Duplicate
-                  </DropdownMenuItem>
-                  {(sharingInfo?.isOwner || sharingInfo?.canEdit) && (
-                    <DropdownMenuItem onClick={() => setShowShareDialog(true)}>
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Edit button - visible for owners */}
+              {sharingInfo?.isOwner && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowEditDialog(true)}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              )}
+
+              {/* Actions menu */}
+              <SetlistActionsMenu
+                setlistId={setlist.id}
+                setlistName={setlist.name}
+                isOwner={sharingInfo?.isOwner ?? false}
+                canEdit={canEdit}
+                onEdit={() => setShowEditDialog(true)}
+                onDuplicate={handleDuplicate}
+                onShare={() => setShowShareDialog(true)}
+                onDeleted={() => navigate('/setlists')}
+              />
             </div>
           </div>
 

@@ -596,6 +596,7 @@ See [POST_MVP_ROADMAP.md](POST_MVP_ROADMAP.md) for:
 
 | Date | Change |
 |------|--------|
+| 2026-01-28 | **UI unification**: Unified action menus across Songs, Arrangements, and Setlists. Added SongActionsMenu, DeleteSongDialog, DuplicateSongDialog, SetlistActionsMenu, DeleteSetlistDialog. Converted Songs to modal editing. Added visible Edit buttons and consistent menu styling (outline/sm trigger, w-56 width, min-h-[44px] dialog buttons). Added songs.duplicate and songs.remove mutations. |
 | 2026-01-28 | **Phase 10 complete**: Public setlists with privacy levels, sharing, favorites, browse page, duplication with attribution, improved performance mode with swipe navigation |
 | 2026-01-28 | **Song enhancements**: Notes field with bible verses and quotes, ownership transfer to/from groups |
 | 2026-01-27 | **Phase 10 partial**: Custom keys per setlist entry, add to setlist dialog with search |
