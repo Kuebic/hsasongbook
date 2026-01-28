@@ -6,12 +6,14 @@ import { useArrangementData } from '../hooks/useArrangementData';
 import { useArrangementPermissions } from '../hooks/useArrangementPermissions';
 import { useArrangementCoAuthors } from '../hooks/useArrangementCoAuthors';
 import { useArrangementAudio } from '../hooks/useArrangementAudio';
+import { useArrangementAttachments } from '../hooks/useArrangementAttachments';
 import ChordProViewer, { type TranspositionState } from '@/features/chordpro';
 import ArrangementHeader from '../components/ArrangementHeader';
 import { EditModeAccordion } from '../components/EditModeAccordion';
 import CollaboratorsDialog from '../components/CollaboratorsDialog';
 import CoAuthorsList from '../components/CoAuthorsList';
 import { ArrangementActionsMenu } from '../components/ArrangementActionsMenu';
+import { AttachmentsDisplay } from '../components/attachments';
 import { useAuth } from '@/features/auth';
 import { useAudioPlayer } from '@/features/audio';
 import Breadcrumbs from '../../shared/components/Breadcrumbs';
@@ -78,6 +80,9 @@ export function ArrangementPage() {
   const { audioUrl } = useArrangementAudio(arrangement?.id ?? null);
   const hasAudio = !!audioUrl;
   const hasYoutube = !!arrangement?.youtubeUrl;
+
+  // File attachments
+  const { attachments, attachmentCount } = useArrangementAttachments(arrangement?.id ?? null);
 
   // Check if this arrangement's audio is currently playing in the global player
   const isThisTrackPlaying =
@@ -271,6 +276,7 @@ export function ArrangementPage() {
               arrangementId={arrangement.id}
               youtubeUrl={arrangement.youtubeUrl}
               hasAudio={!!arrangement.audioFileKey}
+              attachmentCount={attachmentCount}
             />
           </div>
         )}
@@ -313,6 +319,13 @@ export function ArrangementPage() {
             }}
           />
         </div>
+
+        {/* File Attachments (read-only view when not in edit mode) */}
+        {!isEditMode && attachments.length > 0 && (
+          <div className="mb-8 no-print">
+            <AttachmentsDisplay attachments={attachments} />
+          </div>
+        )}
 
         {/* Version History Panel (Community group moderators only) */}
         <VersionHistoryPanel

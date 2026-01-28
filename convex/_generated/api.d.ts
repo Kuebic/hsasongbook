@@ -9,6 +9,7 @@
  */
 
 import type * as arrangements from "../arrangements.js";
+import type * as attachments from "../attachments.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as favorites from "../favorites.js";
@@ -34,6 +35,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   arrangements: typeof arrangements;
+  attachments: typeof attachments;
   auth: typeof auth;
   crons: typeof crons;
   favorites: typeof favorites;

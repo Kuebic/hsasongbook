@@ -12,9 +12,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Settings2, Headphones } from "lucide-react";
+import { Settings2, Headphones, Paperclip } from "lucide-react";
 import { ArrangementMetadataContent } from "./ArrangementMetadataForm";
 import { AudioReferencesContent } from "./AudioReferencesForm";
+import { AttachmentsSection } from "./attachments";
 import type { ArrangementMetadata } from "@/types/Arrangement.types";
 
 interface EditModeAccordionProps {
@@ -22,12 +23,14 @@ interface EditModeAccordionProps {
   metadata: ArrangementMetadata;
   /** Callback when metadata changes */
   onMetadataChange: (metadata: ArrangementMetadata) => void;
-  /** Arrangement ID for audio references */
+  /** Arrangement ID for audio references and attachments */
   arrangementId: string;
   /** Current YouTube URL */
   youtubeUrl?: string;
   /** Whether arrangement has an audio file */
   hasAudio?: boolean;
+  /** Number of attachments (for badge) */
+  attachmentCount?: number;
   /** Whether the form is disabled */
   disabled?: boolean;
 }
@@ -38,6 +41,7 @@ export function EditModeAccordion({
   arrangementId,
   youtubeUrl,
   hasAudio,
+  attachmentCount = 0,
   disabled = false,
 }: EditModeAccordionProps) {
   return (
@@ -76,6 +80,27 @@ export function EditModeAccordion({
             arrangementId={arrangementId}
             youtubeUrl={youtubeUrl}
             hasAudio={hasAudio}
+          />
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* File Attachments */}
+      <AccordionItem value="attachments">
+        <AccordionTrigger className="text-base font-semibold hover:no-underline">
+          <div className="flex items-center gap-2">
+            <Paperclip className="h-5 w-5 text-primary" />
+            <span>Attachments</span>
+            {attachmentCount > 0 && (
+              <span className="text-sm font-normal text-muted-foreground">
+                ({attachmentCount})
+              </span>
+            )}
+          </div>
+        </AccordionTrigger>
+        <AccordionContent>
+          <AttachmentsSection
+            arrangementId={arrangementId}
+            disabled={disabled}
           />
         </AccordionContent>
       </AccordionItem>

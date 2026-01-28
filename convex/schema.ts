@@ -114,6 +114,20 @@ export default defineSchema({
     // Audio references
     audioFileKey: v.optional(v.string()), // R2 object key for MP3 file
     youtubeUrl: v.optional(v.string()), // YouTube video URL or ID
+    // File attachments (PDFs, music notation files, images, documents)
+    attachments: v.optional(
+      v.array(
+        v.object({
+          key: v.string(), // R2 object key
+          displayName: v.string(), // User-editable display name
+          originalName: v.string(), // Original filename from upload
+          mimeType: v.string(), // File MIME type
+          size: v.number(), // File size in bytes
+          order: v.number(), // Position in list (0-based)
+          uploadedAt: v.number(), // Timestamp of upload
+        })
+      )
+    ),
   })
     .index("by_slug", ["slug"])
     .index("by_song", ["songId"])

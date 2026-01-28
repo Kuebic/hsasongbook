@@ -56,6 +56,23 @@ export interface Arrangement {
   // Audio references
   audioFileKey?: string;               // R2 object key for MP3 file
   youtubeUrl?: string;                 // YouTube video URL or ID
+  // File attachments
+  attachments?: Attachment[];
+}
+
+/**
+ * File attachment for arrangements
+ * Used for PDFs, music notation files (Dorico, Finale, etc.), images, and documents
+ */
+export interface Attachment {
+  key: string;              // R2 object key
+  displayName: string;      // User-editable display name
+  originalName: string;     // Original filename from upload
+  mimeType: string;         // File MIME type
+  size: number;             // File size in bytes
+  order: number;            // Position in list (0-based)
+  uploadedAt: number;       // Timestamp of upload
+  url?: string;             // Signed URL (populated by query)
 }
 
 /**
