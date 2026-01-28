@@ -319,6 +319,10 @@ export default defineSchema({
     fontFamily: v.optional(v.string()), // "system", "inter", "lora", etc.
     fontSize: v.optional(v.number()), // Scale multiplier: 0.85-1.25
 
+    // Lyrics-specific styling
+    lyricsFontFamily: v.optional(v.string()), // "inherit", "mono", or font ID
+    lyricsFontSize: v.optional(v.number()), // Relative scale: 0.8-1.4
+
     // Chord-specific styling
     chordFontFamily: v.optional(v.string()), // "inherit", "mono", etc.
     chordFontSize: v.optional(v.number()), // Relative scale: 0.8-1.4

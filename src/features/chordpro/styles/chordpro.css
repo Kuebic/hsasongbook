@@ -66,6 +66,8 @@
   white-space: pre-wrap; /* Allow wrapping while preserving spaces */
   word-break: break-word; /* Break long words if needed */
   line-height: 1.5; /* Ensure consistent line height */
+  /* Customizable via appearance settings */
+  font-family: var(--font-lyrics);
 }
 
 /* Section labels and formatting */
@@ -131,7 +133,7 @@
   }
 
   .chord-sheet-output .lyrics {
-    font-size: 0.85rem;
+    font-size: calc(0.85rem * var(--lyrics-size-scale));
   }
 
   /* Reduce section indentation on mobile */
@@ -160,7 +162,7 @@
   }
 
   .chord-sheet-output .lyrics {
-    @apply text-base;
+    font-size: calc(1rem * var(--lyrics-size-scale));
   }
 }
 
@@ -176,7 +178,7 @@
   }
 
   .chord-sheet-output .lyrics {
-    @apply text-base;
+    font-size: calc(1rem * var(--lyrics-size-scale));
   }
 
   /* More generous spacing on desktop */

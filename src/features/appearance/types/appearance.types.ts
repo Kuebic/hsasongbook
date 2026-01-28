@@ -54,6 +54,10 @@ export interface AppearancePreferences {
   fontFamily?: string; // Font preset ID
   fontSize?: number; // Scale: 0.85-1.25
 
+  // Lyrics-specific styling
+  lyricsFontFamily?: string; // "inherit" or font preset ID
+  lyricsFontSize?: number; // Scale: 0.8-1.4
+
   // Chord-specific styling
   chordFontFamily?: string; // "inherit" or font preset ID
   chordFontSize?: number; // Scale: 0.8-1.4
@@ -73,6 +77,10 @@ export interface ResolvedAppearance {
   // Fonts
   fontFamily: string; // CSS font-family stack
   fontSize: number;
+
+  // Lyrics styling
+  lyricsFontFamily: string;
+  lyricsFontSize: number;
 
   // Chord styling
   chordFontFamily: string;

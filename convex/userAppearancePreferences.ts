@@ -45,6 +45,8 @@ export const upsert = mutation({
     accentColorId: v.optional(v.union(v.string(), v.null())),
     fontFamily: v.optional(v.string()),
     fontSize: v.optional(v.number()),
+    lyricsFontFamily: v.optional(v.string()),
+    lyricsFontSize: v.optional(v.number()),
     chordFontFamily: v.optional(v.string()),
     chordFontSize: v.optional(v.number()),
     chordFontWeight: v.optional(v.string()),

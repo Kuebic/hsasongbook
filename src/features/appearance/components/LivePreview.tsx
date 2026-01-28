@@ -8,6 +8,23 @@ interface LivePreviewProps {
   className?: string;
 }
 
+// Shared styles for chord elements
+const chordStyle = {
+  fontFamily: "var(--font-chord)",
+  color: "hsl(var(--chord-color))",
+  fontWeight: "var(--chord-weight)",
+  fontSize: "calc(0.75rem * var(--chord-size-scale))",
+  backgroundColor: "var(--chord-highlight-bg)",
+  padding: "var(--chord-highlight-padding)",
+  borderRadius: "var(--chord-highlight-radius)",
+} as const;
+
+// Shared styles for lyrics elements
+const lyricsStyle = {
+  fontFamily: "var(--font-lyrics)",
+  fontSize: "calc(0.875rem * var(--lyrics-size-scale))",
+} as const;
+
 export function LivePreview({ className }: LivePreviewProps) {
   return (
     <div className={className}>
@@ -20,53 +37,29 @@ export function LivePreview({ className }: LivePreviewProps) {
               <span className="relative inline-block">
                 <span
                   className="absolute -top-5 left-0 whitespace-nowrap"
-                  style={{
-                    fontFamily: "var(--font-chord)",
-                    color: "hsl(var(--chord-color))",
-                    fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
-                    backgroundColor: "var(--chord-highlight-bg)",
-                    padding: "var(--chord-highlight-padding)",
-                    borderRadius: "var(--chord-highlight-radius)",
-                  }}
+                  style={chordStyle}
                 >
                   Am
                 </span>
-                <span>Amazing</span>
+                <span style={lyricsStyle}>Amazing</span>
               </span>
               <span className="relative inline-block">
                 <span
                   className="absolute -top-5 left-0 whitespace-nowrap"
-                  style={{
-                    fontFamily: "var(--font-chord)",
-                    color: "hsl(var(--chord-color))",
-                    fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
-                    backgroundColor: "var(--chord-highlight-bg)",
-                    padding: "var(--chord-highlight-padding)",
-                    borderRadius: "var(--chord-highlight-radius)",
-                  }}
+                  style={chordStyle}
                 >
                   G
                 </span>
-                <span>grace, how</span>
+                <span style={lyricsStyle}>grace, how</span>
               </span>
               <span className="relative inline-block">
                 <span
                   className="absolute -top-5 left-0 whitespace-nowrap"
-                  style={{
-                    fontFamily: "var(--font-chord)",
-                    color: "hsl(var(--chord-color))",
-                    fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
-                    backgroundColor: "var(--chord-highlight-bg)",
-                    padding: "var(--chord-highlight-padding)",
-                    borderRadius: "var(--chord-highlight-radius)",
-                  }}
+                  style={chordStyle}
                 >
                   C
                 </span>
-                <span>sweet the</span>
+                <span style={lyricsStyle}>sweet the</span>
               </span>
             </div>
           </div>
@@ -77,53 +70,29 @@ export function LivePreview({ className }: LivePreviewProps) {
               <span className="relative inline-block">
                 <span
                   className="absolute -top-5 left-0 whitespace-nowrap"
-                  style={{
-                    fontFamily: "var(--font-chord)",
-                    color: "hsl(var(--chord-color))",
-                    fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
-                    backgroundColor: "var(--chord-highlight-bg)",
-                    padding: "var(--chord-highlight-padding)",
-                    borderRadius: "var(--chord-highlight-radius)",
-                  }}
+                  style={chordStyle}
                 >
                   F
                 </span>
-                <span>sound, that</span>
+                <span style={lyricsStyle}>sound, that</span>
               </span>
               <span className="relative inline-block">
                 <span
                   className="absolute -top-5 left-0 whitespace-nowrap"
-                  style={{
-                    fontFamily: "var(--font-chord)",
-                    color: "hsl(var(--chord-color))",
-                    fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
-                    backgroundColor: "var(--chord-highlight-bg)",
-                    padding: "var(--chord-highlight-padding)",
-                    borderRadius: "var(--chord-highlight-radius)",
-                  }}
+                  style={chordStyle}
                 >
                   C/E
                 </span>
-                <span>saved a</span>
+                <span style={lyricsStyle}>saved a</span>
               </span>
               <span className="relative inline-block">
                 <span
                   className="absolute -top-5 left-0 whitespace-nowrap"
-                  style={{
-                    fontFamily: "var(--font-chord)",
-                    color: "hsl(var(--chord-color))",
-                    fontWeight: "var(--chord-weight)",
-                    fontSize: "calc(0.75rem * var(--chord-size-scale))",
-                    backgroundColor: "var(--chord-highlight-bg)",
-                    padding: "var(--chord-highlight-padding)",
-                    borderRadius: "var(--chord-highlight-radius)",
-                  }}
+                  style={chordStyle}
                 >
                   G
                 </span>
-                <span>wretch like me</span>
+                <span style={lyricsStyle}>wretch like me</span>
               </span>
             </div>
           </div>

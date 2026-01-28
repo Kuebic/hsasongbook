@@ -37,8 +37,12 @@
 
     /* Font tokens (customizable via appearance settings) */
     --font-app: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-lyrics: inherit;
     --font-chord: inherit;
     --font-scale: 1;
+
+    /* Lyrics styling tokens */
+    --lyrics-size-scale: 1;
 
     /* Chord styling tokens */
     --chord-color: var(--primary);
@@ -81,8 +85,12 @@
 
     /* Font tokens (same as light, applied via JS) */
     --font-app: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-lyrics: inherit;
     --font-chord: inherit;
     --font-scale: 1;
+
+    /* Lyrics styling tokens */
+    --lyrics-size-scale: 1;
 
     /* Chord styling tokens */
     --chord-color: var(--primary);

@@ -2,13 +2,15 @@
  * Appearance Settings
  *
  * Main component for the appearance customization section in settings.
- * Combines all appearance controls with live preview.
+ * Combines all appearance controls: colors, app font, lyrics styling, chord styling.
+ * Reorganized to have all settings in one place with sub-section headings.
  *
  * Exports:
  * - AppearanceSettings: Full component with Card wrapper (for standalone use)
  * - AppearanceSettingsContent: Content only (for use in accordion)
  */
 
+import type { ReactNode } from "react";
 import { useCallback } from "react";
 import { RotateCcw } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +23,9 @@ import { useAppearance } from "../context/UserAppearanceContext";
 import { ThemePresetPicker } from "./ThemePresetPicker";
 import { ColorPalettePicker } from "./ColorPalettePicker";
 import { FontSelector } from "./FontSelector";
+import { LyricsStyleSettings } from "./LyricsStyleSettings";
+import { ChordStyleSettings } from "./ChordStyleSettings";
+import { LivePreview } from "./LivePreview";
 import { getThemePreset } from "../presets/colorPresets";
 
 /**
@@ -124,7 +129,7 @@ function useAppearanceHandlers() {
     }
   }
 
-  // Handlers
+  // Color handlers
   const handlePresetSelect = useCallback(
     (presetId: string) => {
       applyPreset(presetId);
@@ -146,6 +151,7 @@ function useAppearanceHandlers() {
     [setCustomColors, currentPrimaryId]
   );
 
+  // App font handlers
   const handleFontFamilyChange = useCallback(
     (fontId: string) => {
       updatePreference("fontFamily", fontId);
@@ -156,6 +162,57 @@ function useAppearanceHandlers() {
   const handleFontSizeChange = useCallback(
     (size: number) => {
       updatePreference("fontSize", size);
+    },
+    [updatePreference]
+  );
+
+  // Lyrics handlers
+  const handleLyricsFontFamilyChange = useCallback(
+    (fontId: string) => {
+      updatePreference("lyricsFontFamily", fontId);
+    },
+    [updatePreference]
+  );
+
+  const handleLyricsFontSizeChange = useCallback(
+    (size: number) => {
+      updatePreference("lyricsFontSize", size);
+    },
+    [updatePreference]
+  );
+
+  // Chord handlers
+  const handleChordFontFamilyChange = useCallback(
+    (fontId: string) => {
+      updatePreference("chordFontFamily", fontId);
+    },
+    [updatePreference]
+  );
+
+  const handleChordFontSizeChange = useCallback(
+    (size: number) => {
+      updatePreference("chordFontSize", size);
+    },
+    [updatePreference]
+  );
+
+  const handleChordFontWeightChange = useCallback(
+    (weight: "normal" | "medium" | "bold") => {
+      updatePreference("chordFontWeight", weight);
+    },
+    [updatePreference]
+  );
+
+  const handleChordColorIdChange = useCallback(
+    (colorId: string | null) => {
+      updatePreference("chordColorId", colorId ?? undefined);
+    },
+    [updatePreference]
+  );
+
+  const handleChordHighlightChange = useCallback(
+    (highlight: boolean) => {
+      updatePreference("chordHighlight", highlight);
     },
     [updatePreference]
   );
@@ -171,12 +228,37 @@ function useAppearanceHandlers() {
     handleAccentChange,
     handleFontFamilyChange,
     handleFontSizeChange,
+    handleLyricsFontFamilyChange,
+    handleLyricsFontSizeChange,
+    handleChordFontFamilyChange,
+    handleChordFontSizeChange,
+    handleChordFontWeightChange,
+    handleChordColorIdChange,
+    handleChordHighlightChange,
   };
+}
+
+/**
+ * Sub-section heading component for visual grouping
+ */
+function SectionHeading({ children }: { children: ReactNode }) {
+  return (
+    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      {children}
+    </h3>
+  );
 }
 
 /**
  * Authenticated content for appearance settings (no Card wrapper)
  * For use in accordion or other container layouts
+ *
+ * Structure:
+ * - Theme Mode
+ * - Color Theme (presets + custom)
+ * - App Font (for UI)
+ * - Song Text Settings (lyrics + chords)
+ * - Live Preview
  */
 function AppearanceSettingsAuthenticatedContent() {
   const {
@@ -190,6 +272,13 @@ function AppearanceSettingsAuthenticatedContent() {
     handleAccentChange,
     handleFontFamilyChange,
     handleFontSizeChange,
+    handleLyricsFontFamilyChange,
+    handleLyricsFontSizeChange,
+    handleChordFontFamilyChange,
+    handleChordFontSizeChange,
+    handleChordFontWeightChange,
+    handleChordColorIdChange,
+    handleChordHighlightChange,
   } = useAppearanceHandlers();
 
   return (
@@ -240,20 +329,59 @@ function AppearanceSettingsAuthenticatedContent() {
 
       <Separator />
 
-      {/* Font Settings */}
-      <FontSelector
-        fontFamily={preferences.fontFamily}
-        fontSize={preferences.fontSize}
-        onFontFamilyChange={handleFontFamilyChange}
-        onFontSizeChange={handleFontSizeChange}
-        disabled={isLoading}
-      />
+      {/* App Font Settings */}
+      <div className="space-y-3">
+        <SectionHeading>App Font</SectionHeading>
+        <FontSelector
+          fontFamily={preferences.fontFamily}
+          fontSize={preferences.fontSize}
+          onFontFamilyChange={handleFontFamilyChange}
+          onFontSizeChange={handleFontSizeChange}
+          disabled={isLoading}
+        />
+      </div>
+
+      <Separator />
+
+      {/* Song Text Settings */}
+      <div className="space-y-4">
+        <SectionHeading>Song Text</SectionHeading>
+
+        {/* Lyrics Settings */}
+        <LyricsStyleSettings
+          lyricsFontFamily={preferences.lyricsFontFamily}
+          lyricsFontSize={preferences.lyricsFontSize}
+          onLyricsFontFamilyChange={handleLyricsFontFamilyChange}
+          onLyricsFontSizeChange={handleLyricsFontSizeChange}
+          disabled={isLoading}
+        />
+
+        {/* Chord Settings */}
+        <ChordStyleSettings
+          chordFontFamily={preferences.chordFontFamily}
+          chordFontSize={preferences.chordFontSize}
+          chordFontWeight={preferences.chordFontWeight}
+          chordColorId={preferences.chordColorId}
+          chordHighlight={preferences.chordHighlight}
+          accentColorId={currentAccentId}
+          onChordFontFamilyChange={handleChordFontFamilyChange}
+          onChordFontSizeChange={handleChordFontSizeChange}
+          onChordFontWeightChange={handleChordFontWeightChange}
+          onChordColorIdChange={handleChordColorIdChange}
+          onChordHighlightChange={handleChordHighlightChange}
+          disabled={isLoading}
+        />
+      </div>
+
+      {/* Live Preview */}
+      <LivePreview className="mt-6" />
     </div>
   );
 }
 
 /**
  * Full settings for authenticated users (with Card wrapper)
+ * Now includes all settings (app font, lyrics, chords) in one Card
  */
 function AppearanceSettingsAuthenticated() {
   const {
@@ -267,6 +395,13 @@ function AppearanceSettingsAuthenticated() {
     handleAccentChange,
     handleFontFamilyChange,
     handleFontSizeChange,
+    handleLyricsFontFamilyChange,
+    handleLyricsFontSizeChange,
+    handleChordFontFamilyChange,
+    handleChordFontSizeChange,
+    handleChordFontWeightChange,
+    handleChordColorIdChange,
+    handleChordHighlightChange,
   } = useAppearanceHandlers();
 
   return (
@@ -276,7 +411,7 @@ function AppearanceSettingsAuthenticated() {
           <div>
             <CardTitle>Appearance</CardTitle>
             <CardDescription>
-              Customize colors and fonts
+              Customize colors, fonts, and song display
             </CardDescription>
           </div>
           <Button
@@ -324,14 +459,52 @@ function AppearanceSettingsAuthenticated() {
 
         <Separator />
 
-        {/* Font Settings */}
-        <FontSelector
-          fontFamily={preferences.fontFamily}
-          fontSize={preferences.fontSize}
-          onFontFamilyChange={handleFontFamilyChange}
-          onFontSizeChange={handleFontSizeChange}
-          disabled={isLoading}
-        />
+        {/* App Font Settings */}
+        <div className="space-y-3">
+          <SectionHeading>App Font</SectionHeading>
+          <FontSelector
+            fontFamily={preferences.fontFamily}
+            fontSize={preferences.fontSize}
+            onFontFamilyChange={handleFontFamilyChange}
+            onFontSizeChange={handleFontSizeChange}
+            disabled={isLoading}
+          />
+        </div>
+
+        <Separator />
+
+        {/* Song Text Settings */}
+        <div className="space-y-4">
+          <SectionHeading>Song Text</SectionHeading>
+
+          {/* Lyrics Settings */}
+          <LyricsStyleSettings
+            lyricsFontFamily={preferences.lyricsFontFamily}
+            lyricsFontSize={preferences.lyricsFontSize}
+            onLyricsFontFamilyChange={handleLyricsFontFamilyChange}
+            onLyricsFontSizeChange={handleLyricsFontSizeChange}
+            disabled={isLoading}
+          />
+
+          {/* Chord Settings */}
+          <ChordStyleSettings
+            chordFontFamily={preferences.chordFontFamily}
+            chordFontSize={preferences.chordFontSize}
+            chordFontWeight={preferences.chordFontWeight}
+            chordColorId={preferences.chordColorId}
+            chordHighlight={preferences.chordHighlight}
+            accentColorId={currentAccentId}
+            onChordFontFamilyChange={handleChordFontFamilyChange}
+            onChordFontSizeChange={handleChordFontSizeChange}
+            onChordFontWeightChange={handleChordFontWeightChange}
+            onChordColorIdChange={handleChordColorIdChange}
+            onChordHighlightChange={handleChordHighlightChange}
+            disabled={isLoading}
+          />
+        </div>
+
+        {/* Live Preview */}
+        <LivePreview className="mt-6" />
       </CardContent>
     </Card>
   );

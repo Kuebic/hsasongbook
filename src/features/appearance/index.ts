@@ -11,6 +11,8 @@ export { useAppearance, useAppearanceSafe } from "./context/UserAppearanceContex
 // Components
 export { AppearanceSettings } from "./components/AppearanceSettings";
 export { LivePreview } from "./components/LivePreview";
+export { LyricsStyleSettings } from "./components/LyricsStyleSettings";
+export { ChordStyleSettings } from "./components/ChordStyleSettings";
 
 // Types
 export type {
@@ -35,9 +37,13 @@ export {
 
 export {
   appFonts,
+  lyricsFonts,
   chordFonts,
   getAppFont,
+  getLyricsFont,
   getChordFont,
   DEFAULT_APP_FONT_ID,
+  DEFAULT_LYRICS_FONT_ID,
+  DEFAULT_LYRICS_FONT_SIZE,
   DEFAULT_CHORD_FONT_ID,
 } from "./presets/fontPresets";

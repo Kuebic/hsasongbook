@@ -26,8 +26,11 @@ import {
 } from "../presets/colorPresets";
 import {
   getAppFont,
+  getLyricsFont,
   getChordFont,
   DEFAULT_APP_FONT_ID,
+  DEFAULT_LYRICS_FONT_ID,
+  DEFAULT_LYRICS_FONT_SIZE,
   DEFAULT_CHORD_FONT_ID,
   DEFAULT_FONT_SIZE,
   DEFAULT_CHORD_FONT_SIZE,
@@ -87,6 +90,7 @@ function resolveAppearance(
 
   // Determine fonts
   const appFont = getAppFont(prefs?.fontFamily ?? DEFAULT_APP_FONT_ID);
+  const lyricsFont = getLyricsFont(prefs?.lyricsFontFamily ?? DEFAULT_LYRICS_FONT_ID);
   const chordFont = getChordFont(prefs?.chordFontFamily ?? DEFAULT_CHORD_FONT_ID);
 
   // Determine chord color
@@ -115,6 +119,9 @@ function resolveAppearance(
     accentColor: accentColorHsl,
     fontFamily: appFont?.stack ?? "system-ui, sans-serif",
     fontSize: prefs?.fontSize ?? DEFAULT_FONT_SIZE,
+    lyricsFontFamily:
+      lyricsFont?.id === "inherit" ? "inherit" : (lyricsFont?.stack ?? "inherit"),
+    lyricsFontSize: prefs?.lyricsFontSize ?? DEFAULT_LYRICS_FONT_SIZE,
     chordFontFamily:
       chordFont?.id === "inherit" ? "inherit" : (chordFont?.stack ?? "inherit"),
     chordFontSize: prefs?.chordFontSize ?? DEFAULT_CHORD_FONT_SIZE,
@@ -141,6 +148,13 @@ function applyCssVariables(resolved: ResolvedAppearance): void {
   // Apply font settings
   root.style.setProperty("--font-app", resolved.fontFamily);
   root.style.setProperty("--font-scale", resolved.fontSize.toString());
+
+  // Apply lyrics settings
+  root.style.setProperty(
+    "--font-lyrics",
+    resolved.lyricsFontFamily === "inherit" ? "var(--font-app)" : resolved.lyricsFontFamily
+  );
+  root.style.setProperty("--lyrics-size-scale", resolved.lyricsFontSize.toString());
 
   // Apply chord settings
   root.style.setProperty(
@@ -173,6 +187,8 @@ function resetCssVariables(): void {
     "--input",
     "--font-app",
     "--font-scale",
+    "--font-lyrics",
+    "--lyrics-size-scale",
     "--font-chord",
     "--chord-color",
     "--chord-weight",
@@ -212,6 +228,8 @@ export function UserAppearanceProvider({ children }: UserAppearanceProviderProps
       accentColorId: dbPreferences.accentColorId ?? undefined,
       fontFamily: dbPreferences.fontFamily ?? undefined,
       fontSize: dbPreferences.fontSize ?? undefined,
+      lyricsFontFamily: dbPreferences.lyricsFontFamily ?? undefined,
+      lyricsFontSize: dbPreferences.lyricsFontSize ?? undefined,
       chordFontFamily: dbPreferences.chordFontFamily ?? undefined,
       chordFontSize: dbPreferences.chordFontSize ?? undefined,
       chordFontWeight: dbPreferences.chordFontWeight as AppearancePreferences["chordFontWeight"],

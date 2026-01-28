@@ -2,8 +2,11 @@
  * SettingsAccordion Component
  *
  * Accordion-based layout for settings page.
- * Organizes Appearance, Chord Display, Account, and About sections
+ * Organizes Appearance, Account, and About sections
  * into collapsible panels to save vertical space.
+ *
+ * Note: Song text settings (lyrics + chords) are now integrated
+ * into the Appearance section for better UX.
  */
 
 import {
@@ -12,9 +15,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Palette, Music2, User, Info } from "lucide-react";
+import { Palette, User, Info } from "lucide-react";
 import { AppearanceSettingsContent } from "@/features/appearance/components/AppearanceSettings";
-import { ChordStyleSettingsWrapper } from "@/features/appearance/components/ChordStyleSettingsWrapper";
 import { AboutSectionContent } from "./AboutSection";
 import { AccountSectionContent } from "./AccountSection";
 
@@ -30,7 +32,7 @@ export function SettingsAccordion({ isAuthenticated }: SettingsAccordionProps) {
       defaultValue={["appearance"]}
       className="w-full"
     >
-      {/* Appearance Section */}
+      {/* Appearance Section - includes colors, app font, lyrics, and chord settings */}
       <AccordionItem value="appearance">
         <AccordionTrigger className="text-base font-semibold hover:no-underline bg-muted/50 px-3 rounded-md -mx-3">
           <div className="flex items-center gap-2">
@@ -42,21 +44,6 @@ export function SettingsAccordion({ isAuthenticated }: SettingsAccordionProps) {
           <AppearanceSettingsContent isAuthenticated={isAuthenticated} />
         </AccordionContent>
       </AccordionItem>
-
-      {/* Chord Display Section - Only for authenticated users */}
-      {isAuthenticated && (
-        <AccordionItem value="chord-display">
-          <AccordionTrigger className="text-base font-semibold hover:no-underline bg-muted/50 px-3 rounded-md -mx-3">
-            <div className="flex items-center gap-2">
-              <Music2 className="h-5 w-5 text-primary" />
-              <span>Chord Display</span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="pt-4">
-            <ChordStyleSettingsWrapper />
-          </AccordionContent>
-        </AccordionItem>
-      )}
 
       {/* Account Section */}
       <AccordionItem value="account">
