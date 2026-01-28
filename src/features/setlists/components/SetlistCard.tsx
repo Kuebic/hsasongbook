@@ -8,9 +8,8 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ListMusic, Calendar, Music2 } from 'lucide-react';
+import { Calendar, Music2 } from 'lucide-react';
 import { formatSetlistDate } from '../../shared/utils/dateFormatter';
 import SetlistPrivacyBadge from './SetlistPrivacyBadge';
 import SetlistFavoriteButton from './SetlistFavoriteButton';
@@ -41,7 +40,10 @@ function SetlistCard({
   const remainingTags = (setlist.tags?.length ?? 0) - 3;
 
   return (
-    <Card className="h-full flex flex-col hover:shadow-lg transition-all duration-200 hover:scale-[1.01] hover:-translate-y-1 group">
+    <Card
+      className="h-full flex flex-col hover:shadow-lg transition-all duration-200 hover:scale-[1.01] hover:-translate-y-1 cursor-pointer"
+      onClick={handleViewSetlist}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
@@ -135,16 +137,6 @@ function SetlistCard({
             Updated {formatSetlistDate(setlist.updatedAt)}
           </div>
         </div>
-
-        {/* Action button */}
-        <Button
-          onClick={handleViewSetlist}
-          className="w-full mt-4 group-hover:bg-primary/90 transition-colors"
-          variant="default"
-        >
-          <ListMusic className="h-4 w-4 mr-2" />
-          View Setlist
-        </Button>
       </CardContent>
     </Card>
   );

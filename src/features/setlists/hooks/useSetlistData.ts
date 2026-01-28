@@ -122,6 +122,15 @@ export function useSetlistData(setlistId: string | undefined): UseSetlistDataRet
         ? new Date(convexData.updatedAt).toISOString()
         : new Date(convexData._creationTime).toISOString(),
       userId: convexData.userId,
+      // Phase 6 fields
+      privacyLevel: convexData.privacyLevel,
+      tags: convexData.tags,
+      estimatedDuration: convexData.estimatedDuration,
+      difficulty: convexData.difficulty,
+      duplicatedFrom: convexData.duplicatedFrom,
+      duplicatedFromName: convexData.duplicatedFromName,
+      showAttribution: convexData.showAttribution,
+      favorites: convexData.favorites,
     };
 
     return { setlist: setlistObj, arrangements: arrangementsMap, songs: songsMap };

@@ -40,6 +40,15 @@ function mapConvexSetlist(convexSetlist: {
   arrangementIds?: Id<'arrangements'>[];
   userId: Id<'users'>;
   updatedAt?: number;
+  // Phase 6 fields
+  privacyLevel?: 'private' | 'unlisted' | 'public';
+  tags?: string[];
+  estimatedDuration?: number;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  duplicatedFrom?: Id<'setlists'>;
+  duplicatedFromName?: string;
+  showAttribution?: boolean;
+  favorites?: number;
 }): Setlist {
   // Prefer new `songs` field, fallback to legacy `arrangementIds`
   const convexSongs = normalizeSetlistSongs(convexSetlist);
@@ -63,6 +72,15 @@ function mapConvexSetlist(convexSetlist: {
       ? new Date(convexSetlist.updatedAt).toISOString()
       : new Date(convexSetlist._creationTime).toISOString(),
     userId: convexSetlist.userId,
+    // Phase 6 fields
+    privacyLevel: convexSetlist.privacyLevel,
+    tags: convexSetlist.tags,
+    estimatedDuration: convexSetlist.estimatedDuration,
+    difficulty: convexSetlist.difficulty,
+    duplicatedFrom: convexSetlist.duplicatedFrom,
+    duplicatedFromName: convexSetlist.duplicatedFromName,
+    showAttribution: convexSetlist.showAttribution,
+    favorites: convexSetlist.favorites,
   };
 }
 
