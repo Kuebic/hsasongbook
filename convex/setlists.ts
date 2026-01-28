@@ -119,7 +119,8 @@ export const getWithArrangements = query({
       ...setlist,
       // Return songs array with customKey for frontend
       songs: songsData,
-      arrangements: arrangements.filter((a) => a !== null),
+      // Keep nulls in array - frontend shows placeholder for unavailable arrangements
+      arrangements,
     };
   },
 });

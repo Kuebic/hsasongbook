@@ -23,6 +23,7 @@ import SetlistPrivacyBadge from '../components/SetlistPrivacyBadge';
 import SetlistFavoriteButton from '../components/SetlistFavoriteButton';
 import SetlistSharedBadge from '../components/SetlistSharedBadge';
 import SetlistAttribution from '../components/SetlistAttribution';
+import SetlistShareDialog from '../components/SetlistShareDialog';
 import Breadcrumbs from '@/features/shared/components/Breadcrumbs';
 import { PageSpinner } from '@/features/shared/components/LoadingStates';
 import { SimplePageTransition } from '@/features/shared/components/PageTransition';
@@ -41,6 +42,7 @@ export function SetlistPage() {
   const { setlistId } = useParams<{ setlistId: string }>();
   const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   const {
     setlist,
@@ -242,10 +244,10 @@ export function SetlistPage() {
                     <Copy className="h-4 w-4 mr-2" />
                     Duplicate
                   </DropdownMenuItem>
-                  {sharingInfo?.isOwner && (
-                    <DropdownMenuItem disabled>
+                  {(sharingInfo?.isOwner || sharingInfo?.canEdit) && (
+                    <DropdownMenuItem onClick={() => setShowShareDialog(true)}>
                       <Share2 className="h-4 w-4 mr-2" />
-                      Share (coming soon)
+                      Share
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -304,6 +306,14 @@ export function SetlistPage() {
               setShowAddModal(false);
             }}
           />
+
+          {setlistId && (
+            <SetlistShareDialog
+              setlistId={setlistId}
+              open={showShareDialog}
+              onOpenChange={setShowShareDialog}
+            />
+          )}
         </div>
       </div>
     </SimplePageTransition>

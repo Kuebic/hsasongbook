@@ -30,6 +30,8 @@ import UserAvatar from '@/components/UserAvatar';
 import { formatTimestamp } from '../../shared/utils/dateFormatter';
 import { ArrowLeft, User, Music } from 'lucide-react';
 import type { ArrangementWithSongAndCreator } from '@/types/Arrangement.types';
+import type { Setlist, SetlistSong } from '@/types';
+import SetlistCard from '@/features/setlists/components/SetlistCard';
 
 export function UserProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -43,6 +45,12 @@ export function UserProfilePage() {
   // Fetch user's arrangements
   const userArrangements = useQuery(
     api.arrangements.getByCreator,
+    userData?._id ? { userId: userData._id } : 'skip'
+  );
+
+  // Fetch user's public setlists
+  const userSetlists = useQuery(
+    api.setlists.getByCreator,
     userData?._id ? { userId: userData._id } : 'skip'
   );
 
@@ -86,6 +94,40 @@ export function UserProfilePage() {
         youtubeUrl: arr.youtubeUrl,
       }));
   }, [userArrangements, userData]);
+
+  // Map setlists to frontend type
+  const setlists: Setlist[] = useMemo(() => {
+    if (!userSetlists) return [];
+    return userSetlists.map((s) => {
+      // Map songs array
+      const songs: SetlistSong[] = (s.songs ?? s.arrangementIds?.map((id) => ({ arrangementId: id })) ?? [])
+        .map((songData, index) => ({
+          id: songData.arrangementId,
+          songId: '',
+          arrangementId: songData.arrangementId,
+          order: index,
+          customKey: 'customKey' in songData ? songData.customKey : undefined,
+        }));
+
+      return {
+        id: s._id,
+        name: s.name,
+        description: s.description,
+        performanceDate: s.performanceDate,
+        songs,
+        createdAt: new Date(s._creationTime).toISOString(),
+        updatedAt: s.updatedAt
+          ? new Date(s.updatedAt).toISOString()
+          : new Date(s._creationTime).toISOString(),
+        userId: s.userId,
+        privacyLevel: s.privacyLevel,
+        tags: s.tags,
+        estimatedDuration: s.estimatedDuration,
+        difficulty: s.difficulty,
+        favorites: s.favorites,
+      };
+    });
+  }, [userSetlists]);
 
   const breadcrumbs = [
     { label: 'Home', path: '/' },
@@ -174,6 +216,12 @@ export function UserProfilePage() {
                   <span className="font-semibold text-foreground">{arrangements.length}</span>
                   {' '}arrangement{arrangements.length !== 1 ? 's' : ''}
                 </div>
+                {setlists.length > 0 && (
+                  <div>
+                    <span className="font-semibold text-foreground">{setlists.length}</span>
+                    {' '}setlist{setlists.length !== 1 ? 's' : ''}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -204,6 +252,25 @@ export function UserProfilePage() {
               </Card>
             )}
           </div>
+
+          {/* User's Public Setlists */}
+          {setlists.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">
+                Public Setlists by {getDisplayedName()}
+              </h2>
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {setlists.map((setlist) => (
+                  <SetlistCard
+                    key={setlist.id}
+                    setlist={setlist}
+                    isOwner={false}
+                    showPrivacyBadge={false}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </SimplePageTransition>

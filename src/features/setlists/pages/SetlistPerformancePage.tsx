@@ -10,6 +10,7 @@ import { useRef, useEffect } from 'react';
 import { usePerformanceMode } from '../hooks/usePerformanceMode';
 import { useSetlistData } from '../hooks/useSetlistData';
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
+import { useOnlineStatus } from '@/features/pwa/hooks/useOnlineStatus';
 import ChordProViewer from '@/features/chordpro';
 import PerformanceLayout from '../components/PerformanceLayout';
 import { PageSpinner } from '@/features/shared/components/LoadingStates';
@@ -24,6 +25,7 @@ export function SetlistPerformancePage() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { setlist, arrangements, loading, error } = useSetlistData(setlistId);
+  const { isOnline } = useOnlineStatus();
 
   // Convert arrangements map to array in setlist order
   const arrangementArray = setlist?.songs
@@ -83,6 +85,13 @@ export function SetlistPerformancePage() {
       aria-label="Setlist performance mode"
       className="performance-mode-container"
     >
+      {/* Offline indicator */}
+      {!isOnline && (
+        <div className="bg-yellow-100 text-yellow-800 px-4 py-2 text-sm text-center fixed top-0 left-0 right-0 z-50">
+          Offline mode - viewing cached version
+        </div>
+      )}
+
       {/* Screen reader instructions */}
       <div className="sr-only">
         Use arrow keys to navigate between arrangements.

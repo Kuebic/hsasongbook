@@ -111,6 +111,51 @@ export const searchByUsername = query({
 });
 
 /**
+ * Search users by username or email (for sharing)
+ * Access: Authenticated users only
+ * Returns up to 10 matching non-anonymous users
+ */
+export const searchByUsernameOrEmail = query({
+  args: { searchTerm: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return [];
+    }
+
+    const term = args.searchTerm.toLowerCase().trim();
+    if (term.length < 2) {
+      return [];
+    }
+
+    // Get all users with usernames (not anonymous)
+    const users = await ctx.db
+      .query("users")
+      .filter((q) => q.neq(q.field("username"), undefined))
+      .collect();
+
+    // Filter by match on username or email, exclude current user
+    const matches = users
+      .filter(
+        (u) =>
+          u._id !== userId &&
+          u.email && // Only non-anonymous users
+          (u.username?.toLowerCase().includes(term) ||
+            u.email?.toLowerCase().includes(term))
+      )
+      .slice(0, 10)
+      .map((u) => ({
+        _id: u._id,
+        username: u.username,
+        displayName: u.displayName,
+        // Don't expose full email for privacy
+      }));
+
+    return matches;
+  },
+});
+
+/**
  * Get stats for the current user (songs, arrangements, setlists created)
  * Access: Authenticated users only
  */

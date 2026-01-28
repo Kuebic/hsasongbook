@@ -117,6 +117,19 @@ export default defineConfig(({ mode }) => {
                 },
               },
             },
+            // Convex setlist API calls - for offline performance mode
+            {
+              urlPattern: /^https:\/\/.*\.convex\.cloud\/api\/.*setlists/,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'setlists-cache',
+                networkTimeoutSeconds: pwaConfig.api.networkTimeoutSeconds,
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 24 * 60 * 60, // 1 day
+                },
+              },
+            },
           ],
           cleanupOutdatedCaches: true,
           clientsClaim: true,

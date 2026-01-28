@@ -59,6 +59,42 @@ export default function SetlistSongItem({
     opacity: isDragging ? 0.5 : 1
   };
 
+  // Show placeholder for unavailable/deleted arrangements
+  if (!arrangement) {
+    return (
+      <Card
+        ref={setNodeRef}
+        style={style}
+        className="p-4 flex items-center gap-4 bg-muted/20"
+      >
+        <button
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
+          className="touch-none cursor-grab active:cursor-grabbing"
+          aria-label="Drag to reorder"
+          type="button"
+        >
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium truncate text-muted-foreground italic">
+            {index + 1}. [Unavailable] - Arrangement removed
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onRemove(song.id)}
+          aria-label="Remove song"
+          type="button"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </Card>
+    );
+  }
+
   return (
     <Card
       ref={setNodeRef}
