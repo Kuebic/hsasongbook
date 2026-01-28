@@ -241,3 +241,12 @@ export function generateDisplayName(originalName: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/**
+ * Check if a file type is previewable in the browser
+ * Currently supports images and PDFs
+ */
+export function isPreviewable(mimeType: string, fileName: string): boolean {
+  const category = getFileCategory(mimeType, fileName);
+  return category === "image" || category === "pdf";
+}

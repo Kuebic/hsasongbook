@@ -9,3 +9,4 @@ export { default as AttachmentUpload } from "./AttachmentUpload";
 export { default as AttachmentList } from "./AttachmentList";
 export { default as AttachmentItem } from "./AttachmentItem";
 export { default as AttachmentRenameDialog } from "./AttachmentRenameDialog";
+export { default as AttachmentPreviewDialog } from "./AttachmentPreviewDialog";

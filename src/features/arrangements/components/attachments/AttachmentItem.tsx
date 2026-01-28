@@ -31,6 +31,7 @@ interface AttachmentItemProps {
   attachment: Attachment;
   onRemove: () => void;
   onRename: () => void;
+  onPreview?: () => void;
   disabled?: boolean;
   isRemoving?: boolean;
 }
@@ -63,6 +64,7 @@ export default function AttachmentItem({
   attachment,
   onRemove,
   onRename,
+  onPreview,
   disabled = false,
   isRemoving = false,
 }: AttachmentItemProps) {
@@ -112,17 +114,34 @@ export default function AttachmentItem({
         <GripVertical className="h-5 w-5 text-muted-foreground" />
       </button>
 
-      {/* File icon */}
-      <div className="flex-shrink-0">
-        <FileIcon category={category} className="h-5 w-5" />
-      </div>
+      {/* File icon and info - clickable for preview */}
+      <div
+        className={cn(
+          "flex items-center gap-3 flex-1 min-w-0",
+          onPreview && "cursor-pointer"
+        )}
+        onClick={onPreview}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && onPreview) {
+            onPreview();
+          }
+        }}
+        role={onPreview ? "button" : undefined}
+        tabIndex={onPreview ? 0 : undefined}
+        aria-label={onPreview ? `Preview ${attachment.displayName}` : undefined}
+      >
+        {/* File icon */}
+        <div className="flex-shrink-0">
+          <FileIcon category={category} className="h-5 w-5" />
+        </div>
 
-      {/* File info */}
-      <div className="flex-1 min-w-0">
-        <p className="font-medium truncate text-sm">{attachment.displayName}</p>
-        <p className="text-xs text-muted-foreground">
-          {formatFileSize(attachment.size)}
-        </p>
+        {/* File info */}
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate text-sm">{attachment.displayName}</p>
+          <p className="text-xs text-muted-foreground">
+            {formatFileSize(attachment.size)}
+          </p>
+        </div>
       </div>
 
       {/* Actions */}

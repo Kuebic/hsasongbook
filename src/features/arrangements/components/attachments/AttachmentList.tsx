@@ -21,8 +21,11 @@ import {
 import type { DragEndEvent } from "@dnd-kit/core";
 import AttachmentItem from "./AttachmentItem";
 import AttachmentRenameDialog from "./AttachmentRenameDialog";
+import AttachmentPreviewDialog from "./AttachmentPreviewDialog";
 import type { Attachment } from "@/types/Arrangement.types";
 import { useAttachmentDragReorder } from "../../hooks/useAttachmentDragReorder";
+import { useAttachmentPreview } from "../../hooks/useAttachmentPreview";
+import { isPreviewable } from "../../validation/attachmentSchemas";
 
 interface AttachmentListProps {
   attachments: Attachment[];
@@ -54,6 +57,17 @@ export default function AttachmentList({
   const [renamingAttachment, setRenamingAttachment] = useState<Attachment | null>(
     null
   );
+
+  // Preview state
+  const {
+    selectedIndex,
+    openPreview,
+    closePreview,
+    navigateNext,
+    navigatePrev,
+    canNavigateNext,
+    canNavigatePrev,
+  } = useAttachmentPreview(attachments);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -105,16 +119,23 @@ export default function AttachmentList({
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-2">
-            {dragItems.map((attachment) => (
-              <AttachmentItem
-                key={attachment.key}
-                attachment={attachment}
-                onRemove={() => handleRemove(attachment.key)}
-                onRename={() => setRenamingAttachment(attachment)}
-                disabled={disabled}
-                isRemoving={removingKey === attachment.key}
-              />
-            ))}
+            {dragItems.map((attachment, index) => {
+              const canPreview = isPreviewable(
+                attachment.mimeType,
+                attachment.originalName
+              );
+              return (
+                <AttachmentItem
+                  key={attachment.key}
+                  attachment={attachment}
+                  onRemove={() => handleRemove(attachment.key)}
+                  onRename={() => setRenamingAttachment(attachment)}
+                  onPreview={canPreview ? () => openPreview(index) : undefined}
+                  disabled={disabled}
+                  isRemoving={removingKey === attachment.key}
+                />
+              );
+            })}
           </div>
         </SortableContext>
       </DndContext>
@@ -125,6 +146,17 @@ export default function AttachmentList({
         onOpenChange={(open) => !open && setRenamingAttachment(null)}
         currentName={renamingAttachment?.displayName ?? ""}
         onSave={handleRenameSubmit}
+      />
+
+      {/* Preview dialog */}
+      <AttachmentPreviewDialog
+        attachments={attachments}
+        selectedIndex={selectedIndex}
+        onClose={closePreview}
+        onNavigateNext={navigateNext}
+        onNavigatePrev={navigatePrev}
+        canNavigateNext={canNavigateNext}
+        canNavigatePrev={canNavigatePrev}
       />
     </>
   );
