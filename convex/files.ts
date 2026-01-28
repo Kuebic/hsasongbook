@@ -1,10 +1,14 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { R2 } from "@convex-dev/r2";
 import { components } from "./_generated/api";
 import { DataModel } from "./_generated/dataModel";
 import { requireAuthenticatedUser, requireAuth, canEditArrangement } from "./permissions";
+
+// R2 Free Tier Constants
+const FREE_TIER_STORAGE_BYTES = 10 * 1024 * 1024 * 1024; // 10 GB
+const WARNING_THRESHOLD_BYTES = 8 * 1024 * 1024 * 1024; // 8 GB (80% of free tier)
 
 const r2 = new R2(components.r2);
 
@@ -242,5 +246,142 @@ export const getArrangementAudioUrl = query({
     return await r2.getUrl(arrangement.audioFileKey, {
       expiresIn: 60 * 60 * 24,
     });
+  },
+});
+
+// ============ STORAGE MONITORING ============
+
+/**
+ * Get R2 storage statistics for monitoring
+ * Access: Authenticated users only (for admin dashboard)
+ */
+export const getStorageStats = query({
+  args: {},
+  handler: async (ctx) => {
+    // Collect all metadata with pagination
+    let allMetadata: Array<{ key: string; size?: number }> = [];
+    let cursor: string | undefined = undefined;
+    let hasMore = true;
+
+    while (hasMore) {
+      const result = await r2.listMetadata(ctx, 1000, cursor);
+      allMetadata = allMetadata.concat(result.page);
+      hasMore = !result.isDone;
+      cursor = result.continueCursor;
+    }
+
+    // Calculate total storage
+    const totalBytes = allMetadata.reduce((sum, m) => sum + (m.size ?? 0), 0);
+    const totalMB = totalBytes / (1024 * 1024);
+    const totalGB = totalBytes / (1024 * 1024 * 1024);
+
+    return {
+      totalBytes,
+      totalMB: Math.round(totalMB * 100) / 100,
+      totalGB: Math.round(totalGB * 100) / 100,
+      fileCount: allMetadata.length,
+      freeTierGB: FREE_TIER_STORAGE_BYTES / (1024 * 1024 * 1024),
+      usagePercent: Math.round((totalBytes / FREE_TIER_STORAGE_BYTES) * 100),
+      isWarning: totalBytes > WARNING_THRESHOLD_BYTES,
+      isOverLimit: totalBytes > FREE_TIER_STORAGE_BYTES,
+    };
+  },
+});
+
+// ============ ORPHAN FILE CLEANUP ============
+
+/**
+ * Find and delete orphaned R2 files not linked to any database record
+ * Called by monthly cron job
+ * Access: Internal only
+ */
+export const cleanupOrphanedFiles = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // 1. Get all R2 object keys with pagination
+    const allR2Keys = new Set<string>();
+    let cursor: string | undefined = undefined;
+    let hasMore = true;
+
+    while (hasMore) {
+      const result = await r2.listMetadata(ctx, 1000, cursor);
+      for (const item of result.page) {
+        allR2Keys.add(item.key);
+      }
+      hasMore = !result.isDone;
+      cursor = result.continueCursor;
+    }
+
+    if (allR2Keys.size === 0) {
+      console.log("[R2 Cleanup] No files in R2 bucket");
+      return { orphanedCount: 0, deletedCount: 0, errors: 0 };
+    }
+
+    // 2. Collect all referenced keys from database
+    const referencedKeys = new Set<string>();
+
+    // User avatars
+    const users = await ctx.db.query("users").collect();
+    for (const user of users) {
+      if (user.avatarKey) {
+        referencedKeys.add(user.avatarKey);
+      }
+    }
+
+    // Group avatars
+    const groups = await ctx.db.query("groups").collect();
+    for (const group of groups) {
+      if (group.avatarKey) {
+        referencedKeys.add(group.avatarKey);
+      }
+    }
+
+    // Arrangement audio files
+    const arrangements = await ctx.db.query("arrangements").collect();
+    for (const arrangement of arrangements) {
+      if (arrangement.audioFileKey) {
+        referencedKeys.add(arrangement.audioFileKey);
+      }
+    }
+
+    // 3. Find orphaned keys (in R2 but not in database)
+    const orphanedKeys: string[] = [];
+    for (const key of allR2Keys) {
+      if (!referencedKeys.has(key)) {
+        orphanedKeys.push(key);
+      }
+    }
+
+    if (orphanedKeys.length === 0) {
+      console.log("[R2 Cleanup] No orphaned files found");
+      return { orphanedCount: 0, deletedCount: 0, errors: 0 };
+    }
+
+    console.log(`[R2 Cleanup] Found ${orphanedKeys.length} orphaned files`);
+
+    // 4. Delete orphaned files
+    let deletedCount = 0;
+    let errors = 0;
+
+    for (const key of orphanedKeys) {
+      try {
+        await r2.deleteObject(ctx, key);
+        deletedCount++;
+        console.log(`[R2 Cleanup] Deleted orphaned file: ${key}`);
+      } catch (error) {
+        errors++;
+        console.error(`[R2 Cleanup] Failed to delete ${key}:`, error);
+      }
+    }
+
+    console.log(
+      `[R2 Cleanup] Completed: ${deletedCount} deleted, ${errors} errors`
+    );
+
+    return {
+      orphanedCount: orphanedKeys.length,
+      deletedCount,
+      errors,
+    };
   },
 });
