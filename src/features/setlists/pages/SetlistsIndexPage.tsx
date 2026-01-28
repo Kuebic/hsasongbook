@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, ListMusic, Users } from 'lucide-react';
+import { Plus, ListMusic, Users, Globe } from 'lucide-react';
 import type { SetlistFormData } from '../types';
 
 export function SetlistsIndexPage() {
@@ -98,12 +98,15 @@ export function SetlistsIndexPage() {
           </div>
 
           <Tabs defaultValue="my-setlists" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="my-setlists">
                 My Setlists ({ownedSetlists.length})
               </TabsTrigger>
               <TabsTrigger value="shared">
                 Shared With Me ({sharedSetlists.length})
+              </TabsTrigger>
+              <TabsTrigger value="browse">
+                Browse
               </TabsTrigger>
             </TabsList>
 
@@ -133,6 +136,21 @@ export function SetlistsIndexPage() {
                   isOwnerView={false}
                 />
               )}
+            </TabsContent>
+
+            <TabsContent value="browse">
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <Globe className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Discover Public Setlists</h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    Browse setlists shared by the community.
+                  </p>
+                  <Link to="/setlists/browse">
+                    <Button>Browse Public Setlists</Button>
+                  </Link>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
 
