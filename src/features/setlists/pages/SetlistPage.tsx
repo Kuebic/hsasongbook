@@ -24,6 +24,7 @@ import SetlistFavoriteButton from '../components/SetlistFavoriteButton';
 import SetlistSharedBadge from '../components/SetlistSharedBadge';
 import SetlistAttribution from '../components/SetlistAttribution';
 import SetlistShareDialog from '../components/SetlistShareDialog';
+import SetlistEditDialog from '../components/SetlistEditDialog';
 import Breadcrumbs from '@/features/shared/components/Breadcrumbs';
 import { PageSpinner } from '@/features/shared/components/LoadingStates';
 import { SimplePageTransition } from '@/features/shared/components/PageTransition';
@@ -35,7 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, Play, ListMusic, Copy, Share2, MoreVertical } from 'lucide-react';
+import { Plus, Play, ListMusic, Copy, Share2, MoreVertical, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function SetlistPage() {
@@ -43,6 +44,7 @@ export function SetlistPage() {
   const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const {
     setlist,
@@ -240,6 +242,12 @@ export function SetlistPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {sharingInfo?.isOwner && (
+                    <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={handleDuplicate}>
                     <Copy className="h-4 w-4 mr-2" />
                     Duplicate
@@ -308,11 +316,18 @@ export function SetlistPage() {
           />
 
           {setlistId && (
-            <SetlistShareDialog
-              setlistId={setlistId}
-              open={showShareDialog}
-              onOpenChange={setShowShareDialog}
-            />
+            <>
+              <SetlistShareDialog
+                setlistId={setlistId}
+                open={showShareDialog}
+                onOpenChange={setShowShareDialog}
+              />
+              <SetlistEditDialog
+                setlistId={setlistId}
+                open={showEditDialog}
+                onOpenChange={setShowEditDialog}
+              />
+            </>
           )}
         </div>
       </div>

@@ -6,10 +6,11 @@
  */
 
 import React, { useState } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -17,9 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { X } from 'lucide-react';
+import ChipInput from '@/features/shared/components/ChipInput';
 import { validateSetlist } from '../utils/setlistValidation';
+import { SETLIST_TAG_SUGGESTIONS } from '../utils/setlistTagConstants';
 import SetlistPrivacySelector from './SetlistPrivacySelector';
+import { SetlistTagSuggestions } from './SetlistTagSuggestions';
 import type { SetlistFormData, SetlistValidationErrors } from '../types';
 
 interface SetlistFormProps {
@@ -43,8 +46,10 @@ export default function SetlistForm({
     difficulty: initialData?.difficulty,
   });
 
-  const [tagInput, setTagInput] = useState('');
   const [errors, setErrors] = useState<SetlistValidationErrors | null>(null);
+
+  // Fetch existing tags for autocomplete
+  const existingTags = useQuery(api.setlists.getDistinctTags);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
@@ -59,24 +64,15 @@ export default function SetlistForm({
     onSubmit(formData);
   };
 
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault();
-      const newTag = tagInput.trim().toLowerCase();
-      const currentTags = formData.tags ?? [];
-      if (!currentTags.includes(newTag)) {
-        setFormData({ ...formData, tags: [...currentTags, newTag] });
-      }
-      setTagInput('');
-    }
+  const handleTagsChange = (tags: string[]) => {
+    setFormData({ ...formData, tags });
   };
 
-  const handleRemoveTag = (tagToRemove: string): void => {
+  const handleAddTag = (tag: string) => {
     const currentTags = formData.tags ?? [];
-    setFormData({
-      ...formData,
-      tags: currentTags.filter(tag => tag !== tagToRemove)
-    });
+    if (!currentTags.includes(tag)) {
+      setFormData({ ...formData, tags: [...currentTags, tag] });
+    }
   };
 
   return (
@@ -140,31 +136,21 @@ export default function SetlistForm({
 
       {/* Tags Input */}
       <div>
-        <Label htmlFor="tags">Tags</Label>
-        <Input
-          id="tags"
-          value={tagInput}
-          onChange={(e) => setTagInput(e.target.value)}
-          onKeyDown={handleAddTag}
-          placeholder="Add tags (press Enter)"
+        <ChipInput
+          label="Tags"
+          value={formData.tags || []}
+          onChange={handleTagsChange}
+          suggestions={[...SETLIST_TAG_SUGGESTIONS]}
+          dynamicSuggestions={existingTags || []}
+          allowCustom={true}
+          placeholder="Add tags..."
+          helperText="Select from suggestions or create your own"
+          chipVariant="tag"
         />
-        {(formData.tags?.length ?? 0) > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {formData.tags?.map((tag) => (
-              <Badge key={tag} variant="secondary" className="gap-1">
-                {tag}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag)}
-                  className="ml-1 hover:text-destructive"
-                  aria-label={`Remove tag ${tag}`}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        )}
+        <SetlistTagSuggestions
+          selectedTags={formData.tags || []}
+          onSelectTag={handleAddTag}
+        />
       </div>
 
       {/* Estimated Duration */}

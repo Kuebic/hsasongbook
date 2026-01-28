@@ -24,6 +24,8 @@ export { default as SetlistSharedBadge } from './components/SetlistSharedBadge';
 export { default as SetlistPrivacySelector } from './components/SetlistPrivacySelector';
 export { default as SetlistFavoriteButton } from './components/SetlistFavoriteButton';
 export { default as SetlistAttribution } from './components/SetlistAttribution';
+export { default as SetlistEditDialog } from './components/SetlistEditDialog';
+export { SetlistTagSuggestions } from './components/SetlistTagSuggestions';
 
 // Hooks
 export { useSetlists } from './hooks/useSetlists';
@@ -38,6 +40,11 @@ export { useSwipeNavigation } from './hooks/useSwipeNavigation';
 // Utils
 export { sortSetlists } from './utils/setlistSorter';
 export { validateSetlist } from './utils/setlistValidation';
+export {
+  SETLIST_TAG_CATEGORIES,
+  SETLIST_TAG_SUGGESTIONS,
+  type SetlistTagCategory,
+} from './utils/setlistTagConstants';
 
 // Types
 export type {
