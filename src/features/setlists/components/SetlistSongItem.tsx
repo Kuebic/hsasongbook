@@ -10,12 +10,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import KeySelector from '@/features/chordpro/components/KeySelector';
 import { GripVertical, X, Music, Youtube, Play, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SetlistSong, Arrangement, Song } from '@/types';
@@ -49,9 +44,8 @@ export default function SetlistSongItem({
   isPlaying = false,
   onPlay,
 }: SetlistSongItemProps) {
-  // Musical keys for dropdown
-  const MUSICAL_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const currentKey = song.customKey || arrangement?.key || 'C';
+  const isTransposed = song.customKey && song.customKey !== arrangement?.key;
 
   const {
     attributes,
@@ -141,30 +135,15 @@ export default function SetlistSongItem({
         </div>
         <div className="flex items-center gap-2 mt-1">
           <span className="text-sm text-muted-foreground">Key:</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="px-2 py-0.5 text-sm font-medium border rounded hover:bg-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
-                type="button"
-              >
-                {currentKey}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {MUSICAL_KEYS.map(key => (
-                <DropdownMenuItem
-                  key={key}
-                  onClick={() => onKeyChange(song.id, key)}
-                  className="cursor-pointer"
-                >
-                  {key}
-                  {key === arrangement?.key && (
-                    <span className="ml-2 text-xs text-muted-foreground">(Original)</span>
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <KeySelector
+            value={currentKey}
+            onChange={(key) => onKeyChange(song.id, key)}
+            size="sm"
+            includeMinorKeys={true}
+          />
+          {isTransposed && (
+            <span className="text-xs text-muted-foreground">(transposed)</span>
+          )}
         </div>
       </div>
 

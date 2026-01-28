@@ -138,7 +138,7 @@ export function useSetlistSongs(
     async (songId: string, newKey: string): Promise<void> => {
       if (!setlist) return;
 
-      // Find the song entry (songId is the arrangementId in this context)
+      // Find the song entry (songId is the stable ID, which equals arrangementId)
       const songEntry = setlist.songs.find((s) => s.id === songId);
       if (!songEntry) {
         logger.warn('Song not found in setlist:', songId);
@@ -147,16 +147,7 @@ export function useSetlistSongs(
 
       logger.debug('Updating song key:', { songId, newKey });
 
-      // Optimistic update
-      onUpdate({
-        ...setlist,
-        songs: setlist.songs.map((s) =>
-          s.id === songId ? { ...s, customKey: newKey } : s
-        ),
-        updatedAt: new Date().toISOString(),
-      });
-
-      // Persist to Convex
+      // Persist to Convex - Convex reactivity will update the UI
       await updateSongKeyMutation({
         setlistId: setlist.id as Id<'setlists'>,
         arrangementId: songEntry.arrangementId as Id<'arrangements'>,
@@ -165,7 +156,7 @@ export function useSetlistSongs(
 
       logger.info('Song key updated');
     },
-    [setlist, updateSongKeyMutation, onUpdate]
+    [setlist, updateSongKeyMutation]
   );
 
   return { addSong, removeSong, reorderSongs, updateSongKey };
