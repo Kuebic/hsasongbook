@@ -68,3 +68,27 @@ export const signUpSchema = z
   });
 
 export type SignUpFormData = z.infer<typeof signUpSchema>;
+
+/**
+ * Verification code schema (8-digit numeric code)
+ */
+export const verificationCodeSchema = z
+  .string()
+  .length(8, 'Code must be 8 digits')
+  .regex(/^\d+$/, 'Code must contain only numbers');
+
+/**
+ * Password reset schema (step 2: enter code and new password)
+ */
+export const passwordResetSchema = z
+  .object({
+    code: verificationCodeSchema,
+    newPassword: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
+export type PasswordResetFormData = z.infer<typeof passwordResetSchema>;

@@ -17,6 +17,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { z } from 'zod';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +33,8 @@ interface SignInFormProps {
   /** @deprecated No longer used - page reloads after sign-in due to Convex Auth state race condition */
   onSuccess?: () => void;
   onSwitchToSignUp?: () => void;
+  /** Called when user clicks forgot password link (useful for closing modals) */
+  onForgotPassword?: () => void;
 }
 
 /**
@@ -44,7 +47,7 @@ interface SignInFormProps {
  * />
  * ```
  */
-export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
+export default function SignInForm({ onSwitchToSignUp, onForgotPassword }: SignInFormProps) {
   const { signIn } = useAuthActions();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -129,6 +132,17 @@ export default function SignInForm({ onSwitchToSignUp }: SignInFormProps) {
             {errors.password.message}
           </p>
         )}
+      </div>
+
+      {/* Forgot password link */}
+      <div className="text-right">
+        <Link
+          to="/auth/forgot-password"
+          className="text-sm text-primary hover:underline"
+          onClick={onForgotPassword}
+        >
+          Forgot password?
+        </Link>
       </div>
 
       {/* Submit button */}

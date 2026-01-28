@@ -12,6 +12,7 @@ import type * as arrangements from "../arrangements.js";
 import type * as attachments from "../attachments.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
+import type * as email_ResendOTPPasswordReset from "../email/ResendOTPPasswordReset.js";
 import type * as favorites from "../favorites.js";
 import type * as files from "../files.js";
 import type * as groups from "../groups.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   attachments: typeof attachments;
   auth: typeof auth;
   crons: typeof crons;
+  "email/ResendOTPPasswordReset": typeof email_ResendOTPPasswordReset;
   favorites: typeof favorites;
   files: typeof files;
   groups: typeof groups;

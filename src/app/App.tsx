@@ -11,6 +11,7 @@ import { ProfilePage, UserProfilePage } from '../features/profile'
 import { GroupsIndexPage, GroupPage, GroupSettingsPage } from '../features/groups'
 import SignInPage from '../features/auth/pages/SignInPage'
 import SignUpPage from '../features/auth/pages/SignUpPage'
+import ForgotPasswordPage from '../features/auth/pages/ForgotPasswordPage'
 import { NotFound } from '../features/shared/pages/NotFound'
 import ScrollRestoration from '../features/shared/components/ScrollRestoration'
 import MobileNav from '../features/shared/components/MobileNav'
@@ -130,6 +131,7 @@ function AppWithFeatures() {
           {/* Auth routes (Phase 5) */}
           <Route path="/auth/signin" element={<SignInPage />} />
           <Route path="/auth/signup" element={<SignUpPage />} />
+          <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

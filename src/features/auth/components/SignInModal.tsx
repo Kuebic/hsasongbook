@@ -55,6 +55,11 @@ export default function SignInModal({
     onOpenChange(false); // Close modal
   };
 
+  // Handle forgot password click - close modal and navigate
+  const handleForgotPassword = () => {
+    onOpenChange(false); // Close modal
+  };
+
   // Switch between sign-in and sign-up
   const handleSwitchView = () => {
     setCurrentView((prev) => (prev === 'signin' ? 'signup' : 'signin'));
@@ -89,6 +94,7 @@ export default function SignInModal({
             <SignInForm
               onSuccess={handleSuccess}
               onSwitchToSignUp={handleSwitchView}
+              onForgotPassword={handleForgotPassword}
             />
           ) : (
             <SignUpForm
