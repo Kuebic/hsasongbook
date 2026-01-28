@@ -100,7 +100,7 @@ export function AddArrangementModal({
   const handleArrangementSelect = (index: number): void => {
     const arrangement = arrangements[index];
     if (arrangement) {
-      onAdd(arrangement.id, arrangement.key);
+      onAdd(arrangement.id);
       onOpenChange(false); // Close modal
       setSelectedSong(null); // Reset state
       setQuery(''); // Reset search

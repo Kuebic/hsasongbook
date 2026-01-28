@@ -139,15 +139,19 @@ export function useSetlistSongs(
       if (!setlist) return;
 
       // Find the song entry (songId is the stable ID, which equals arrangementId)
-      const songEntry = setlist.songs.find((s) => s.id === songId);
-      if (!songEntry) {
+      const songIndex = setlist.songs.findIndex((s) => s.id === songId);
+      if (songIndex === -1) {
         logger.warn('Song not found in setlist:', songId);
         return;
       }
 
+      const songEntry = setlist.songs[songIndex];
       logger.debug('Updating song key:', { songId, newKey });
 
       // Persist to Convex - Convex reactivity will update the UI
+      // Note: We don't call onUpdate here because it triggers updateSetlist mutation,
+      // which would cause a double mutation race condition. Instead, we rely on
+      // Convex's reactive query in useSetlistData to propagate the change.
       await updateSongKeyMutation({
         setlistId: setlist.id as Id<'setlists'>,
         arrangementId: songEntry.arrangementId as Id<'arrangements'>,

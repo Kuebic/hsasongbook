@@ -40,6 +40,46 @@ const UNUSUAL_SHARP_KEYS = new Set(['G#', 'D#', 'A#'])
 // Cb major = 7 flats → prefer B major = 5 sharps
 const UNUSUAL_FLAT_KEYS = new Set(['Cb'])
 
+// Map flats to their sharp equivalents for index lookup
+const FLAT_TO_SHARP_MAP: Record<string, string> = {
+  'Db': 'C#',
+  'Eb': 'D#',
+  'Gb': 'F#',
+  'Ab': 'G#',
+  'Bb': 'A#',
+}
+
+/**
+ * Normalize a key to its sharp equivalent for consistent semitone calculations
+ * Also strips minor suffix to get the root note
+ */
+function normalizeKeyForSemitones(key: string): string {
+  // Strip minor suffix (e.g., "Am" -> "A", "Bbm" -> "Bb")
+  const root = key.replace('m', '')
+  // Convert flats to sharps
+  return FLAT_TO_SHARP_MAP[root] || root
+}
+
+/**
+ * Calculate the semitone offset needed to transpose from one key to another
+ * Returns a value from 0-11 representing the number of semitones up
+ */
+function calculateSemitoneOffset(fromKey: string, toKey: string): number {
+  const fromNormalized = normalizeKeyForSemitones(fromKey)
+  const toNormalized = normalizeKeyForSemitones(toKey)
+
+  const fromIndex = CHROMATIC_SHARPS.indexOf(fromNormalized)
+  const toIndex = CHROMATIC_SHARPS.indexOf(toNormalized)
+
+  // If either key is invalid, return 0 (no transposition)
+  if (fromIndex === -1 || toIndex === -1) {
+    return 0
+  }
+
+  // Calculate offset (always positive, 0-11 range)
+  return (toIndex - fromIndex + 12) % 12
+}
+
 /**
  * Get key at specified semitone offset
  */
@@ -70,6 +110,7 @@ interface ChordProViewerProps {
   arrangementMetadata?: ArrangementMetadata | null;  // Optional metadata to inject before parsing
   onTranspositionChange?: (state: TranspositionState) => void;  // Callback when transposition changes
   performanceMode?: boolean;  // Minimal padding for performance mode on mobile
+  originalArrangementKey?: string;  // The arrangement's original key (for auto-transposition in setlists)
 }
 
 export default function ChordProViewer({
@@ -86,7 +127,8 @@ export default function ChordProViewer({
   initialEditMode = false,  // DEPRECATED: Use editMode instead
   arrangementMetadata = null,  // Optional metadata to inject before parsing
   onTranspositionChange,  // Callback when transposition changes
-  performanceMode = false  // Minimal padding for performance mode on mobile
+  performanceMode = false,  // Minimal padding for performance mode on mobile
+  originalArrangementKey,  // The arrangement's original key (for auto-transposition in setlists)
 }: ChordProViewerProps) {
   const [showChords, setShowChords] = useState(showChordsProp)
   const [editContent, setEditContent] = useState(content)
@@ -108,8 +150,17 @@ export default function ChordProViewer({
     return JSON.stringify(arrangementMetadata)
   }, [arrangementMetadata])
 
+  // Calculate initial transposition offset when originalArrangementKey is provided
+  // This enables automatic transposition for setlist custom keys
+  const initialTranspositionOffset = useMemo(() => {
+    if (!originalArrangementKey || !arrangementMetadata?.key) return 0
+    if (originalArrangementKey === arrangementMetadata.key) return 0
+    return calculateSemitoneOffset(originalArrangementKey, arrangementMetadata.key)
+  }, [originalArrangementKey, arrangementMetadata?.key])
+
   // Transposition state - managed here so we can preprocess rhythm brackets
-  const [transpositionOffset, setTranspositionOffset] = useState<number>(0)
+  // Initialized with calculated offset for setlist auto-transposition
+  const [transpositionOffset, setTranspositionOffset] = useState<number>(initialTranspositionOffset)
 
   // Extract key early (before preprocessing) to compute preferFlats synchronously
   // This avoids the "flash" of wrong enharmonic spelling on first render
@@ -153,6 +204,12 @@ export default function ChordProViewer({
   useEffect(() => {
     setUserPreferFlatsOverride(null)
   }, [earlyKey, transpositionOffset])
+
+  // Sync transposition offset when originalArrangementKey or target key changes
+  // This handles navigation between songs in setlist performance mode
+  useEffect(() => {
+    setTranspositionOffset(initialTranspositionOffset)
+  }, [initialTranspositionOffset])
 
   // Final value: user wins if they toggled, otherwise use computed
   const preferFlats = userPreferFlatsOverride ?? computedPreferFlats

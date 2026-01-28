@@ -22,6 +22,8 @@ interface SetlistSongItemProps {
   index: number;
   onRemove: (songId: string) => void;
   onKeyChange: (songId: string, newKey: string) => void;
+  /** Whether the key change is temporary (session-only, for viewers) */
+  isTemporaryKey?: boolean;
   /** Whether arrangement has MP3 audio */
   hasAudio?: boolean;
   /** Whether arrangement has YouTube video */
@@ -39,6 +41,7 @@ export default function SetlistSongItem({
   index,
   onRemove,
   onKeyChange,
+  isTemporaryKey = false,
   hasAudio = false,
   hasYoutube = false,
   isPlaying = false,
@@ -140,9 +143,13 @@ export default function SetlistSongItem({
             onChange={(key) => onKeyChange(song.id, key)}
             size="sm"
             includeMinorKeys={true}
+            lockMode={true}
+            originalKey={arrangement?.key}
           />
           {isTransposed && (
-            <span className="text-xs text-muted-foreground">(transposed)</span>
+            <span className="text-xs text-muted-foreground">
+              {isTemporaryKey ? '(session only)' : '(transposed)'}
+            </span>
           )}
         </div>
       </div>

@@ -5,8 +5,8 @@
  * Pattern: Uses @dnd-kit DndContext + SortableContext
  */
 
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useSensor, useSensors, PointerSensor, KeyboardSensor } from '@dnd-kit/core';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
@@ -43,9 +43,44 @@ import { toast } from 'sonner';
 export function SetlistPage() {
   const { setlistId } = useParams<{ setlistId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+
+  // Temporary key overrides for viewers (not persisted to database)
+  // Initialize from URL params to preserve keys when returning from performance mode
+  const [tempKeyOverrides, setTempKeyOverrides] = useState<Map<string, string>>(() => {
+    const tempKeysParam = searchParams.get('tempKeys');
+    if (!tempKeysParam) return new Map();
+    const map = new Map<string, string>();
+    try {
+      tempKeysParam.split(',').forEach(entry => {
+        const [id, key] = entry.split(':');
+        if (id && key) map.set(id, key);
+      });
+    } catch {
+      // Invalid format, ignore
+    }
+    return map;
+  });
+
+  // Keep URL in sync with temp key overrides (for browser back/forward)
+  useEffect(() => {
+    const currentParam = searchParams.get('tempKeys');
+    const newParam = tempKeyOverrides.size > 0
+      ? Array.from(tempKeyOverrides.entries()).map(([id, key]) => `${id}:${key}`).join(',')
+      : null;
+
+    if (currentParam !== newParam) {
+      if (newParam) {
+        searchParams.set('tempKeys', newParam);
+      } else {
+        searchParams.delete('tempKeys');
+      }
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [tempKeyOverrides, searchParams, setSearchParams]);
 
   const {
     setlist,
@@ -136,6 +171,19 @@ export function SetlistPage() {
 
   // Determine if user can edit
   const canEdit = sharingInfo?.canEdit ?? sharingInfo?.isOwner ?? false;
+
+  // Handler for viewers to set temporary keys (session-only, not persisted)
+  const handleTempKeyChange = useCallback((songId: string, newKey: string) => {
+    setTempKeyOverrides(prev => new Map(prev).set(songId, newKey));
+  }, []);
+
+  // Build URL params for temporary keys to pass to performance mode
+  const tempKeysUrlParam = useMemo(() => {
+    if (tempKeyOverrides.size === 0) return '';
+    return Array.from(tempKeyOverrides.entries())
+      .map(([id, key]) => `${id}:${key}`)
+      .join(',');
+  }, [tempKeyOverrides]);
 
   // Auth gating: Show sign-in prompt for anonymous users
   if (!isAuthenticated) {
@@ -239,7 +287,10 @@ export function SetlistPage() {
 
               {setlist.songs.length > 0 && (
                 <Button
-                  onClick={() => navigate(`/setlist/${setlist.id}/performance/0`)}
+                  onClick={() => {
+                    const url = `/setlist/${setlist.id}/performance/0${tempKeysUrlParam ? `?tempKeys=${encodeURIComponent(tempKeysUrlParam)}` : ''}`;
+                    navigate(url);
+                  }}
                   variant="default"
                 >
                   <Play className="mr-2 h-4 w-4" />
@@ -312,15 +363,22 @@ export function SetlistPage() {
                     const arrangement = arrangements.get(song.arrangementId);
                     const parentSong = arrangement ? songs.get(arrangement.songId) : undefined;
                     const playlistItem = playlistItems.find(p => p.arrangementId === song.arrangementId);
+
+                    // For viewers: apply temporary key override if set
+                    const tempKey = tempKeyOverrides.get(song.arrangementId);
+                    const effectiveSong = tempKey ? { ...song, customKey: tempKey } : song;
+                    const isTemporaryKey = tempKey !== undefined;
+
                     return (
                       <SetlistSongItem
                         key={song.id}
-                        song={song}
+                        song={effectiveSong}
                         arrangement={arrangement}
                         parentSong={parentSong}
                         index={index}
                         onRemove={canEdit ? removeSong : () => {}}
-                        onKeyChange={canEdit ? updateSongKey : () => {}}
+                        onKeyChange={canEdit ? updateSongKey : handleTempKeyChange}
+                        isTemporaryKey={isTemporaryKey}
                         hasAudio={playlistItem?.hasAudio ?? false}
                         hasYoutube={playlistItem?.hasYoutube ?? false}
                         isPlaying={isArrangementPlaying(song.arrangementId)}

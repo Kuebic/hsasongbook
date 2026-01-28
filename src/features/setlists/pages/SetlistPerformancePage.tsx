@@ -5,8 +5,8 @@
  * Features: ChordPro viewer, fullscreen support, arrow key navigation, progress tracking.
  */
 
-import { useParams, useNavigate } from 'react-router-dom';
-import { useRef, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useRef, useEffect, useMemo } from 'react';
 import { usePerformanceMode } from '../hooks/usePerformanceMode';
 import { useSetlistData } from '../hooks/useSetlistData';
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
@@ -22,15 +22,48 @@ export function SetlistPerformancePage() {
     arrangementIndex?: string;
   }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { setlist, arrangements, loading, error } = useSetlistData(setlistId);
+
+  // Parse temporary key overrides from URL (for viewers who set session-only keys)
+  const tempKeyOverrides = useMemo(() => {
+    const tempKeysParam = searchParams.get('tempKeys');
+    if (!tempKeysParam) return new Map<string, string>();
+    const map = new Map<string, string>();
+    try {
+      tempKeysParam.split(',').forEach(entry => {
+        const [id, key] = entry.split(':');
+        if (id && key) map.set(id, key);
+      });
+    } catch {
+      // Invalid format, ignore
+    }
+    return map;
+  }, [searchParams]);
+
+  // Build exit URL that preserves temp keys
+  const exitUrl = useMemo(() => {
+    const tempKeysParam = searchParams.get('tempKeys');
+    return `/setlist/${setlistId}${tempKeysParam ? `?tempKeys=${encodeURIComponent(tempKeysParam)}` : ''}`;
+  }, [setlistId, searchParams]);
   const { isOnline } = useOnlineStatus();
 
-  // Convert arrangements map to array in setlist order
-  const arrangementArray = setlist?.songs
-    .map(song => arrangements.get(song.arrangementId))
-    .filter((arr): arr is Arrangement => arr !== undefined) || [];
+  // Build array of valid songs (with their arrangements) in setlist order
+  // This preserves the relationship between setlist song data (customKey) and arrangement data
+  const setlistSongs = setlist?.songs ?? [];
+  const validSongsWithArrangements = setlistSongs
+    .map(song => {
+      const arrangement = arrangements.get(song.arrangementId);
+      return arrangement ? { song, arrangement } : null;
+    })
+    .filter((item): item is { song: (typeof setlistSongs)[0]; arrangement: Arrangement } =>
+      item !== null
+    );
+
+  // Extract just the arrangements for usePerformanceMode
+  const arrangementArray = validSongsWithArrangements.map(item => item.arrangement);
 
   const {
     currentIndex,
@@ -40,7 +73,7 @@ export function SetlistPerformancePage() {
   } = usePerformanceMode(containerRef, {
     arrangements: arrangementArray,
     initialIndex: parseInt(arrangementIndex || '0', 10),
-    onExit: () => navigate(`/setlist/${setlistId}`),
+    onExit: () => navigate(exitUrl),
     autoFullscreen: true // Auto-enter fullscreen on load
   });
 
@@ -51,15 +84,28 @@ export function SetlistPerformancePage() {
     enabled: true
   });
 
-  // Get the current setlist song to access customKey
-  const currentSetlistSong = setlist?.songs[currentIndex];
+  // Get the current setlist song from the filtered array to access customKey
+  // This ensures currentIndex correctly maps to the song data
+  const currentSetlistSong = validSongsWithArrangements[currentIndex]?.song;
 
-  // Sync URL with current index
+  // Determine the effective key: temp override > persisted customKey > arrangement default
+  const effectiveCustomKey = useMemo(() => {
+    if (!currentSetlistSong) return currentArrangement?.key;
+    // Check for temporary key override first (from URL params)
+    const tempKey = tempKeyOverrides.get(currentSetlistSong.arrangementId);
+    if (tempKey) return tempKey;
+    // Fall back to persisted customKey or arrangement default
+    return currentSetlistSong.customKey || currentArrangement?.key;
+  }, [currentSetlistSong, tempKeyOverrides, currentArrangement?.key]);
+
+  // Sync URL with current index (preserve query params like tempKeys)
   useEffect(() => {
     if (setlistId) {
-      navigate(`/setlist/${setlistId}/performance/${currentIndex}`, { replace: true });
+      const search = searchParams.toString();
+      const url = `/setlist/${setlistId}/performance/${currentIndex}${search ? `?${search}` : ''}`;
+      navigate(url, { replace: true });
     }
-  }, [currentIndex, setlistId, navigate]);
+  }, [currentIndex, setlistId, navigate, searchParams]);
 
   if (loading) return <PageSpinner message="Loading performance mode..." />;
   if (error || !setlist) {
@@ -106,17 +152,18 @@ export function SetlistPerformancePage() {
         canGoNext={currentIndex < arrangementArray.length - 1}
         onPrevious={previousArrangement}
         onNext={nextArrangement}
-        onExit={() => navigate(`/setlist/${setlistId}`)}
+        onExit={() => navigate(exitUrl)}
       >
         {currentArrangement && (
           <ChordProViewer
             content={currentArrangement.chordProContent}
             arrangementMetadata={{
-              key: currentSetlistSong?.customKey || currentArrangement.key,
+              key: effectiveCustomKey ?? currentArrangement.key ?? '',
               tempo: currentArrangement.tempo,
               capo: currentArrangement.capo,
               timeSignature: currentArrangement.timeSignature
             }}
+            originalArrangementKey={currentArrangement.key}
             showChords={true}
             showToggle={false}
             showTranspose={false}

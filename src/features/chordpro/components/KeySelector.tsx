@@ -12,7 +12,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Key grid layout: [flat, natural, sharp] for each row
@@ -34,9 +33,10 @@ interface KeySelectorProps {
   className?: string;
   disabled?: boolean;
   size?: 'default' | 'sm' | 'lg' | 'icon';
-  originalKey?: string | null; // Not displayed in minimal design
+  originalKey?: string | null; // Displayed at top of popover when different from value
   includeMinorKeys?: boolean;
   id?: string;
+  lockMode?: boolean; // When true, disables switching between major/minor (locks to current mode)
 }
 
 interface ModeToggleProps {
@@ -141,8 +141,10 @@ export default function KeySelector({
   className,
   disabled = false,
   size = 'default',
+  originalKey,
   includeMinorKeys = true,
   id,
+  lockMode = false,
 }: KeySelectorProps) {
   const [open, setOpen] = useState(false)
 
@@ -200,7 +202,6 @@ export default function KeySelector({
           id={id}
         >
           <span className="text-base font-medium">{value}</span>
-          <ChevronDown className="h-4 w-4 ml-2" />
         </Button>
       </PopoverTrigger>
 
@@ -209,7 +210,13 @@ export default function KeySelector({
         className="w-auto p-2"
         sideOffset={8}
       >
-        {includeMinorKeys && (
+        {originalKey && originalKey !== value && (
+          <div className="text-xs text-muted-foreground mb-2 text-center">
+            Original: <span className="font-medium">{originalKey}</span>
+          </div>
+        )}
+
+        {includeMinorKeys && !lockMode && (
           <ModeToggle
             mode={mode}
             onChange={handleModeChange}

@@ -38,21 +38,16 @@ export function useDragReorder(sourceItems: SetlistSong[]): UseDragReorderReturn
   // Track the latest source items to detect when Convex has synced
   const lastSourceRef = useRef<SetlistSong[]>(sourceItems);
 
-  // Check if source items have been updated (Convex synced)
-  // If so, clear temp state since we have fresh data
-  // Using useEffect to avoid state updates during render
+  // Clear temp state whenever source data changes from Convex
+  // This ensures Convex reactivity is the source of truth for all changes
+  // (reorder, key changes, etc.) rather than holding potentially stale temp state
   useEffect(() => {
-    if (
-      tempItems !== null &&
-      sourceItems !== lastSourceRef.current &&
-      arraysMatch(sourceItems, tempItems)
-    ) {
-      // Source now matches our temp state - Convex has synced
+    if (sourceItems !== lastSourceRef.current) {
       setTempItems(null);
       setIsReordering(false);
     }
     lastSourceRef.current = sourceItems;
-  }, [sourceItems, tempItems]);
+  }, [sourceItems]);
 
   const handleReorder = useCallback(
     async (
@@ -101,11 +96,3 @@ export function useDragReorder(sourceItems: SetlistSong[]): UseDragReorderReturn
   };
 }
 
-/**
- * Check if two arrays of SetlistSong have the same items in the same order
- * (comparing by id and order)
- */
-function arraysMatch(a: SetlistSong[], b: SetlistSong[]): boolean {
-  if (a.length !== b.length) return false;
-  return a.every((item, index) => item.id === b[index].id && item.order === b[index].order);
-}
