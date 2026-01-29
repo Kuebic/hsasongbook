@@ -15,6 +15,7 @@ import type * as crons from "../crons.js";
 import type * as email_ResendOTPEmailVerification from "../email/ResendOTPEmailVerification.js";
 import type * as email_ResendOTPPasswordReset from "../email/ResendOTPPasswordReset.js";
 import type * as favorites from "../favorites.js";
+import type * as feedback from "../feedback.js";
 import type * as files from "../files.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   "email/ResendOTPEmailVerification": typeof email_ResendOTPEmailVerification;
   "email/ResendOTPPasswordReset": typeof email_ResendOTPPasswordReset;
   favorites: typeof favorites;
+  feedback: typeof feedback;
   files: typeof files;
   groups: typeof groups;
   http: typeof http;

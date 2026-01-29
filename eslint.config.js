@@ -7,7 +7,7 @@ import tseslint from '@typescript-eslint/eslint-plugin'
 import tsparser from '@typescript-eslint/parser'
 
 export default [
-  { ignores: ['dist', 'dev-dist', 'src/components/ui/**', 'convex/*.config.ts'] },
+  { ignores: ['dist', 'dev-dist', 'src/components/ui/**', 'convex/**'] },
   // JavaScript files configuration
   {
     files: ['**/*.{js,jsx}'],

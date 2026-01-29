@@ -304,6 +304,31 @@ export const markChordProTutorialSeen = mutation({
   },
 });
 
+/**
+ * Record user's acceptance of Terms of Service and Privacy Policy
+ * Access: Authenticated users only
+ * Called during signup flow after email verification
+ */
+export const recordConsent = mutation({
+  args: {
+    termsVersion: v.string(),
+    privacyVersion: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(ctx);
+    const now = Date.now();
+
+    await ctx.db.patch(userId, {
+      termsAcceptedAt: now,
+      privacyAcceptedAt: now,
+      termsVersion: args.termsVersion,
+      privacyVersion: args.privacyVersion,
+    });
+
+    return { success: true };
+  },
+});
+
 // ============ INTERNAL MUTATIONS ============
 
 /**

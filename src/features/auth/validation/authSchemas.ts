@@ -61,6 +61,11 @@ export const signUpSchema = z
     email: emailSchema,
     password: passwordSchema,
     confirmPassword: z.string(),
+    acceptedTerms: z.literal(true, {
+      errorMap: () => ({
+        message: 'You must accept the Terms of Use and Privacy Policy',
+      }),
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',

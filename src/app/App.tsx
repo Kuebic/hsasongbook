@@ -13,6 +13,7 @@ import SignInPage from '../features/auth/pages/SignInPage'
 import SignUpPage from '../features/auth/pages/SignUpPage'
 import ForgotPasswordPage from '../features/auth/pages/ForgotPasswordPage'
 import VerifyEmailPage from '../features/auth/pages/VerifyEmailPage'
+import { PrivacyPolicyPage, TermsOfServicePage } from '../features/legal'
 import { NotFound } from '../features/shared/pages/NotFound'
 import ScrollRestoration from '../features/shared/components/ScrollRestoration'
 import MobileNav from '../features/shared/components/MobileNav'
@@ -140,6 +141,9 @@ function AppWithFeatures() {
           <Route path="/auth/signup" element={<SignUpPage />} />
           <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+          {/* Legal routes */}
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

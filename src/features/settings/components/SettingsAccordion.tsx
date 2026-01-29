@@ -15,10 +15,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Palette, User, Info } from "lucide-react";
+import { Palette, User, Info, MessageSquare } from "lucide-react";
 import { AppearanceSettingsContent } from "@/features/appearance/components/AppearanceSettings";
 import { AboutSectionContent } from "./AboutSection";
 import { AccountSectionContent } from "./AccountSection";
+import { FeedbackSectionContent } from "@/features/feedback";
 
 interface SettingsAccordionProps {
   /** Whether user is authenticated (affects which sections show full content) */
@@ -68,6 +69,19 @@ export function SettingsAccordion({ isAuthenticated }: SettingsAccordionProps) {
         </AccordionTrigger>
         <AccordionContent className="pt-4">
           <AboutSectionContent />
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* Feedback & Support Section */}
+      <AccordionItem value="feedback">
+        <AccordionTrigger className="text-base font-semibold hover:no-underline bg-muted/50 px-3 rounded-md -mx-3">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <span>Feedback & Support</span>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="pt-4">
+          <FeedbackSectionContent />
         </AccordionContent>
       </AccordionItem>
     </Accordion>

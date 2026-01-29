@@ -15,7 +15,7 @@
  * Pattern from: PRPs/phase5-authentication-flow-prd.md
  */
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useEffect, useCallback } from 'react';
 import { z } from 'zod';
@@ -23,12 +23,14 @@ import { useQuery, useMutation } from 'convex/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuthActions } from '../hooks/useAuth';
 import { signUpSchema } from '../validation/authSchemas';
 import { AlertCircle, Check, X, Loader2 } from 'lucide-react';
 import { api } from '../../../../convex/_generated/api';
 import { useDebounce } from '@/features/shared/hooks/useDebounce';
 import { extractErrorMessage } from '@/lib/utils';
+import { TERMS_VERSION, PRIVACY_POLICY_VERSION } from '@/features/legal';
 
 // Infer TypeScript type from Zod schema
 type SignUpFormData = z.infer<typeof signUpSchema>;
@@ -77,6 +79,7 @@ export default function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -115,10 +118,13 @@ export default function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
       setIsSubmitting(true);
       setSubmitError(null);
 
-      // Store username and email in localStorage for after verification
+      // Store username, email, and consent versions in localStorage for after verification
       // Username will be set by AuthProvider after verification completes
+      // Consent will be recorded by AuthProvider after verification completes
       localStorage.setItem('pendingUsername', data.username);
       localStorage.setItem('pendingVerificationEmail', data.email);
+      localStorage.setItem('pendingTermsVersion', TERMS_VERSION);
+      localStorage.setItem('pendingPrivacyVersion', PRIVACY_POLICY_VERSION);
 
       // Create auth account - this triggers the verification email
       await signUp(data.email, data.password);
@@ -259,6 +265,58 @@ export default function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
           </p>
         )}
       </div>
+
+      {/* Terms acceptance checkbox */}
+      <Controller
+        name="acceptedTerms"
+        control={control}
+        render={({ field }) => (
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="acceptedTerms"
+              disabled={isSubmitting}
+              checked={field.value === true}
+              onCheckedChange={field.onChange}
+              aria-describedby={
+                errors.acceptedTerms ? 'terms-error' : undefined
+              }
+              className="mt-0.5"
+            />
+            <div className="grid gap-1.5 leading-none">
+              <label
+                htmlFor="acceptedTerms"
+                className="text-sm leading-relaxed cursor-pointer"
+              >
+                I agree to the{' '}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Terms of Use
+                </a>{' '}
+                and{' '}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Privacy Policy
+                </a>
+              </label>
+              {errors.acceptedTerms && (
+                <p id="terms-error" className="text-sm text-destructive">
+                  {errors.acceptedTerms.message}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      />
 
       {/* Submit button */}
       <Button type="submit" className="w-full" disabled={isSubmitting}>

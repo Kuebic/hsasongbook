@@ -23,6 +23,11 @@ export default defineSchema({
     // Onboarding fields
     onboardingCompleted: v.optional(v.boolean()), // Welcome modal dismissed
     hasSeenChordProTutorial: v.optional(v.boolean()), // ChordPro tutorial seen
+    // Legal consent tracking
+    termsAcceptedAt: v.optional(v.number()), // Unix timestamp when ToS was accepted
+    privacyAcceptedAt: v.optional(v.number()), // Unix timestamp when privacy policy was accepted
+    termsVersion: v.optional(v.string()), // Version string, e.g., "2025-01-29"
+    privacyVersion: v.optional(v.string()), // Version string, e.g., "2025-01-29"
   })
     .index("email", ["email"])
     .index("by_username", ["username"])

@@ -25,6 +25,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Fetch actual user data from Convex
   const convexUser = useQuery(api.users.currentUser);
   const setUsernameMutation = useMutation(api.users.setUsername);
+  const recordConsentMutation = useMutation(api.users.recordConsent);
   const pendingUsernameProcessed = useRef(false);
 
   // Auto sign-in anonymously on first load if not authenticated
@@ -43,9 +44,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initAnonymous();
   }, [isLoading, isAuthenticated, signIn]);
 
-  // Handle pending username from signup (set after page reload)
+  // Handle pending username and consent from signup (set after email verification)
   useEffect(() => {
-    const setPendingUsername = async () => {
+    const processPendingSignup = async () => {
       // Only run once per mount, when user is loaded and authenticated
       if (pendingUsernameProcessed.current) return;
       if (!convexUser) return;
@@ -56,19 +57,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!pendingUsername) return;
 
       pendingUsernameProcessed.current = true;
+
+      // Get consent versions from localStorage
+      const pendingTermsVersion = localStorage.getItem('pendingTermsVersion');
+      const pendingPrivacyVersion = localStorage.getItem('pendingPrivacyVersion');
+
+      // Clear localStorage items
       localStorage.removeItem('pendingUsername');
+      localStorage.removeItem('pendingTermsVersion');
+      localStorage.removeItem('pendingPrivacyVersion');
+      localStorage.removeItem('pendingVerificationEmail');
 
       try {
+        // Set username
         await setUsernameMutation({ username: pendingUsername });
         logger.info('Set pending username after signup:', pendingUsername);
+
+        // Record consent if we have the versions
+        if (pendingTermsVersion && pendingPrivacyVersion) {
+          await recordConsentMutation({
+            termsVersion: pendingTermsVersion,
+            privacyVersion: pendingPrivacyVersion,
+          });
+          logger.info('Recorded consent after signup');
+        }
       } catch (err) {
-        logger.error('Failed to set pending username:', err);
-        // User can set it manually from profile page
+        logger.error('Failed to complete signup process:', err);
+        // User can set username manually from profile page
       }
     };
 
-    setPendingUsername();
-  }, [convexUser, setUsernameMutation]);
+    processPendingSignup();
+  }, [convexUser, setUsernameMutation, recordConsentMutation]);
 
   // Map Convex user to existing User type
   const user: User | null = useMemo(() => {
