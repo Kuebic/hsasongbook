@@ -10,6 +10,7 @@
  */
 
 import { useQuery } from 'convex/react';
+import { Link } from 'react-router-dom';
 import { api } from '../../../../convex/_generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -46,6 +47,14 @@ export function AboutSectionContent() {
       <div>
         <p className="text-muted-foreground">Version</p>
         <p className="text-lg font-semibold">0.1.0</p>
+      </div>
+      <div className="col-span-2 sm:col-span-4 pt-2 flex gap-4">
+        <Link to="/terms" className="text-muted-foreground hover:underline">
+          Terms of Service
+        </Link>
+        <Link to="/privacy" className="text-muted-foreground hover:underline">
+          Privacy Policy
+        </Link>
       </div>
     </div>
   );
