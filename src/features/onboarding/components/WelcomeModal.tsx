@@ -38,17 +38,11 @@ export default function WelcomeModal({ open, onOpenChange }: WelcomeModalProps) 
     try {
       await requestJoin(communityGroup._id);
       setJoinedCommunity(true);
-      // Close modal after a brief moment to show success
-      setTimeout(() => {
-        onOpenChange(false);
-      }, 1000);
+      // Keep modal open so user can browse groups if they want
     } catch (error) {
       // Error is handled by the hook, but we might already be a member
       if (error instanceof Error && error.message.includes('Already a member')) {
         setJoinedCommunity(true);
-        setTimeout(() => {
-          onOpenChange(false);
-        }, 1000);
       }
     }
   };
