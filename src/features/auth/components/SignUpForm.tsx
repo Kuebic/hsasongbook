@@ -115,20 +115,16 @@ export default function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
       setIsSubmitting(true);
       setSubmitError(null);
 
-      // Store username in localStorage to be set after page reload
-      // This avoids the race condition where setUsername runs while still
-      // authenticated as the anonymous user instead of the new user
+      // Store username and email in localStorage for after verification
+      // Username will be set by AuthProvider after verification completes
       localStorage.setItem('pendingUsername', data.username);
+      localStorage.setItem('pendingVerificationEmail', data.email);
 
-      // Create auth account
+      // Create auth account - this triggers the verification email
       await signUp(data.email, data.password);
 
-      // Workaround for Convex Auth state race condition:
-      // useConvexAuth() doesn't update reliably after signUp resolves.
-      // See POST_MVP_ROADMAP.md "Convex Auth Sign-in State Race Condition"
-      // Navigate to home instead of reload to avoid service worker offline fallback on mobile
-      // The username will be set by AuthProvider after navigation
-      window.location.href = '/';
+      // Redirect to email verification page
+      window.location.href = '/auth/verify-email';
     } catch (error) {
       // Clear pending username on error
       localStorage.removeItem('pendingUsername');

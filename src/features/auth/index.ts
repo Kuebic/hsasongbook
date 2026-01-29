@@ -25,11 +25,13 @@ export { default as SignInModal } from './components/SignInModal';
 export { default as UserDropdown } from './components/UserDropdown';
 export { default as ProfilePictureUpload } from './components/ProfilePictureUpload';
 export { default as ForgotPasswordForm } from './components/ForgotPasswordForm';
+export { default as EmailVerificationForm } from './components/EmailVerificationForm';
 
 // Pages
 export { default as SignInPage } from './pages/SignInPage';
 export { default as SignUpPage } from './pages/SignUpPage';
 export { default as ForgotPasswordPage } from './pages/ForgotPasswordPage';
+export { default as VerifyEmailPage } from './pages/VerifyEmailPage';
 
 // Context (rarely needed directly, use hooks instead)
 export { AuthProvider } from './context/AuthProvider';
