@@ -278,6 +278,32 @@ export const updateRecentlyViewedVisibility = mutation({
   },
 });
 
+/**
+ * Mark welcome onboarding as completed
+ * Access: Authenticated users only
+ */
+export const completeOnboarding = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const { userId } = await requireAuthenticatedUser(ctx);
+    await ctx.db.patch(userId, { onboardingCompleted: true });
+    return { success: true };
+  },
+});
+
+/**
+ * Mark ChordPro tutorial as seen
+ * Access: Authenticated users only
+ */
+export const markChordProTutorialSeen = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const { userId } = await requireAuthenticatedUser(ctx);
+    await ctx.db.patch(userId, { hasSeenChordProTutorial: true });
+    return { success: true };
+  },
+});
+
 // ============ INTERNAL MUTATIONS ============
 
 /**

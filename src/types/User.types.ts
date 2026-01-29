@@ -17,6 +17,9 @@ export interface User {
   isAnonymous: boolean;                // True for anonymous users
   createdAt: string;                   // ISO timestamp
   lastSignInAt?: string;               // ISO timestamp (last sign-in time)
+  // Onboarding fields
+  onboardingCompleted?: boolean;       // Welcome modal dismissed
+  hasSeenChordProTutorial?: boolean;   // ChordPro tutorial seen
 }
 
 /**

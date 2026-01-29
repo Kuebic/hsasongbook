@@ -45,6 +45,9 @@ import { AudioPlayerProvider, GlobalAudioPlayer } from '../features/audio'
 import { usePWA, UpdateNotification, OfflineIndicator } from '../features/pwa'
 import { initDatabase } from '../features/pwa/db/database'
 
+// Onboarding imports
+import { WelcomeModal, useOnboardingState } from '../features/onboarding'
+
 import '../App.css'
 
 // Initialize Convex client
@@ -83,6 +86,9 @@ function AppWithFeatures() {
 
   // Initialize PWA features
   const { needRefresh, updateServiceWorker } = usePWA()
+
+  // Onboarding state
+  const { shouldShowWelcome, completeOnboarding } = useOnboardingState()
 
   // Initialize IndexedDB for local drafts storage only
   // (Songs and arrangements are now stored in Convex)
@@ -154,6 +160,16 @@ function AppWithFeatures() {
 
       {/* Toast notifications */}
       <Toaster />
+
+      {/* Welcome onboarding modal for new authenticated users */}
+      <WelcomeModal
+        open={shouldShowWelcome}
+        onOpenChange={(open) => {
+          if (!open) {
+            completeOnboarding();
+          }
+        }}
+      />
     </div>
   )
 }

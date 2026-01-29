@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import logger from '@/lib/logger'
 import { ArrangementMetadata } from '@/types/Arrangement.types'
 import type { TranspositionState } from '../types'
+import { useChordProTutorial, ChordProHelpButton } from '@/features/onboarding'
 
 // Import CSS styles
 import '../styles/chordpro.css'
@@ -138,6 +139,14 @@ export default function ChordProViewer({
   const isControlled = editMode !== undefined
   const [internalEditMode, setInternalEditMode] = useState(initialEditMode)
   const isEditMode = isControlled ? editMode : internalEditMode
+
+  // ChordPro tutorial state (only used when editable)
+  const {
+    isPopoverOpen: isTutorialOpen,
+    setIsPopoverOpen: setIsTutorialOpen,
+    triggerOnFirstEdit,
+    closeTutorial,
+  } = useChordProTutorial()
 
   // Lazy import editor components when needed
   const [EditorComponent, setEditorComponent] = useState<ComponentType<unknown> | null>(null)
@@ -354,6 +363,11 @@ export default function ChordProViewer({
   const handleEditModeToggle = (): void => {
     const newEditMode = !isEditMode
 
+    // Trigger tutorial on first edit (entering edit mode)
+    if (newEditMode) {
+      triggerOnFirstEdit()
+    }
+
     if (isControlled) {
       // Controlled mode: notify parent
       onEditModeChange?.(newEditMode)
@@ -445,15 +459,22 @@ export default function ChordProViewer({
                 </div>
                 <div className="flex gap-2 items-center">
                   {editable && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleEditModeToggle}
-                      className="text-xs"
-                    >
-                      <Edit3 className="h-3 w-3 mr-1" />
-                      Edit Chords
-                    </Button>
+                    <>
+                      <ChordProHelpButton
+                        isPopoverOpen={isTutorialOpen}
+                        onPopoverOpenChange={setIsTutorialOpen}
+                        onGotIt={() => closeTutorial(true)}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleEditModeToggle}
+                        className="text-xs"
+                      >
+                        <Edit3 className="h-3 w-3 mr-1" />
+                        Edit Chords
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>

@@ -20,6 +20,9 @@ export default defineSchema({
     avatarKey: v.optional(v.string()), // R2 object key for profile picture
     showRealName: v.optional(v.boolean()), // Toggle to show displayName instead of username
     showRecentlyViewed: v.optional(v.boolean()), // Toggle to make recently viewed public (defaults to false/private)
+    // Onboarding fields
+    onboardingCompleted: v.optional(v.boolean()), // Welcome modal dismissed
+    hasSeenChordProTutorial: v.optional(v.boolean()), // ChordPro tutorial seen
   })
     .index("email", ["email"])
     .index("by_username", ["username"])

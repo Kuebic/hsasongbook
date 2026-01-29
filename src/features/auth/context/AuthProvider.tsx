@@ -89,6 +89,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       showRecentlyViewed: convexUser.showRecentlyViewed,
       isAnonymous: !hasEmail,
       createdAt: new Date(convexUser._creationTime).toISOString(),
+      // Onboarding fields
+      onboardingCompleted: convexUser.onboardingCompleted,
+      hasSeenChordProTutorial: convexUser.hasSeenChordProTutorial,
     };
   }, [isAuthenticated, convexUser]);
 
