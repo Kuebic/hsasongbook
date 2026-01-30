@@ -1,388 +1,125 @@
 # HSA Songbook - Post-MVP Roadmap
 
-**Last Updated**: 2026-01-28
+**Last Updated**: 2026-01-30
 
-Features and improvements planned after MVP, organized by priority and effort.
-
----
-
-## Recently Completed (Jan 26-27, 2026)
-
-### Major Feature Releases
-
-**Phase 7: Audio & Media Features** ✅
-- MP3 upload and playback (10 MB max, stored in R2)
-- YouTube video embedding with thumbnail preview
-- Global audio player with persistent mini-player across navigation
-- Audio source toggle (MP3 vs YouTube)
-- Automatic file cleanup
-
-**Phase 8: Theme & Appearance Customization** ✅
-- 5 preset color themes (Earth-tones, Ocean, Forest, Sunset, Classic)
-- Custom color mixing (20+ curated colors for primary/accent)
-- App-wide font selection and size scaling
-- Chord-specific styling (font, size, weight, color, highlighting)
-- Live preview with accordion-style settings page
-- Cross-device sync via Convex
-
-**Phase 9: Discovery-Oriented Homepage** ✅
-- Hero section with prominent search
-- Recently viewed tracking and display
-- Browse by theme, origin, and style sections
-- Favorites quick access
-- Recently added content section
-- Horizontal scroll sections for discovery
-
-**Phase 10: Setlist Enhancements** ✅
-- Custom keys per setlist entry
-- Quick add to setlist dialog with fuzzy search
-- Public/unlisted/private setlist privacy levels
-- Setlist sharing with view/edit permissions
-- Browse public setlists page with search and filters
-- Setlist favorites system
-- Duplicate setlists with attribution tracking
-- Performance mode with fullscreen, swipe navigation, keyboard controls
-
-**Song Enhancements** ✅
-- Notes field for songs (performance tips, spiritual themes)
-- Bible verses attachment (reference, text, version)
-- Quotes attachment (text, source, reference)
-- Ownership transfer to/from groups
-
-### Database Schema Additions
-```typescript
-// New tables
-userAppearancePreferences  // User theme/font preferences
-userViews                  // Recently viewed tracking
-
-// New fields on arrangements
-audioFileKey: v.optional(v.string())    // R2 MP3 file
-youtubeUrl: v.optional(v.string())      // YouTube video URL
-
-// New fields on setlist songs
-customKey: v.optional(v.string())       // Per-song key override
-
-// New setlist fields
-privacyLevel: v.optional(v.union("private", "unlisted", "public"))
-tags: v.optional(v.array(v.string()))
-duplicatedFrom: v.optional(v.id("setlists"))
-favorites: v.optional(v.number())
-
-// New tables
-setlistShares                          // Sharing relationships
-
-// New song fields
-notes: v.optional(v.string())          // Performance/spiritual notes
-bibleVerses: v.optional(v.array(...))  // Scripture references
-quotes: v.optional(v.array(...))       // Spiritual quotes
-```
+Remaining features and improvements after MVP launch, organized by priority.
 
 ---
 
-## Priority 1: Critical Bugs
+## Priority 1: Pre-Launch Fixes (Editor UX)
 
-Issues significantly impacting user experience.
+Issues blocking soft launch - must fix before sharing with users.
 
-| Issue | Description | Effort | Status |
-|-------|-------------|--------|--------|
-| ~~**Mobile preview pane broken**~~ | ~~Preview pane doesn't work when editing chords on mobile~~ | ~~Medium~~ | ✅ Fixed |
-| ~~**Fullscreen exit broken**~~ | ~~ESC exits browser fullscreen but not editor fullscreen mode~~ | ~~Low~~ | ✅ Fixed |
-| ~~**Avatar not loading**~~ | ~~"Added by (username)" shows default avatar, not user's actual avatar~~ | ~~Low~~ | ✅ Fixed |
-| ~~**Duplicate UI elements**~~ | ~~"Available Arrangements" shows twice; song title appears twice on arrangement view~~ | ~~Low~~ | ✅ Fixed |
-| ~~**Printing broken**~~ | ~~Print functionality needs fixing~~ | ~~Medium~~ | ✅ Fixed |
-
-### Auth State Issue (Workaround Applied)
-
-**Problem**: Sign-in form stays on "Authenticating..." requiring page refresh.
-
-**Workaround**: `window.location.href = '/'` after sign-in (navigates instead of reload to avoid service worker issues).
-
-**References**: [GitHub #259](https://github.com/get-convex/convex-backend/issues/259), [GitHub #92](https://github.com/get-convex/convex-auth/issues/92)
-
-### PWA SPA Route Refresh Issue (Fixed)
-
-**Problem**: Refreshing on sub-routes (`/profile`, `/groups`, etc.) showed "you're offline" page in production.
-
-**Root Cause**: Service worker `navigateFallback` was set to `/offline.html`. For SPAs, client-side routes aren't cached individually—they need to fall back to `index.html` so React Router can handle routing.
-
-**Fix**: Changed `navigateFallback: '/offline.html'` → `navigateFallback: '/index.html'` in `vite.config.ts`. The app handles offline state via `useOnlineStatus` hook instead.
-
-**References**: [vite-pwa docs](https://vite-pwa-org.netlify.app/guide/development), [GitHub #653](https://github.com/vite-pwa/vite-plugin-pwa/issues/653)
+| Issue | Description | Effort |
+|-------|-------------|--------|
+| **Cursor jumping on highlight** | When bracket highlighting disappears, cursor position shifts 3-4 spaces. Happens on both mobile and desktop. Related to CodeMirror state sync. | Medium |
+| **Debounce syntax errors** | Don't show "unclosed bracket" errors while user is mid-keystroke. Add ~500ms debounce before displaying parse errors. | Low |
+| **Navigate to editor after create** | "Add Arrangement" dialog should open chord editor immediately, not the arrangement view page. | Low |
+| **Copy ChordPro button** | Add "Copy to clipboard" for ChordPro content. Anyone can copy for Planning Center use (community spirit). | Low |
 
 ---
 
-## Priority 2: Core Missing Features
+## Priority 2: Arrangement & Song Editing Gaps
 
-Features users will expect that aren't blocking MVP.
-
-### Content Management
-
-| Feature | Description | Effort | Status |
-|---------|-------------|--------|--------|
-| ~~**Edit arrangement name**~~ | ~~Owner should be able to rename (URL uses ID, won't break)~~ | ~~Low~~ | ✅ Done |
-| ~~**Delete own arrangements**~~ | ~~Allow users to delete their arrangements~~ | ~~Low~~ | ✅ Done |
-| ~~**Duplicate arrangements**~~ | ~~Copy another user's arrangement to customize~~ | ~~Medium~~ | ✅ Done |
-| ~~**Edit song details**~~ | ~~Edit title, artist, themes, lyrics (by creator or community)~~ | ~~Medium~~ | ✅ Done |
-
-### Navigation & Discovery
-
-| Feature | Description | Effort | Status |
-|---------|-------------|--------|--------|
-| ~~**Browse songs on homepage**~~ | ~~Currently only arrangements; need song browsing with filters~~ | ~~Medium~~ | ✅ Done |
-| ~~**Remove arrangement switcher**~~ | ~~Top-right dropdown and bottom quick-nav buttons removed~~ | ~~Low~~ | ✅ Done |
-| ~~**Filter by "my arrangements"**~~ | ~~On song page, "Only mine" toggle filters to your arrangements~~ | ~~Low~~ | ✅ Done |
-| ~~**"My Arrangements" on profile**~~ | ~~Profile page now shows arrangements you created or collaborate on~~ | ~~Low~~ | ✅ Done |
-
-### Collaborator Awareness
-
-| Feature | Description | Effort | Status |
-|---------|-------------|--------|--------|
-| **Collaborator notifications** | Users have no way of knowing when added as collaborator | Medium | |
-
----
-
-## Priority 3: User Onboarding
-
-### First-Time User Welcome
-
-New users don't understand the community nature of the app.
-
-**Solution**: Welcome modal explaining:
-- This is a community songbook, not private
-- All songs/arrangements are public
-- Options to allow community editing
-- How to join "Community" group for collaborative editing
-- Also mention about ChordPro and how it's useful when appropriate
-
-**Effort**: Medium
-
----
-
-## Priority 4: Theme & Display Customization ✅ COMPLETE
-
-| Feature | Description | Effort | Status |
-|---------|-------------|--------|--------|
-| ~~**Earth-tone color palette**~~ | ~~Warm earthy tones (sage green, terracotta) replacing default shadcn colors~~ | ~~Medium~~ | ✅ Done |
-| ~~**Theme color switcher**~~ | ~~Allow users to choose from preset color themes (earthy, ocean, forest, sunset, etc.)~~ | ~~Medium~~ | ✅ Done |
-| ~~**Font customization**~~ | ~~Allow users to choose fonts for chord sheets (serif, sans-serif, monospace options)~~ | ~~Medium~~ | ✅ Done |
-| ~~**Font size preference**~~ | ~~Global font size preference for chord sheets (small, medium, large)~~ | ~~Low~~ | ✅ Done |
-| ~~**Chord-specific styling**~~ | ~~Chord font family, size, weight, color, and highlight customization~~ | ~~Medium~~ | ✅ Done |
-
-### Implementation Complete
-
-**Implemented Color Themes:**
-- ✅ **Earth-tones** (default): Sage green primary, terracotta accent, warm backgrounds
-- ✅ **Ocean**: Deep blue primary, coral accent, cool gray backgrounds
-- ✅ **Forest**: Deep green primary, amber accent, natural tones
-- ✅ **Sunset**: Warm orange primary, purple accent, gradient-inspired
-- ✅ **Classic**: Traditional blue/gray theme (similar to original shadcn)
-- ✅ **Custom Mix**: Users can select any primary + accent color combination from 20+ curated colors
-
-**Implementation Details:**
-- ✅ Stored in `userAppearancePreferences` Convex table, synced across devices
-- ✅ CSS custom properties applied at app root for live theming
-- ✅ `src/features/appearance/presets/colorPresets.ts` - Theme definitions
-- ✅ `src/features/appearance/presets/fontPresets.ts` - Font definitions
-- ✅ Appearance settings in Settings page with accordion layout
-- ✅ Live preview component showing changes in real-time
-
-**Font Customization Implemented:**
-- ✅ **App-wide fonts**: System, Inter, Lora, and more
-- ✅ **Global font size**: Scaling from 0.85x to 1.25x
-- ✅ **Chord-specific fonts**: Inherit, monospace options
-- ✅ **Chord font size**: Independent scaling from 0.8x to 1.4x
-- ✅ **Chord font weight**: Normal, medium, bold options
-- ✅ **Chord color**: Custom color selection from palette
-- ✅ **Chord highlight**: Toggle background highlighting for chords
-- ✅ Stored per-user, synced via Convex
-- ✅ Applied via CSS variables dynamically
-
----
-
-## Priority 5: Editor Improvements
+Missing metadata fields and edit capabilities.
 
 | Feature | Description | Effort |
 |---------|-------------|--------|
-| **Debounce error alerts** | Don't show syntax errors mid-typing (e.g., unclosed `[]`) | Low |
-| **Clarify save/undo buttons** | Improve save button behavior; verify undo/redo works | Low |
-| ~~**Chord progression parsing**~~ | ~~Recognize `[D / / / \| A/C# / / / \|]` as transposable chords~~ | ~~High~~ | ✅ Done |
-| **Formatting customization** | Add formatting customization abilities | Medium |
+| **Editable "Arranged By"** | User/group picker for arrangement attribution (like song ownership transfer). Currently no way to credit the arranger. | Medium |
+| **Arrangement notes field** | Public notes field shown on arrangement page (e.g., "Source: tparents resource", "Based on Hillsong version"). | Low |
+| **Edit tags after creation** | Tags, instrument, energy, style not editable post-creation. Add these to the arrangement edit dialog. | Medium |
+| **Discoverable audio upload** | Audio/YouTube section not obvious in edit UI. Consider moving out of accordion or adding visual indicator. | Low |
+| **BPM tapper** | Tap-to-set BPM button for convenience when setting tempo. | Low |
+| **Link duplicated arrangements** | Show "Duplicated from [original]" attribution like setlists already do. Track `duplicatedFrom` field. | Low |
+| **Artist autocomplete in edit** | Verify ArtistInput component works in SongEditForm (exists in AddSongForm). | Low |
 
 ---
 
-## Priority 6: Key Selection UX
+## Priority 3: Search & Discovery
+
+Enhancements to help users find content.
+
+| Feature | Description | Effort |
+|---------|-------------|--------|
+| **Lyrics search** | Search by first few words of lyrics. Add lyrics to Fuse.js index (currently only title/artist/themes). | Medium |
+| **Exclude themes filter** | Filter OUT certain themes, not just include. "Show everything except 'new-era'". | Medium |
+| **Community songs filter** | Browse songs owned by Community group. Backend query exists, needs UI filter. | Low |
+| **Theme: add "grace"** | Add to THEME_SUGGESTIONS in tagConstants.ts | Low |
+| **Theme: add "providence"** | Add to THEME_SUGGESTIONS in tagConstants.ts | Low |
+| **Theme: rename "new-age" to "new-era"** | Rename in constants AND migrate all existing songs with this theme. | Low |
+| **Theme Enter behavior** | Pressing Enter should select the highlighted autocomplete suggestion, not add raw typed text. | Low |
+| **Origin: Korean Christian Hymn** | Add new origin category for Korean hymns (separate from Traditional Holy Songs). | Low |
+
+---
+
+## Priority 4: User Experience Polish
+
+Visual fixes, onboarding, and profile enhancements.
+
+### Visual Issues
+
+| Issue | Description | Effort |
+|-------|-------------|--------|
+| **Card text cutoff** | "Holy" shows with clipped "y" tail on search cards. Check line-height/overflow on card titles. | Low |
+| **Song vs arrangement cards** | Make visual distinction clearer, especially on smaller screens. Different card styling or clear labels. | Medium |
+| **Spiritual context collapse** | Spiritual notes should expand/collapse like lyrics section does. | Low |
+| **Settings link from arrangement** | Add link to appearance settings from arrangement view for chord styling customization. | Low |
+
+### User Profile
+
+| Feature | Description | Effort |
+|---------|-------------|--------|
+| **Avatar click to upload** | Clicking own profile pic on profile page should open upload dialog (currently only in Settings). | Low |
+| **Profile: bio field** | Add optional bio/about text to user profile. | Low |
+| **Profile: church location** | Add optional church/location field. | Low |
+| **Profile: social links** | Add optional social media links (Instagram, YouTube, etc.). | Medium |
+| **Account deletion** | Delete account with options: delete all content, mark as "deleted user", or keep community-owned content. Warn about duplicates losing links. | High |
+| **Ko-fi donations** | Add donations page/link somewhere accessible. | Low |
+
+### Onboarding & Clarity
+
+| Feature | Description | Effort |
+|---------|-------------|--------|
+| **First-time welcome modal** | Explain: community songbook (not private), all content public, community editing options, ChordPro format. | Medium |
+| **Set community ownership at creation** | Option to assign song to Community group when adding (not just transfer later). | Low |
+| **Clarify spiritual input** | Make it clearer that song owner can add spiritual notes, bible verses, quotes. | Low |
+| **Collaborator notifications** | Users have no way of knowing when added as collaborator. | Medium |
+
+---
+
+## Priority 5: Future Features
+
+Lower priority features for after launch stabilizes.
+
+| Feature | Description | Effort |
+|---------|-------------|--------|
+| **Comments with threads** | Threaded comments on songs and arrangements. New `comments` table, soft-delete, denormalized counts. Design decision needed: Reddit-style nesting vs GitHub-style flat with replies. | High |
+| **Google OAuth** | Social login via Google. Setup in Google Cloud Console, add provider to convex/auth.ts. | Medium |
+| **Apple OAuth** | Only if planning App Store release. $99/year, no localhost testing, secrets expire every 6 months. | High |
+| **Setlist notes per entry** | Add performance notes to individual songs within a setlist. | Low |
+| **Offline performance mode** | "Save for Offline" button, store in IndexedDB, read when offline. Critical for mid-performance reliability. | High |
+
+---
+
+## Technical Debt
+
+Code quality improvements - low priority, do when convenient.
 
 | Issue | Fix | Effort |
 |-------|-----|--------|
-| ~~**Key dropdown overflow**~~ | ~~"All keys" section gets cut off~~ | ~~Low~~ | ✅ Done |
-| ~~**Enharmonic handling**~~ | ~~Show both sharp/flat variants (C#/Db) or Planning Center-style picker~~ | ~~Medium~~ | ✅ Done |
+| **Duplicated type mappers** | Extract to `convex/mappers.ts` | Low |
+| **Convex ID type casting** | Type IDs upstream to reduce casts | Medium |
+| **No-op `reload()` functions** | Remove from hooks (Convex auto-syncs) | Low |
+| **Stubbed `updateSongKey`** | Remove or throw error | Low |
+| **Repeated creator joins** | Extract `attachCreatorInfo()` helper | Medium |
+| **Deleted arrangements in setlists** | Show "arrangement deleted" placeholder; add option to remove | Low |
+| **Form boilerplate** | Extract ~20 lines of useState/try-catch to `useFormHandler` hook | Medium |
+| **Magic numbers** | Slug length (30) and nanoid length (6) should be constants | Low |
+| **Possibly unused** | Verify if `chordsheetjs` dependency is actually used | Low |
 
----
+### Low-Priority N+1 Patterns
 
-## Priority 7: Search & Input
-
-| Feature | Description | Effort |
-|---------|-------------|--------|
-| **Song title autocomplete** | Suggest existing titles when adding songs | Medium |
-| **Tag chips with autocomplete** | Replace comma text with chip UI; enforce lowercase, hyphens | Medium |
-| **Server-side search** | Move filtering to Convex for scale | Medium |
-
----
-
-## Priority 8: User & Social Features
-
-| Feature | Description | Effort |
-|---------|-------------|--------|
-| ~~**Favorites**~~ | ~~Heart/favorite arrangements; show favorite count~~ | ~~Medium~~ | ✅ Done |
-| **Comments with threads** | Threaded comments on songs and arrangements. See details below. | High |
-
-### Comments Feature Details
-
-**Scope:** Allow authenticated users to discuss songs and arrangements via threaded comments.
-
-**What's needed:**
-- New `comments` table with `targetType` (song/arrangement), `targetId`, `parentCommentId` for threading
-- Permission helpers: author can edit/delete, content owner + moderators can delete
-- Soft-delete to preserve thread integrity (show "[deleted]" placeholder)
-- Denormalized `commentCount` on songs/arrangements for sorting by activity
-- New `src/features/comments/` module following existing patterns
-
-**Design decisions to make:**
-- Threading depth: Unlimited nesting (Reddit-style) vs flat with one reply level (GitHub-style)?
-- Notifications: How do users know someone replied to their comment?
-- Moderation: Community group admins can moderate all comments?
-
-**Builds on existing patterns:**
-- `userFavorites` table structure (`targetType` + `targetId` union pattern)
-- `permissions.ts` helpers (add `canDeleteComment()`)
-- `versions.ts` soft-delete/audit trail approach
-- Form + query/mutation hook patterns
-
----
-
-## Priority 9: OAuth Authentication
-
-### Google OAuth (Recommended First)
-
-**Effort**: Low-Medium
-
-**Setup**:
-1. Create project in [Google Cloud Console](https://console.cloud.google.com/)
-2. Configure OAuth consent screen
-3. Create credentials with redirect: `https://<deployment>.convex.site/api/auth/callback/google`
-
-```bash
-npx convex env set AUTH_GOOGLE_ID <client-id>
-npx convex env set AUTH_GOOGLE_SECRET <client-secret>
-```
-
-**Code** (`convex/auth.ts`):
-```typescript
-import Google from "@auth/core/providers/google";
-// Add Google to providers array
-```
-
-**Frontend**: `await signIn("google")`
-
-### Apple OAuth (Optional)
-
-**Effort**: High | **Cost**: $99/year | **Constraints**: No localhost testing, secret expires every 6 months
-
-Only implement if planning App Store release or significant iOS user base.
-
-**References**: [Convex Auth - OAuth](https://labs.convex.dev/auth/config/oauth)
-
----
-
-## Priority 10: Setlist Enhancements ✅ COMPLETE
-
-| Feature | Description | Effort | Status |
-|---------|-------------|--------|--------|
-| ~~**Custom key per entry**~~ | ~~Override arrangement key for specific songs~~ | ~~Medium~~ | ✅ Done |
-| ~~**Quick add to setlist**~~ | ~~Searchable dialog for adding arrangements to setlists~~ | ~~Medium~~ | ✅ Done |
-| ~~**Privacy levels**~~ | ~~Private/unlisted/public visibility settings~~ | ~~Medium~~ | ✅ Done |
-| ~~**Setlist sharing**~~ | ~~Share with users, view/edit permissions~~ | ~~Medium~~ | ✅ Done |
-| ~~**Browse public setlists**~~ | ~~Discover community setlists with search/filters~~ | ~~Medium~~ | ✅ Done |
-| ~~**Setlist favorites**~~ | ~~Heart setlists, favorites count~~ | ~~Medium~~ | ✅ Done |
-| ~~**Duplicate setlists**~~ | ~~Copy setlists with attribution~~ | ~~Low~~ | ✅ Done |
-| ~~**Performance mode**~~ | ~~Fullscreen with swipe/keyboard navigation~~ | ~~Medium~~ | ✅ Done |
-| **Notes per entry** | Add performance notes to individual songs | Low | |
-| **Offline caching** | "Download for Offline" for performance mode | High | |
-
-### Offline Performance Mode Architecture
-
-**Problem**: Convex queries fail offline. Unacceptable mid-performance.
-
-**Solution**:
-1. "Save for Offline" button on setlist page
-2. Store in IndexedDB (`offlineSetlists`)
-3. Read from IndexedDB when offline
-4. Show "Available Offline" badge
-
-**Rules**: Convex = source of truth, no offline editing, staleness indicator.
-
-**Existing code**: `src/features/pwa/db/database.ts`, `useOnlineStatus.ts`, `setlists.ts:getWithArrangements`
-
----
-
-## Priority 11: Technical Debt
-
-| Issue | Fix | Effort | Status |
-|-------|-----|--------|--------|
-| ~~**N+1 query in SongList**~~ | ~~Add `arrangements.getCountsBySong` query~~ | ~~Low~~ | ✅ Done |
-| ~~**N+1 queries in groups.ts list()**~~ | ~~Batch membership & member count queries~~ | ~~Medium~~ | ✅ Done |
-| ~~**Full table scan for Community group**~~ | ~~Add `isSystemGroup` index, use `.first()`~~ | ~~Low~~ | ✅ Done |
-| ~~**Browse queries fetch all data**~~ | ~~`listWithArrangementSummary` and `getPopular` in `convex/songs.ts` fetch all songs/arrangements into memory then filter. Add pagination, indexes, or denormalize arrangement counts.~~ | ~~High~~ | ✅ Done |
-| **Duplicated type mappers** | Extract to `convex/mappers.ts` | Low | |
-| **Convex ID type casting** | Type IDs upstream to reduce casts | Medium | |
-| **No-op `reload()` functions** | Remove from hooks (Convex auto-syncs) | Low | |
-| **Stubbed `updateSongKey`** | Remove or throw error | Low | |
-| **Repeated creator joins** | Extract `attachCreatorInfo()` helper | Medium | |
-| **Deleted arrangements in setlists** | Show "arrangement deleted" placeholder; add option to remove from setlist | Low | |
-
----
-
-## Effort Guide
-
-| Effort | Estimate | Examples |
-|--------|----------|----------|
-| **Low** | < 2 hours | Bug fixes, UI tweaks, dead code removal |
-| **Medium** | 2-8 hours | New components, simple features |
-| **High** | 1-3 days | Complex features, architecture changes |
-
----
-
-## Changelog
-
-| Date | Change |
-|------|--------|
-| 2026-01-28 | **Priority 10 complete**: Public setlists with privacy, sharing, favorites, browse page, duplication, performance mode |
-| 2026-01-28 | **Song enhancements**: Notes field, bible verses, quotes, ownership transfer |
-| 2026-01-27 | **Priority 10 updates**: Marked custom key per entry and quick add to setlist as complete |
-| 2026-01-27 | **Priority 4 complete**: Full theme customization system - 5 preset themes + custom color mixing, app-wide and chord-specific font controls, live preview |
-| 2026-01-27 | **Audio features complete**: MP3 uploads, YouTube videos, global audio player with mini-bar and full controls, Picture-in-Picture support |
-| 2026-01-27 | **Discovery homepage complete**: Recently viewed tracking, browse by theme/origin/style sections, hero section, horizontal scroll sections |
-| 2026-01-26 | **Audio references feature development**: MP3 uploads (10 MB max) and YouTube links on arrangements with floating mini-player |
-| 2026-01-26 | Added theme customization roadmap (Priority 4); implemented earth-tone color palette; added theme suggestions for songs; added origin field and filtering |
-| 2026-01-26 | Redesigned search/home page with hero section, browse-by-theme, and quick access bar |
-| 2026-01-26 | Implemented favorites system for arrangements |
-| 2026-01-24 | Removed arrangement switchers (dropdown + bottom nav); added "Only mine" filter on song pages; added "My Arrangements" section to profile page |
-| 2026-01-24 | Added arrangement management features: inline name editing, delete (with setlist warning), duplicate |
-| 2026-01-23 | Fixed duplicate "Available Arrangements" header - removed from ArrangementList since SongPage already provides section header |
-| 2026-01-23 | Fixed avatar not loading - SongMetadata now uses UserAvatar component; also fixed username @ prefix consistency (songs now show @username like arrangements) |
-| 2026-01-23 | Fixed fullscreen exit - removed browser Fullscreen API, now uses CSS-only fullscreen so ESC works as expected |
-| 2026-01-23 | Fixed mobile preview pane blank issue - replaced translateX sliding with conditional rendering in ChordProSplitView |
-| 2026-01-23 | Fixed N+1 queries in groups.ts, added `getCountsBySong` query, added `isSystemGroup` index |
-| 2026-01-23 | Reorganized by priority; consolidated scattered notes; added effort estimates |
-| 2026-01-22 | Initial extraction from PROJECT_STATUS.md |
-
----
-
-## Remaining Database Optimization Notes
-
-### Still TODO (Lower Priority)
-
-These N+1 patterns exist but are less critical (Convex batches parallel `ctx.db.get()` calls internally):
+These exist but Convex batches parallel `ctx.db.get()` calls internally:
 
 | File | Pattern | Impact |
 |------|---------|--------|
@@ -390,151 +127,48 @@ These N+1 patterns exist but are less critical (Convex batches parallel `ctx.db.
 | `convex/arrangements.ts` | Fetching collaborator + addedBy user data in loops | Low - few collaborators |
 | `convex/versions.ts` | Fetching user data per version in history | Low - versions are paginated |
 
-### Code Quality Notes
-
-- **Form boilerplate duplication**: Each form repeats ~20 lines of useState/try-catch/error handling. Could extract to a `useFormHandler` hook.
-- **Magic numbers**: Slug length (30) and nanoid length (6) should be constants
-- **Possibly unused**: `chordsheetjs` dependency - verify if actually used
-
 ---
 
-## Future Ideas (To Be Fleshed Out)
+## Deferred Ideas
 
-### Song Origin/Category Taxonomy ✅ IMPLEMENTED
+Not currently planned - revisit if user demand emerges.
 
-Songs now have an `origin` field for categorization:
-- **Traditional Holy Songs** - The original 40, originally Korean, translated to English
-- **Pioneer Songs** - Traditional songs written by early pioneers, popular in US
-- **Repurposed Hymns** - Traditional hymns adapted for our use
-- **Contemporary Christian** - Modern CCM songs
-- **Original Songs** - New compositions by community members
-- **New Holy Songs** - Recently added to official holy song collection
+### Multi-Language Support
 
-**Implementation:**
-- Single `origin` field (not multiple tags) - songs have one origin
-- User-contributed when adding songs
-- Separate from themes (themes describe content, origin describes source)
-- Filter by origin on Browse page via `getDistinctOrigins()` query
+Many songs have Korean origins with English translations. Would involve:
+- Dual titles (Korean + English)
+- Multiple lyrics per language
+- CJK font support
+- Cross-language search
+
+**Decision**: Too complex for current user base. Users can add Korean titles in parentheses manually for now.
 
 ### Mashup Arrangements
 
-Arrangements that combine multiple songs should reference all parent songs and appear under each.
+Arrangements combining multiple songs, appearing under each parent song. Very niche use case.
 
-- Arrangement links to multiple songs instead of just one
-- Shows up in arrangement lists for all referenced songs
-- UI for selecting multiple songs when creating arrangement
-- Very niche feature - low priority
+### Lead Sheet / Sheet Music PDFs
 
-### Favorites vs Ratings - Do We Need Both?
-
-Current plan has both ratings and favorites. Reconsidering:
-
-- **Favorites (hearts)** already indicate popularity by count
-- **Ratings** add complexity - what are we actually measuring?
-- Simpler approach: Just use favorites/hearts, show count
-- Popular = most favorited
-
-Decision: Probably just favorites, not ratings. Simpler is better.
-
-### Media Attachments for Arrangements ✅ IMPLEMENTED
-
-~~Allow arrangement creators to attach resources:~~
-- ~~**YouTube video** - Link to a video demonstrating their arrangement~~ ✅
-- ~~**Audio file** - Upload MP3 of how it sounds~~ ✅
-- **Lead sheet / sheet music** - PDF uploads for musicians (future - low priority)
-
-**Implemented features:**
-- ✅ MP3 uploads (10 MB max) stored in Cloudflare R2
-- ✅ YouTube video links with thumbnail preview and iframe embed
-- ✅ Global audio player - persistent across navigation, three states (hidden, collapsed mini-bar, expanded full controls)
-- ✅ Floating mini-player with play/pause, seek slider, volume/mute controls
-- ✅ Source toggle when both MP3 and YouTube are available
-- ✅ Edit mode form for managing audio references (`AudioReferencesForm.tsx`)
-- ✅ Automatic cleanup when arrangements are deleted or audio is replaced
-- ✅ YouTube Picture-in-Picture support for full-screen video playback
-- ✅ Audio context management (`AudioPlayerContext`) for global state
-
-**Implementation files:**
-- `src/features/audio/components/GlobalAudioPlayer.tsx` - Main player component
-- `src/features/audio/components/AudioUpload.tsx` - MP3 file upload with drag-drop
-- `src/features/audio/components/YouTubeInput.tsx` - YouTube URL input with validation
-- `src/features/audio/components/AudioReferencesForm.tsx` - Combined management form
-- `src/features/audio/context/AudioPlayerContext.tsx` - Audio state management
-- `convex/schema.ts` - Added `audioFileKey`, `youtubeUrl` to arrangements table
-
-### Song-Level Demo/Reference Audio?
-
-Songs currently have: title, artist, copyright, lyrics.
-Arrangements have: key, tempo, genre, time signature, chords.
-
-**Question:** Should songs have a "demo" or reference recording?
-
-Considerations:
-- Helps people discover unfamiliar songs before looking at arrangements
-- Useful for original songs where there's no well-known recording
-- Could just link to a YouTube/Spotify reference
-- But... isn't that what arrangements are for? The arrangement with media attached serves this purpose
-- For well-known songs, people can just search YouTube themselves
-
-**For original songs specifically:**
-- The song creator's arrangement naturally becomes the "reference"
-- Their attached audio/video is the demo
-- No need for separate song-level media if arrangements handle it
-
-Tentative decision: Keep media at arrangement level only. Song page can highlight the original creator's arrangement for context.
-
-### Primary/Original Arrangement Treatment
-
-**Question:** Should "primary" or "original" arrangements get special treatment?
-
-Current thinking: **No special UI prominence in listings.**
-
-Reasoning:
-- Most users want the highest-rated or their favorited arrangements first
-- Being "original" doesn't mean it's the best for their use case
-- Someone might have a better key, simpler chords, etc.
-
-**Proposed approach:**
-- Default sort: most popular (by favorites count)
-- Let users filter/sort as they want
-- Small badge like "Original" or "Composer's Version" for context only
-- On song details page: "About this song" section showing who submitted it originally, linking to their arrangement (credit, not prominence)
-
-This gives credit without forcing the original to the top.
+PDF uploads for musicians. Low priority since most users need chord charts, not sheet music.
 
 ---
 
-### Multi-Language Support (Deferred)
+## Known Workarounds
 
-**Scope:** Many songs have Korean origins with English translations. Some users may want Korean or Japanese lyrics.
+### Auth State Issue
 
-**What this would involve:**
-- Songs with Korean titles + English translations (display both? toggle?)
-- Lyrics in multiple languages per song (Korean original, English translation, Japanese)
-- Non-English text in tags and search
-- Language filter/toggle in UI
-- Font support for CJK characters
-- Search that works across languages
+**Problem**: Sign-in form occasionally stays on "Authenticating..." requiring page refresh.
 
-**Complexity concerns:**
-- UI clutter: How to show dual titles without overwhelming the interface?
-- Data model: Separate lyrics fields per language? Or versioned lyrics with language attribute?
-- Search: Needs to handle romanization, hangul, kanji
-- Tags: Do we allow Korean tags? How does search/filter work?
-- Mobile: Screen real estate is already tight
+**Workaround**: `window.location.href = '/'` after sign-in.
 
-**Current decision: Defer until needed.**
-
-This adds significant complexity for a feature that may not have enough users to justify it yet. Revisit once:
-- There's an active Korean/Japanese-speaking user base
-- Users are actually requesting this feature
-- We have bandwidth to design it properly
-
-For now, users can add Korean titles in parentheses manually if needed, e.g., "Song of the Garden (동산의 노래)"
+**References**: [convex-backend#259](https://github.com/get-convex/convex-backend/issues/259), [convex-auth#92](https://github.com/get-convex/convex-auth/issues/92)
 
 ---
 
-# Random Notes (To Be Added If Not Already)
-- Admin UI for featured songs management
-- Guitar vs Piano filter (needs instrument field or tag convention)
-- Scripture reference field and filter
+## Effort Guide
+
+| Effort | Estimate | Examples |
+|--------|----------|----------|
+| **Low** | < 2 hours | Bug fixes, UI tweaks, adding fields |
+| **Medium** | 2-8 hours | New components, simple features |
+| **High** | 1-3 days | Complex features, architecture changes |
