@@ -113,6 +113,7 @@ interface ChordProViewerProps {
   onTranspositionChange?: (state: TranspositionState) => void;  // Callback when transposition changes
   performanceMode?: boolean;  // Minimal padding for performance mode on mobile
   originalArrangementKey?: string;  // The arrangement's original key (for auto-transposition in setlists)
+  showActionButtons?: boolean;  // Whether to show Edit/Copy buttons (default true, hide in preview pane)
 }
 
 export default function ChordProViewer({
@@ -131,6 +132,7 @@ export default function ChordProViewer({
   onTranspositionChange,  // Callback when transposition changes
   performanceMode = false,  // Minimal padding for performance mode on mobile
   originalArrangementKey,  // The arrangement's original key (for auto-transposition in setlists)
+  showActionButtons = true,  // Whether to show Edit/Copy buttons
 }: ChordProViewerProps) {
   const [showChords, setShowChords] = useState(showChordsProp)
   const [editContent, setEditContent] = useState(content)
@@ -468,36 +470,38 @@ export default function ChordProViewer({
                     />
                   )}
                 </div>
-                <div className="flex gap-2 items-center">
-                  {editable ? (
-                    <>
-                      <ChordProHelpButton
-                        isPopoverOpen={isTutorialOpen}
-                        onPopoverOpenChange={setIsTutorialOpen}
-                        onGotIt={() => closeTutorial(true)}
-                      />
+                {showActionButtons && (
+                  <div className="flex gap-2 items-center">
+                    {editable ? (
+                      <>
+                        <ChordProHelpButton
+                          isPopoverOpen={isTutorialOpen}
+                          onPopoverOpenChange={setIsTutorialOpen}
+                          onGotIt={() => closeTutorial(true)}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleEditModeToggle}
+                          className="text-xs"
+                        >
+                          <Edit3 className="h-3 w-3 mr-1" />
+                          Edit Chords
+                        </Button>
+                      </>
+                    ) : content ? (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleEditModeToggle}
+                        onClick={handleCopyChordPro}
                         className="text-xs"
                       >
-                        <Edit3 className="h-3 w-3 mr-1" />
-                        Edit Chords
+                        <Copy className="h-3 w-3 mr-1" />
+                        Copy ChordPro
                       </Button>
-                    </>
-                  ) : content ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyChordPro}
-                      className="text-xs"
-                    >
-                      <Copy className="h-3 w-3 mr-1" />
-                      Copy ChordPro
-                    </Button>
-                  ) : null}
-                </div>
+                    ) : null}
+                  </div>
+                )}
               </div>
 
               {/* Transpose controls */}

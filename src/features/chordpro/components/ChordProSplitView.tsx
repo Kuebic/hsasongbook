@@ -295,7 +295,8 @@ export function ChordProSplitView({
   const enhancedViewerOptions = useMemo(
     () => ({
       ...viewerOptions,
-      enablePrint: true
+      enablePrint: true,
+      showActionButtons: false,  // Hide Copy button in preview pane - editors can copy from editor
     }),
     [viewerOptions]
   );
