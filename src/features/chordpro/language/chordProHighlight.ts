@@ -114,21 +114,22 @@ export const chordProStyles = `
 }
 
 /* Chord notation styles */
+/* Uses box-shadow instead of padding/margin to avoid layout shifts when highlighting changes */
 .cm-chord {
   color: var(--chord-color);
   font-weight: bold;
   background-color: var(--chord-bg);
   border-radius: 3px;
-  padding: 1px 3px;
-  margin: 0 1px;
+  padding: 0;
+  margin: 0;
+  box-shadow: -3px 0 0 var(--chord-bg), 3px 0 0 var(--chord-bg);
 }
 
 /* Mobile optimization for chords */
 @media (max-width: 768px) {
   .cm-chord {
-    padding: 2px 4px;
-    margin: 1px 2px;
     font-size: 1.05em;
+    box-shadow: -4px 0 0 var(--chord-bg), 4px 0 0 var(--chord-bg);
   }
 }
 
@@ -173,32 +174,54 @@ export const chordProStyles = `
 }
 
 /* Error/invalid syntax styles */
+/* Uses box-shadow instead of padding to avoid layout shifts */
 .cm-chord-invalid {
   color: var(--error-color);
   background-color: var(--error-bg);
   border-radius: 3px;
-  padding: 1px 3px;
+  padding: 0;
+  box-shadow: -3px 0 0 var(--error-bg), 3px 0 0 var(--error-bg);
   text-decoration: underline wavy var(--error-color);
 }
 
 /* Partial chord styles (for auto-completion) */
+/* Uses box-shadow instead of padding to avoid layout shifts */
 .cm-chord-partial {
   color: var(--chord-color);
   opacity: 0.7;
   background-color: var(--chord-bg);
   border-radius: 3px;
-  padding: 1px 3px;
-  border: 1px dashed var(--chord-color);
+  padding: 0;
+  box-shadow: -3px 0 0 var(--chord-bg), 3px 0 0 var(--chord-bg);
+  outline: 1px dashed var(--chord-color);
+  outline-offset: 0;
 }
 
 /* Rhythm bracket styles - [D / / / | A/C# / / / |] */
+/* Uses box-shadow instead of padding to avoid layout shifts */
 .cm-rhythm-bracket {
   color: var(--chord-color);
   font-weight: bold;
   background-color: var(--chord-bg);
   border-radius: 3px;
-  padding: 1px 4px;
+  padding: 0;
+  box-shadow: -4px 0 0 var(--chord-bg), 4px 0 0 var(--chord-bg);
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* CodeMirror bracket matching - override defaults to avoid layout shifts */
+.cm-editor .cm-matchingBracket {
+  background-color: transparent !important;
+  outline: 2px solid var(--chord-color);
+  outline-offset: -1px;
+  border-radius: 2px;
+}
+
+.cm-editor .cm-nonmatchingBracket {
+  background-color: transparent !important;
+  outline: 2px solid var(--error-color);
+  outline-offset: -1px;
+  border-radius: 2px;
 }
 
 /* Additional editor optimizations */

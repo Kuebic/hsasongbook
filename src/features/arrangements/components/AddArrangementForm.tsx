@@ -146,9 +146,9 @@ export default function AddArrangementForm({
         coAuthors: coAuthorData,
       });
 
-      // Success - navigate to the new arrangement
+      // Success - navigate to the new arrangement in edit mode
       onSuccess?.();
-      navigate(`/song/${songSlug}/${slug}`);
+      navigate(`/song/${songSlug}/${slug}`, { state: { openEditor: true } });
     } catch (error) {
       setSubmitError(extractErrorMessage(error));
     } finally {

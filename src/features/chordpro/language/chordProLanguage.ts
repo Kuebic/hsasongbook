@@ -109,8 +109,8 @@ const chordProParser: StreamParser<ChordProState> = {
     }
 
     // Chord notation - [chord] format
-    // Comprehensive regex for chord recognition
-    const chordMatch = stream.match(/\[([A-G][#b]?(?:m|maj|min|dim|aug|sus[24]?|add\d+|\d+)*(?:\/[A-G][#b]?)?)\]/);
+    // Comprehensive regex for chord recognition, including parenthesized extensions like (7), (#11), (b9)
+    const chordMatch = stream.match(/\[([A-G][#b]?(?:m|maj|min|dim|aug|sus[24]?|add\d+|\d+|\([#b]?\d+\))*(?:\/[A-G][#b]?)?)\]/);
     if (chordMatch) {
       return 'chord';
     }

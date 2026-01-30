@@ -16,6 +16,7 @@ Issues blocking soft launch - must fix before sharing with users.
 | **Debounce syntax errors** | Don't show "unclosed bracket" errors while user is mid-keystroke. Add ~500ms debounce before displaying parse errors. | Low |
 | **Navigate to editor after create** | "Add Arrangement" dialog should open chord editor immediately, not the arrangement view page. | Low |
 | **Copy ChordPro button** | Add "Copy to clipboard" for ChordPro content. Anyone can copy for Planning Center use (community spirit). | Low |
+| **Chord highlighting with parentheses** | `[C(7)]` only highlights `[C` - parentheses break the chord token. Should highlight full chord like `[Em]` or `[Gsus4]`. | Low |
 
 ---
 

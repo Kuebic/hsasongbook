@@ -13,7 +13,8 @@ import ChordToggle from './ChordToggle'
 import TransposeControl from './TransposeControl'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Edit3 } from 'lucide-react'
+import { Copy, Edit3 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import logger from '@/lib/logger'
 import { ArrangementMetadata } from '@/types/Arrangement.types'
@@ -384,6 +385,16 @@ export default function ChordProViewer({
     onContentChange?.(newContent)
   }
 
+  // Handle copy to clipboard for non-editors
+  const handleCopyChordPro = useCallback(async () => {
+    if (!content) return
+    try {
+      await navigator.clipboard.writeText(content)
+      toast.success('ChordPro copied to clipboard')
+    } catch {
+      toast.error('Failed to copy to clipboard')
+    }
+  }, [content])
 
   // Handle chord toggle
   const handleToggleChords = (): void => {
@@ -458,7 +469,7 @@ export default function ChordProViewer({
                   )}
                 </div>
                 <div className="flex gap-2 items-center">
-                  {editable && (
+                  {editable ? (
                     <>
                       <ChordProHelpButton
                         isPopoverOpen={isTutorialOpen}
@@ -475,7 +486,17 @@ export default function ChordProViewer({
                         Edit Chords
                       </Button>
                     </>
-                  )}
+                  ) : content ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyChordPro}
+                      className="text-xs"
+                    >
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copy ChordPro
+                    </Button>
+                  ) : null}
                 </div>
               </div>
 

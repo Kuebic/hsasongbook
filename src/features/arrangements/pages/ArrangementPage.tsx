@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -31,11 +31,15 @@ import type { Id } from '../../../../convex/_generated/dataModel';
 
 export function ArrangementPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { songSlug, arrangementSlug } = useParams();
   const { breadcrumbs } = useNavigation();
   const { user } = useAuth();
   const isAuthenticated = user && !user.isAnonymous;
-  const [isChordProEditMode, setIsChordProEditMode] = useState(false);
+  // Initialize edit mode from navigation state (when coming from "Add Arrangement" dialog)
+  const [isChordProEditMode, setIsChordProEditMode] = useState(
+    () => location.state?.openEditor === true
+  );
   const [isMetadataDialogOpen, setIsMetadataDialogOpen] = useState(false);
   const [showCollaboratorsDialog, setShowCollaboratorsDialog] = useState(false);
   const [showChords, _setShowChords] = useState(true);
@@ -122,12 +126,16 @@ export function ArrangementPage() {
     });
   }, [arrangement?.youtubeUrl, arrangement?.name, song, songSlug, arrangementSlug, playTrack]);
 
-  // Auto-enable ChordPro edit mode when arrangement has no content AND user can edit
+  // Auto-enable ChordPro edit mode when:
+  // 1. Navigation state requests it (coming from "Add Arrangement" dialog), OR
+  // 2. Arrangement has no content AND user can edit
   useEffect(() => {
-    if (arrangement && !arrangement.chordProContent && canEdit) {
-      setIsChordProEditMode(true);
+    if (arrangement && canEdit) {
+      if (!arrangement.chordProContent || location.state?.openEditor) {
+        setIsChordProEditMode(true);
+      }
     }
-  }, [arrangement, canEdit]);
+  }, [arrangement, canEdit, location.state?.openEditor]);
 
   // Track view for "Recently Viewed" section (only for authenticated users)
   const recordView = useMutation(api.userViews.recordView);

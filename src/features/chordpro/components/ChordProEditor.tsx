@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { useTheme } from '@/lib/theme/hooks'
 import { useChordProEditor } from '../hooks/useChordProEditor'
 import { useAutoSave } from '../hooks/useAutoSave'
+import { useDebounce } from '@/features/shared/hooks/useDebounce'
 import AutoSaveIndicator from './AutoSaveIndicator'
 import { chordProStyles } from '../language/chordProHighlight'
 
@@ -85,6 +86,10 @@ export default function ChordProEditor({
     onSave,
     enabled: autoSave && !!arrangementId
   })
+
+  // Debounce error display to avoid flashing while user is typing
+  const debouncedHasErrors = useDebounce(editor.hasErrors, 500)
+  const debouncedError = useDebounce(editor.error, 500)
 
   // Track mount state for SSR compatibility
   useEffect(() => {
@@ -221,15 +226,15 @@ export default function ChordProEditor({
             </div>
           )}
 
-          {/* Error state overlay */}
-          {editor.hasErrors && editor.error && (
+          {/* Error state overlay - debounced to avoid flashing while typing */}
+          {debouncedHasErrors && debouncedError && (
             <div className="absolute inset-x-3 top-3 z-20">
               <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
                 <p className="text-sm text-destructive font-medium">
                   ChordPro Syntax Error
                 </p>
                 <p className="text-xs text-destructive/80 mt-1">
-                  {editor.error}
+                  {debouncedError}
                 </p>
               </div>
             </div>

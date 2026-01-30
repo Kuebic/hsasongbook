@@ -9,7 +9,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { EditorView, keymap } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
-import { bracketMatching, indentOnInput } from '@codemirror/language'
+import { indentOnInput } from '@codemirror/language'
 import { chordproConfig } from '@/lib/config'
 import chordProLanguage from '../language/chordProLanguage'
 import { createChordProHighlighting } from '../language/chordProHighlight'
@@ -94,8 +94,7 @@ export function useChordProEditor(options: UseChordProEditorOptions = {}): UseCh
       history(),
       keymap.of([...defaultKeymap, ...historyKeymap]),
 
-      // Language features
-      bracketMatching(),
+      // Language features (bracketMatching handled by basicSetup to avoid duplicate configuration)
       indentOnInput(),
 
       // Editor configuration
