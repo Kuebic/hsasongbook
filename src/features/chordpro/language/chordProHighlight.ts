@@ -212,14 +212,14 @@ export const chordProStyles = `
 /* CodeMirror bracket matching - override defaults to avoid layout shifts */
 .cm-editor .cm-matchingBracket {
   background-color: transparent !important;
-  outline: 2px solid var(--chord-color);
+  outline: 1px solid var(--chord-color);
   outline-offset: -1px;
   border-radius: 2px;
 }
 
 .cm-editor .cm-nonmatchingBracket {
   background-color: transparent !important;
-  outline: 2px solid var(--error-color);
+  outline: 1px solid var(--error-color);
   outline-offset: -1px;
   border-radius: 2px;
 }
