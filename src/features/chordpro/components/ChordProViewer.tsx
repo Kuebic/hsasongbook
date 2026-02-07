@@ -301,9 +301,32 @@ export default function ChordProViewer({
     if (!songToFormat) return ''
 
     try {
+      // Preserve intentional spaces in lyrics by using a marker character.
+      // ChordSheetJS's internal stripHTML function collapses whitespace-only lyrics
+      // (e.g., spaces between a chord and the next word), and CSS pre-wrap hangs
+      // trailing spaces on inline-block elements. We temporarily replace spaces with
+      // \u200B (zero-width space, not matched by \s), then swap to &nbsp; after formatting.
+      const SPACE_MARKER = '\u200B'
+      const savedLyrics: { item: ChordSheetJS.ChordLyricsPair; lyrics: string }[] = []
+
+      songToFormat.lines.forEach((line: { items: unknown[] }) => {
+        line.items.forEach((item: unknown) => {
+          if (item instanceof ChordSheetJS.ChordLyricsPair && item.lyrics) {
+            savedLyrics.push({ item, lyrics: item.lyrics })
+            item.lyrics = item.lyrics.replace(/ /g, SPACE_MARKER)
+          }
+        })
+      })
+
       // Format the song to HTML
       const formatter = new ChordSheetJS.HtmlDivFormatter()
       let html = formatter.format(songToFormat)
+
+      // Restore original lyrics on the song object to avoid side effects
+      savedLyrics.forEach(({ item, lyrics }) => { item.lyrics = lyrics })
+
+      // Convert markers to non-breaking spaces that the browser always renders
+      html = html.replace(/\u200B/g, '&nbsp;')
 
       // Add CSS class for chord visibility control
       if (!showChords) {
