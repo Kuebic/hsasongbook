@@ -24,6 +24,11 @@ import { maybeCreateVersionSnapshot } from "./versions";
 // R2 client for audio file cleanup
 const r2 = new R2(components.r2);
 
+// ============ CONSTANTS ============
+
+// 500KB max for ChordPro content — a typical song is 5-10KB
+const MAX_CHORDPRO_LENGTH = 512_000;
+
 // ============ HELPER FUNCTIONS ============
 
 /**
@@ -493,6 +498,13 @@ export const create = mutation({
       throw new Error("Song not found");
     }
 
+    // Validate content size
+    if (args.chordProContent.length > MAX_CHORDPRO_LENGTH) {
+      throw new Error(
+        `ChordPro content is too large (${Math.round(args.chordProContent.length / 1024)}KB). Maximum allowed is ${MAX_CHORDPRO_LENGTH / 1024}KB.`
+      );
+    }
+
     // Check slug uniqueness
     const existing = await ctx.db
       .query("arrangements")
@@ -630,6 +642,16 @@ export const update = mutation({
     const canEdit = await canEditArrangement(ctx, args.id, userId);
     if (!canEdit) {
       throw new Error("You don't have permission to edit this arrangement");
+    }
+
+    // Validate content size
+    if (
+      args.chordProContent !== undefined &&
+      args.chordProContent.length > MAX_CHORDPRO_LENGTH
+    ) {
+      throw new Error(
+        `ChordPro content is too large (${Math.round(args.chordProContent.length / 1024)}KB). Maximum allowed is ${MAX_CHORDPRO_LENGTH / 1024}KB.`
+      );
     }
 
     // Create version snapshot for Community-owned arrangements (if changed)
