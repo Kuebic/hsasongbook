@@ -184,6 +184,15 @@ export const chordProStyles = `
   text-decoration: underline wavy var(--error-color);
 }
 
+/* Suppress error styling on active line - user is mid-keystroke */
+.cm-activeLine .cm-chord-invalid {
+  color: var(--chord-color);
+  opacity: 0.7;
+  background-color: var(--chord-bg);
+  box-shadow: -3px 0 0 var(--chord-bg), 3px 0 0 var(--chord-bg);
+  text-decoration: none;
+}
+
 /* Partial chord styles (for auto-completion) */
 /* Uses box-shadow instead of padding to avoid layout shifts */
 .cm-chord-partial {
