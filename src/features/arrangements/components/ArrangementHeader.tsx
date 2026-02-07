@@ -269,6 +269,13 @@ export default function ArrangementHeader({ arrangement, songTitle, artist, crea
           </Badge>
         ))}
       </div>
+
+      {/* Notes */}
+      {arrangement.notes && (
+        <div className="bg-muted rounded-lg p-3">
+          <p className="text-sm text-muted-foreground whitespace-pre-line">{arrangement.notes}</p>
+        </div>
+      )}
     </div>
   )
 }

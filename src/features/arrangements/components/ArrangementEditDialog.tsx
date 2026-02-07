@@ -2,6 +2,7 @@
  * ArrangementEditDialog Component
  *
  * Dialog for editing arrangement metadata: settings (key, tempo, etc.),
+ * categorization (instrument, energy, style, tags), notes,
  * audio references (MP3, YouTube), and attachments.
  * Separate from ChordPro content editing.
  */
@@ -44,6 +45,28 @@ export function ArrangementEditDialog({
     }
   };
 
+  const handleNotesChange = async (notes: string) => {
+    logger.debug('Notes changed, saving to Convex');
+    const result = await updateArrangement({ notes });
+    if (!result.success) {
+      logger.error('Failed to save notes:', result.error);
+    }
+  };
+
+  const handleCategorizationChange = async (fields: Partial<{
+    instrument: 'guitar' | 'piano';
+    energy: 'high' | 'medium' | 'reflective';
+    style: string;
+    settings: string[];
+    tags: string[];
+  }>) => {
+    logger.debug('Categorization changed, saving to Convex:', fields);
+    const result = await updateArrangement(fields);
+    if (!result.success) {
+      logger.error('Failed to save categorization:', result.error);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -64,6 +87,14 @@ export function ArrangementEditDialog({
           youtubeUrl={arrangement.youtubeUrl}
           hasAudio={!!arrangement.audioFileKey}
           attachmentCount={attachmentCount}
+          notes={arrangement.notes}
+          onNotesChange={handleNotesChange}
+          instrument={arrangement.instrument}
+          energy={arrangement.energy}
+          style={arrangement.style}
+          settings={arrangement.settings}
+          tags={arrangement.tags}
+          onCategorizationChange={handleCategorizationChange}
         />
       </DialogContent>
     </Dialog>

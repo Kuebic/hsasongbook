@@ -114,6 +114,11 @@ export default defineSchema({
     ),
     style: v.optional(v.string()), // Validated via frontend constants
     settings: v.optional(v.array(v.string())), // Multi-select: acoustic, full-band, etc.
+    notes: v.optional(v.string()), // Public notes (source, version info, arrangement context)
+    // Duplication attribution
+    duplicatedFrom: v.optional(v.id("arrangements")),
+    duplicatedFromName: v.optional(v.string()),
+    showAttribution: v.optional(v.boolean()),
     // Track edits
     updatedAt: v.optional(v.number()),
     // Ownership (Phase 2) - defaults to user ownership

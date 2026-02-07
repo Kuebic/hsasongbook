@@ -33,6 +33,7 @@ import { suggestThemes } from '@/lib/themeSuggester';
 import { ThemeSuggestions } from './ThemeSuggestions';
 import { BibleVerseManager } from './BibleVerseManager';
 import { QuoteManager } from './QuoteManager';
+import { ArtistInput } from './ArtistInput';
 import type { BibleVerse, Quote } from '@/types/SpiritualContext.types';
 
 // Edit form schema (themes and spiritual context managed separately)
@@ -87,11 +88,15 @@ export default function SongEditForm({
   const [quotes, setQuotes] = useState<Quote[]>(initialData.quotes || []);
   const [spiritualContextChanged, setSpiritualContextChanged] = useState(false);
 
+  // Artist state (managed separately for ArtistInput controlled component)
+  const [artistValue, setArtistValue] = useState(initialData.artist || '');
+
   const {
     register,
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<EditSongFormData>({
     resolver: zodResolver(editSongSchema),
@@ -116,6 +121,7 @@ export default function SongEditForm({
       origin: initialData.origin || '',
       notes: initialData.notes || '',
     });
+    setArtistValue(initialData.artist || '');
     setOrigin(initialData.origin || '');
     setSelectedThemes(initialData.themes || []);
     setThemesChanged(false);
@@ -221,14 +227,15 @@ export default function SongEditForm({
       {/* Artist field (optional) */}
       <div>
         <Label htmlFor="artist">Artist</Label>
-        <Input
+        <ArtistInput
           id="artist"
-          type="text"
-          placeholder="e.g., John Newton"
+          value={artistValue}
+          onChange={(val) => {
+            setArtistValue(val);
+            setValue('artist', val, { shouldDirty: true });
+          }}
           disabled={isSubmitting}
-          aria-invalid={errors.artist ? 'true' : 'false'}
-          aria-describedby={errors.artist ? 'artist-error' : undefined}
-          {...register('artist')}
+          placeholder="e.g., John Newton"
         />
         {errors.artist && (
           <p id="artist-error" className="text-sm text-destructive mt-1">

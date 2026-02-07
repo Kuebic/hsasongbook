@@ -476,6 +476,7 @@ export const create = mutation({
     ),
     style: v.optional(v.string()),
     settings: v.optional(v.array(v.string())),
+    notes: v.optional(v.string()),
     // Phase 2: Group ownership
     ownerType: v.optional(v.union(v.literal("user"), v.literal("group"))),
     ownerId: v.optional(v.string()),
@@ -558,6 +559,7 @@ export const create = mutation({
       energy: args.energy,
       style: args.style,
       settings: args.settings,
+      notes: args.notes,
       ownerType,
       ownerId,
     });
@@ -629,6 +631,7 @@ export const update = mutation({
     ),
     style: v.optional(v.string()),
     settings: v.optional(v.array(v.string())),
+    notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
@@ -1221,9 +1224,18 @@ export const duplicate = mutation({
       difficulty: source.difficulty,
       chordProContent: source.chordProContent,
       tags: source.tags,
+      instrument: source.instrument,
+      energy: source.energy,
+      style: source.style,
+      settings: source.settings,
+      notes: source.notes,
       slug,
       createdBy: userId,
       favorites: 0,
+      // Duplication attribution
+      duplicatedFrom: args.sourceArrangementId,
+      duplicatedFromName: source.name,
+      showAttribution: true,
       // ownerType and ownerId are undefined (user ownership by default)
     });
 
@@ -1231,5 +1243,63 @@ export const duplicate = mutation({
     await updateSongArrangementSummary(ctx, source.songId);
 
     return { arrangementId: newArrangementId, slug };
+  },
+});
+
+/**
+ * Toggle duplication attribution visibility
+ * Access: Owner or collaborator
+ */
+export const toggleAttribution = mutation({
+  args: { arrangementId: v.id("arrangements") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const arrangement = await ctx.db.get(args.arrangementId);
+    if (!arrangement) {
+      throw new Error("Arrangement not found");
+    }
+
+    const canEdit = await canEditArrangement(ctx, args.arrangementId, userId);
+    if (!canEdit) {
+      throw new Error("You don't have permission to edit this arrangement");
+    }
+
+    await ctx.db.patch(args.arrangementId, {
+      showAttribution: !(arrangement.showAttribution ?? false),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Get attribution info for a duplicated arrangement
+ * Returns source arrangement details if available
+ */
+export const getAttributionInfo = query({
+  args: { arrangementId: v.id("arrangements") },
+  handler: async (ctx, args) => {
+    const arrangement = await ctx.db.get(args.arrangementId);
+    if (!arrangement?.duplicatedFrom) return null;
+
+    const original = await ctx.db.get(arrangement.duplicatedFrom);
+    if (!original) {
+      return {
+        name: arrangement.duplicatedFromName ?? "[Deleted Arrangement]",
+        isAccessible: false,
+      };
+    }
+
+    const creator = await ctx.db.get(original.createdBy);
+    const song = await ctx.db.get(original.songId);
+
+    return {
+      id: arrangement.duplicatedFrom,
+      name: original.name,
+      isAccessible: true,
+      creatorUsername: creator?.username,
+      songSlug: song?.slug,
+      arrangementSlug: original.slug,
+    };
   },
 });

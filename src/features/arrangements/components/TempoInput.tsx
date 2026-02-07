@@ -9,6 +9,7 @@ import React from 'react'
 import { Input } from '@/components/ui/input'
 import { validateTempo, METADATA_CONSTANTS } from '../utils/metadataValidation'
 import { cn } from '@/lib/utils'
+import BpmTapper from './BpmTapper'
 
 const { MIN_TEMPO, MAX_TEMPO } = METADATA_CONSTANTS
 
@@ -66,28 +67,34 @@ export default function TempoInput({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="relative">
-        <Input
-          type="number"
-          value={value ?? ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
+      <div className="flex gap-2 items-start">
+        <div className="relative flex-1">
+          <Input
+            type="number"
+            value={value ?? ''}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            disabled={disabled}
+            min={MIN_TEMPO}
+            max={MAX_TEMPO}
+            placeholder={`${MIN_TEMPO}-${MAX_TEMPO}`}
+            className={cn(
+              'pr-16',
+              isInvalid && 'border-destructive focus-visible:ring-destructive',
+              className
+            )}
+            aria-label="Tempo in BPM"
+            aria-invalid={isInvalid}
+            aria-describedby={error ? 'tempo-error' : undefined}
+          />
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+            BPM
+          </span>
+        </div>
+        <BpmTapper
+          onBpmChange={(bpm) => onChange(bpm)}
           disabled={disabled}
-          min={MIN_TEMPO}
-          max={MAX_TEMPO}
-          placeholder={`${MIN_TEMPO}-${MAX_TEMPO}`}
-          className={cn(
-            'pr-16',
-            isInvalid && 'border-destructive focus-visible:ring-destructive',
-            className
-          )}
-          aria-label="Tempo in BPM"
-          aria-invalid={isInvalid}
-          aria-describedby={error ? 'tempo-error' : undefined}
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-          BPM
-        </span>
       </div>
 
       {/* Error message */}

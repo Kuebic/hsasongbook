@@ -69,10 +69,18 @@ function mapConvexArrangement(arr: {
   favorites: number;
   chordProContent: string;
   updatedAt?: number;
+  instrument?: 'guitar' | 'piano';
+  energy?: 'high' | 'medium' | 'reflective';
+  style?: string;
+  settings?: string[];
+  notes?: string;
   ownerType?: 'user' | 'group';
   ownerId?: string;
   audioFileKey?: string;
   youtubeUrl?: string;
+  duplicatedFrom?: Id<'arrangements'>;
+  duplicatedFromName?: string;
+  showAttribution?: boolean;
 }): Arrangement {
   return {
     id: arr._id,
@@ -92,10 +100,18 @@ function mapConvexArrangement(arr: {
     updatedAt: arr.updatedAt
       ? new Date(arr.updatedAt).toISOString()
       : new Date(arr._creationTime).toISOString(),
+    instrument: arr.instrument,
+    energy: arr.energy,
+    style: arr.style,
+    settings: arr.settings,
+    notes: arr.notes,
     ownerType: arr.ownerType,
     ownerId: arr.ownerId,
     audioFileKey: arr.audioFileKey,
     youtubeUrl: arr.youtubeUrl,
+    duplicatedFrom: arr.duplicatedFrom,
+    duplicatedFromName: arr.duplicatedFromName,
+    showAttribution: arr.showAttribution,
   };
 }
 
@@ -231,6 +247,11 @@ export function useArrangementData(arrangementId?: string | null): UseArrangemen
           difficulty?: 'simple' | 'standard' | 'advanced';
           chordProContent?: string;
           tags?: string[];
+          instrument?: 'guitar' | 'piano';
+          energy?: 'high' | 'medium' | 'reflective';
+          style?: string;
+          settings?: string[];
+          notes?: string;
         } = {
           id: convexArrangement._id,
         };
@@ -246,6 +267,12 @@ export function useArrangementData(arrangementId?: string | null): UseArrangemen
         if (updatedData.chordProContent !== undefined)
           updatePayload.chordProContent = updatedData.chordProContent;
         if (updatedData.tags !== undefined) updatePayload.tags = updatedData.tags;
+        if (updatedData.instrument !== undefined)
+          updatePayload.instrument = updatedData.instrument;
+        if (updatedData.energy !== undefined) updatePayload.energy = updatedData.energy;
+        if (updatedData.style !== undefined) updatePayload.style = updatedData.style;
+        if (updatedData.settings !== undefined) updatePayload.settings = updatedData.settings;
+        if (updatedData.notes !== undefined) updatePayload.notes = updatedData.notes;
 
         await updateArrangementMutation(updatePayload);
 

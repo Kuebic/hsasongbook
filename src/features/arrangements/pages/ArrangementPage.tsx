@@ -9,6 +9,7 @@ import { useArrangementAudio } from '../hooks/useArrangementAudio';
 import { useArrangementAttachments } from '../hooks/useArrangementAttachments';
 import ChordProViewer, { type TranspositionState } from '@/features/chordpro';
 import ArrangementHeader from '../components/ArrangementHeader';
+import ArrangementAttribution from '../components/ArrangementAttribution';
 import { ArrangementEditDialog } from '../components/ArrangementEditDialog';
 import CollaboratorsDialog from '../components/CollaboratorsDialog';
 import CoAuthorsList from '../components/CoAuthorsList';
@@ -139,6 +140,7 @@ export function ArrangementPage() {
 
   // Track view for "Recently Viewed" section (only for authenticated users)
   const recordView = useMutation(api.userViews.recordView);
+  const toggleAttributionMutation = useMutation(api.arrangements.toggleAttribution);
   useEffect(() => {
     if (arrangement?.id && isAuthenticated) {
       // Fire and forget - don't block on this
@@ -267,6 +269,20 @@ export function ArrangementPage() {
                 await updateArrangement({ name: newName });
               }}
             />
+
+            {/* Duplication attribution */}
+            {arrangement.duplicatedFrom && arrangement.showAttribution && (
+              <ArrangementAttribution
+                arrangementId={arrangement.id}
+                showAttribution={arrangement.showAttribution}
+                isOwner={isOwner}
+                onToggleAttribution={() => {
+                  toggleAttributionMutation({
+                    arrangementId: arrangement.id as Id<'arrangements'>,
+                  }).catch(() => {});
+                }}
+              />
+            )}
 
             {/* Co-authors list (for group-owned arrangements) */}
             {coAuthors.length > 0 && (
