@@ -8,49 +8,34 @@
 import type { FontPreset } from "../types/appearance.types";
 
 // ============ APP FONTS ============
-// General-purpose fonts for the entire application
+// Simplified to 3 visually distinct categories (sans, serif, mono).
+// Named fonts like Inter, Lora, etc. were removed because they were never
+// actually loaded (no @fontsource packages, no Google Fonts link), so they
+// all fell back to the same system font anyway.
 
 export const appFonts: FontPreset[] = [
   {
     id: "system",
-    name: "System Default",
+    name: "Sans-serif",
     stack: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
     category: "sans",
   },
   {
-    id: "inter",
-    name: "Inter",
-    stack: "'Inter', system-ui, -apple-system, sans-serif",
-    category: "sans",
-  },
-  {
-    id: "source-sans",
-    name: "Source Sans",
-    stack: "'Source Sans 3', 'Source Sans Pro', system-ui, sans-serif",
-    category: "sans",
-  },
-  {
-    id: "lora",
-    name: "Lora",
-    stack: "'Lora', Georgia, 'Times New Roman', serif",
+    id: "serif",
+    name: "Serif",
+    stack: "Georgia, 'Times New Roman', 'Noto Serif', serif",
     category: "serif",
   },
   {
-    id: "merriweather",
-    name: "Merriweather",
-    stack: "'Merriweather', Georgia, 'Times New Roman', serif",
-    category: "serif",
-  },
-  {
-    id: "crimson",
-    name: "Crimson Text",
-    stack: "'Crimson Text', Georgia, serif",
-    category: "serif",
+    id: "mono",
+    name: "Monospace",
+    stack: "'SF Mono', Monaco, 'Cascadia Code', 'Fira Mono', 'Courier New', monospace",
+    category: "mono",
   },
 ];
 
 // ============ LYRICS FONTS ============
-// Fonts for lyrics display (includes inherit and monospace options)
+// "Same as App" + all app font categories
 
 export const lyricsFonts: FontPreset[] = [
   {
@@ -59,18 +44,11 @@ export const lyricsFonts: FontPreset[] = [
     stack: "inherit",
     category: "sans",
   },
-  {
-    id: "mono",
-    name: "Monospace",
-    stack: "'Source Code Pro', 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace",
-    category: "mono",
-  },
-  // Include all app fonts as options for lyrics too
   ...appFonts,
 ];
 
 // ============ CHORD FONTS ============
-// Fonts specifically designed for chord display (includes monospace options)
+// "Same as App" + all app font categories
 
 export const chordFonts: FontPreset[] = [
   {
@@ -79,13 +57,6 @@ export const chordFonts: FontPreset[] = [
     stack: "inherit",
     category: "sans",
   },
-  {
-    id: "mono",
-    name: "Monospace",
-    stack: "'Source Code Pro', 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace",
-    category: "mono",
-  },
-  // Include all app fonts as options for chords too
   ...appFonts,
 ];
 

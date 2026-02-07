@@ -559,7 +559,6 @@ export default function ChordProViewer({
               className={cn(
                 'chord-sheet-output',
                 'font-mono',
-                'space-y-2',
                 performanceMode ? 'p-2 md:p-4' : 'p-4',
                 !showChords && 'hide-chords'
               )}

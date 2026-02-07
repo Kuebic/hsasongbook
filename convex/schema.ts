@@ -329,7 +329,7 @@ export default defineSchema({
     accentColorId: v.optional(v.union(v.string(), v.null())), // ID from curated accent palette
 
     // App-wide fonts
-    fontFamily: v.optional(v.string()), // "system", "inter", "lora", etc.
+    fontFamily: v.optional(v.string()), // "system", "serif", "mono"
     fontSize: v.optional(v.number()), // Scale multiplier: 0.85-1.25
 
     // Lyrics-specific styling
