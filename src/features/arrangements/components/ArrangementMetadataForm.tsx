@@ -234,11 +234,9 @@ export function ArrangementMetadataContent({
       </div>
 
       {/* Save status indicator */}
-      {isDirty && (
-        <div className="text-xs text-muted-foreground">
-          Saving changes...
-        </div>
-      )}
+      <div className={`text-xs text-muted-foreground transition-opacity duration-200 ${isDirty ? 'opacity-100' : 'opacity-0'}`}>
+        Saving changes...
+      </div>
     </div>
   )
 }
@@ -347,11 +345,9 @@ export default function ArrangementMetadataForm({
         </div>
 
         {/* Save status indicator */}
-        {isDirty && (
-          <div className="mt-4 text-xs text-muted-foreground">
-            Saving changes...
-          </div>
-        )}
+        <div className={`mt-4 text-xs text-muted-foreground transition-opacity duration-200 ${isDirty ? 'opacity-100' : 'opacity-0'}`}>
+          Saving changes...
+        </div>
       </CardContent>
     </Card>
   )
